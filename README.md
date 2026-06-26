@@ -1,4 +1,4 @@
-![](../../workflows/gds/badge.svg) ![](../../workflows/docs/badge.svg) ![](../../workflows/test/badge.svg) ![](../../workflows/fpga/badge.svg)
+<img width="506" height="447" alt="image" src="https://github.com/user-attachments/assets/5abd7124-e83c-4d1c-b1ae-ade613a61825" />![](../../workflows/gds/badge.svg) ![](../../workflows/docs/badge.svg) ![](../../workflows/test/badge.svg) ![](../../workflows/fpga/badge.svg)
 
 # Tiny Tapeout Verilog Project Template
 
@@ -40,3 +40,15 @@ The GitHub action will automatically build the ASIC files using [LibreLane](http
   - Mastodon [#tinytapeout](https://chaos.social/tags/tinytapeout) [@matthewvenn](https://chaos.social/@matthewvenn)
   - X (formerly Twitter) [#tinytapeout](https://twitter.com/hashtag/tinytapeout) [@tinytapeout](https://twitter.com/tinytapeout)
   - Bluesky [@tinytapeout.com](https://bsky.app/profile/tinytapeout.com)
+
+ Pin numbering according to Pmod specification.
+
+| Pin | Signal | Pin | Signal |
+| :---: | :---: | :---: | :---: |
+| top row | | bottom row | |
+| 1 | R1 | 7 | R0 |
+| 2 | G1 | 8 | G0 |
+| 3 | B1 | 9 | B0 |
+| 4 | VS | 10 | HS |
+| 5 | GND | 11 | GND |
+| 6 | VCC | 12 | VCC |
