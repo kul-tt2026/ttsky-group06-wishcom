@@ -43,12 +43,3 @@ The GitHub action will automatically build the ASIC files using [LibreLane](http
 
  Pin numbering according to Pmod specification.
 
-| Pin | Signal | Pin | Signal |
-| :---: | :---: | :---: | :---: |
-| top row | | bottom row | |
-| 1 | R1 | 7 | R0 |
-| 2 | G1 | 8 | G0 |
-| 3 | B1 | 9 | B0 |
-| 4 | VS | 10 | HS |
-| 5 | GND | 11 | GND |
-| 6 | VCC | 12 | VCC |
