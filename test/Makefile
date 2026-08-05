@@ -8,6 +8,9 @@ TOPLEVEL_LANG   ?= verilog
 SRC_DIR          = $(PWD)/../src
 PROJECT_SOURCES  = project.v vga_display.v hvsync_generator.v
 
+# List test modules to run, separated by commas and without the .py suffix:
+COCOTB_TEST_MODULES = vga_image_test
+
 ifneq ($(GATES),yes)
 
 # RTL simulation:
