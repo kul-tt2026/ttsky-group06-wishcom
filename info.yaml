@@ -20,6 +20,19 @@ project:
     - "project.v"
     - "hvsync_generator.v"
     - "vga_display.v"
+    - "anim.v"
+    - "audio.v"
+    - "balance.v"
+    - "bars.v"
+    - "buttons.v"
+    - "chest_draw.v"
+    - "chest_game.v"
+    - "dragon_draw.v"
+    - "dragon_state.v"
+    - "home.v"
+    - "hud.v"
+    - "renderer.v"
+    - "sprites.v"
 
 # The pinout of your project. Leave unused pins blank. DO NOT delete or add any pins.
 # This section is for the datasheet/website. Use descriptive names (e.g., RX, TX, MOSI, SCL, SEG_A, etc.).

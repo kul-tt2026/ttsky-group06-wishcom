@@ -14,13 +14,13 @@ module tt_um_dragonchi (
     input  wire       rst_n
 );
   // ---- screen timing + 60 Hz heartbeat ----
-  wire hsync, vsync, video_active;
-  wire [9:0] pix_x, pix_y;
-  hvsync_generator u_hvsync (
-    .clk(clk), .reset(~rst_n),
-    .hsync(hsync), .vsync(vsync), .display_on(video_active),
-    .hpos(pix_x), .vpos(pix_y)
-  );
+  // wire hsync, vsync, video_active;
+  // wire [9:0] pix_x, pix_y;
+  // hvsync_generator u_hvsync (
+  //   .clk(clk), .reset(~rst_n),
+  //   .hsync(hsync), .vsync(vsync), .display_on(video_active),
+  //   .hpos(pix_x), .vpos(pix_y)
+  // );
   reg vsync_d;
   always @(posedge clk) begin
     if (!rst_n) vsync_d <= 1'b1; else vsync_d <= vsync;
@@ -98,7 +98,19 @@ module tt_um_dragonchi (
   );
 
   // ---- screen painter (render group) ----
+
+  // VGA singals:
+  wire hsync, vsync, video_active;
   wire [1:0] R, G, B;
+  wire [9:0] pix_x, pix_y;
+
+  // ---- TinyVGA Pmod.  Do not touch. ----
+  assign uo_out = {hsync, B[0], G[0], R[0], vsync, B[1], G[1], R[1]};
+  hvsync_generator u_hvsync (
+    .clk(clk), .reset(~rst_n),
+    .hsync(hsync), .vsync(vsync), .display_on(video_active),
+    .hpos(pix_x), .vpos(pix_y)
+  );
   renderer u_renderer (
     .pix_x(pix_x), .pix_y(pix_y), .video_active(video_active),
     .mode(mode), .menu_sel(menu_sel),
@@ -111,8 +123,9 @@ module tt_um_dragonchi (
     .R(R), .G(G), .B(B)
   );
 
-  // ---- TinyVGA Pmod.  Do not touch. ----
-  assign uo_out = {hsync, B[0], G[0], R[0], vsync, B[1], G[1], R[1]};
+  
+
+  
 
   // audio later: assign uio_out[0] = spkr; uio_oe[0] = 1;
   assign uio_out = 8'b0;
