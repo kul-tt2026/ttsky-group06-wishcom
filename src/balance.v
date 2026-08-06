@@ -37,6 +37,7 @@ module balance (
     output reg        req_sat_up,
     output reg        req_sat_down,
 
+    output reg [2:0]  satisfaction,
     output reg  [1:0] combo_len        // -> renderer (progress bar 0..3)
 );
 
@@ -59,7 +60,6 @@ module balance (
   // Interne statusregisters
   reg [1:0] history [0:5];        // Schuifregister voor de laatste 6 acties
   reg [2:0] actions_count;        // Totaal aantal acties uitgevoerd (max 6)
-  reg [2:0] mood_faces;           // Interne status van de health bar (1..5)
   integer i;
 
   // 1. Controle op 4 verschillende acties in de laatste 4 stappen (history[0:3])
@@ -135,7 +135,7 @@ end
         history[i] <= 2'b00;
       end
       actions_count  <= 3'd0;
-      mood_faces     <= 3'd3;     // Start op neutraal humeur (3)
+      satisfaction     <= 3'd3;     // Start op neutraal humeur (3)
       req_heart_gain <= 1'b0;
       req_heart_lose <= 1'b0;
       req_sat_up     <= 1'b0;
@@ -165,26 +165,26 @@ end
         // A) Stijgen: Minstens 4 acties gedaan EN alle 4 uniek in history[0:3]
         if ((actions_count >= 3'd3) && unique_last_4) begin
           req_sat_up <= 1'b1;
-          if (mood_faces < 3'd5) begin
-            mood_faces <= mood_faces + 1'b1;
+          if (satisfaction < 3'd5) begin
+            satisfaction <= satisfaction + 1'b1;
           end
         end 
         // B) Dalen: Minstens 6 acties gedaan EN 1 van de 4 acties ontbreekt in history[0:5]
         else if ((actions_count >= 3'd5) && missing_an_action) begin
           req_sat_down <= 1'b1;
-          if (mood_faces > 3'd1) begin
-            mood_faces <= mood_faces - 1'b1;
+          if (satisfaction > 3'd1) begin
+            satisfaction <= satisfaction - 1'b1;
           end
         end
 
         // --- IMPACT OP LEVENS (HARTJES) ---
         
         // Stijging naar 4 of 5 -> req_heart_gain pulse
-        if ((actions_count >= 3'd3) && unique_last_4 && (mood_faces == 3'd3 || mood_faces == 3'd4 || mood_faces == 3'd5)) begin
+        if ((actions_count >= 3'd3) && unique_last_4 && (satisfaction == 3'd3 || satisfaction == 3'd4 || satisfaction == 3'd5)) begin
           req_heart_gain <= 1'b1;
         end
         // Daling naar 2 of 1 -> req_heart_lose pulse
-        else if ((actions_count >= 3'd5) && missing_an_action && (mood_faces == 3'd3 || mood_faces == 3'd2 || mood_faces == 3'd1)) begin
+        else if ((actions_count >= 3'd5) && missing_an_action && (satisfaction == 3'd3 || satisfaction == 3'd2 || satisfaction == 3'd1)) begin
           req_heart_lose <= 1'b1;
         end
 
