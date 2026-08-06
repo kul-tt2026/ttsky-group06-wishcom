@@ -125,7 +125,7 @@ module renderer (
   always @(*) case (dragon_code)
     3'd1: dragon_rgb = 6'b000000;      // outline
     3'd2: dragon_rgb = 6'b011001;      // body green
-    3'd3: dragon_rgb = 6'b101110;      // belly
+    3'd3: dragon_rgb = 6'b110000;      // belly
     default: dragon_rgb = 6'b011001;
   endcase
 

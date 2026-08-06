@@ -24,8 +24,18 @@ module dragon_draw (
   // comparisons/boxes are cheap; avoid multiplies.  Branch on `level` for
   // size, on `mood_anim` for posture -- all variants live HERE, in one file.
 
-  assign px_on   = 1'b0;            // placeholder: invisible
-  assign px_code = 3'd0;
+  // assign px_on   = 1'b0;            // placeholder: invisible
+  // assign px_code = 3'd0;
 
   wire _unused = &{x, y, level, mood_anim, bob, 1'b0};
+
+  ei_generator my_egg (
+        .x         (x),
+        .y         (y),
+        .level     (level),
+        .mood_anim (mood_anim),
+        .bob       (bob),
+        .px_on     (px_on),
+        .px_code   (px_code)
+    );
 endmodule
