@@ -27,7 +27,7 @@ module renderer (
     input  wire [1:0] chest_sel, // welke kist is selected (0,1,2)
     input  wire [1:0] chest_outcome,
 
-    input  wire [1:0] dragon_state, // weet niet of dit voldoende bits heeft 
+    input  wire [1:0] dragon_form, // weet niet of dit voldoende bits heeft 
     input  wire [1:0] dragon_mood_anim,
     input  wire       flash,
     input  wire       flame_frame,

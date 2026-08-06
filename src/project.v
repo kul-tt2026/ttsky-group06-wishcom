@@ -38,7 +38,7 @@ module tt_um_dragonchi (
   wire [1:0] mode, menu_sel;
   wire act_feed, act_drink, act_sleep, req_evolve, restart;
   wire game_over, minigame_done;
-  wire [7:0] coins;
+  wire [9:0] coins;
   home u_home (
     .clk(clk), .rst_n(rst_n), .frame_tick(frame_tick),
     .btn_pressed(btn_pressed),
@@ -74,7 +74,7 @@ module tt_um_dragonchi (
   );
 
   // ---- the dragon's stats: the one owner (Person A) ----
-  wire [1:0] hearts, satisfaction;
+  wire [2:0] hearts, satisfaction;
   wire [2:0] level;
   dragon_state u_state (
     .clk(clk), .rst_n(rst_n), .frame_tick(frame_tick), .restart(restart),
@@ -103,6 +103,8 @@ module tt_um_dragonchi (
   wire hsync, vsync, video_active;
   wire [1:0] R, G, B;
   wire [9:0] pix_x, pix_y;
+  wire overflow = 0; //nog niet geimplementeerd
+  wire [1:0] dragenform; 
 
   // ---- TinyVGA Pmod.  Do not touch. ----
   assign uo_out = {hsync, B[0], G[0], R[0], vsync, B[1], G[1], R[1]};
@@ -119,9 +121,9 @@ module tt_um_dragonchi (
     .coins(coins), .level(level), .combo_len(combo_len),
     .chest_state(chest_state), .chest_sel(chest_sel),
     .chest_outcome(chest_outcome),
-    .dragon_bob(dragon_bob), .dragon_mood_anim(dragon_mood_anim),
+    .dragon_mood_anim(dragon_mood_anim),
     .chest_frame(chest_frame), .flash(flash), .flame_frame(flame_frame),
-    .R(R), .G(G), .B(B), .evolve_now(req_evolve), .dragon_state(dragon_state), .you_win(game_over), .overflow(overflow)
+    .R(R), .G(G), .B(B), .evolve_now(req_evolve), .dragon_form(dragon_form), .you_win(game_over), .overflow(overflow)
   );
 
   
