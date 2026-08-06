@@ -316,14 +316,14 @@ module ei_generator (
     //---------------------------------------------------------
     wire signed [63:0] vlek1_dx = dx64 - 64'sd25;
     wire signed [63:0] vlek1_dy = dy64 - (-64'sd60);
-    wire vlek1 = (vlek1_dx * vlek1_dx + vlek1_dy * vlek1_dy) <= (64'sd20 * 64'sd20);
+    wire vlek1 = (vlek1_dx * vlek1_dx + vlek1_dy * vlek1_dy) <= (64'sd27 * 64'sd27);
 
     wire signed [63:0] vlek2_dx = dx64 - 64'sd30;
-    wire signed [63:0] vlek2_dy = dy64 - 64'sd50;
-    wire vlek2 = (vlek2_dx * vlek2_dx + vlek2_dy * vlek2_dy) <= (64'sd25 * 64'sd25);
+    wire signed [63:0] vlek2_dy = dy64 - 64'sd70;
+    wire vlek2 = (vlek2_dx * vlek2_dx + vlek2_dy * vlek2_dy) <= (64'sd35 * 64'sd35);
 
-    wire signed [63:0] vlek3_dx = dx64 + 64'sd20;
-    wire signed [63:0] vlek3_dy = dy64 - 64'sd0;
+    wire signed [63:0] vlek3_dx = dx64 + 64'sd50;
+    wire signed [63:0] vlek3_dy = dy64 - 64'sd20;
     wire vlek3 = (vlek3_dx * vlek3_dx + vlek3_dy * vlek3_dy) <= (64'sd30 * 64'sd30);
 
     //---------------------------------------------------------
