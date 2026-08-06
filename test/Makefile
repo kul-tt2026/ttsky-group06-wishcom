@@ -9,8 +9,9 @@ SRC_DIR          = $(PWD)/../src
 PROJECT_SOURCES  = project.v vga_display.v hvsync_generator.v anim.v audio.v balance.v bars.v buttons.v chest_draw.v chest_game.v dragon_draw.v dragon_state.v home.v hud.v renderer.v sprites.v 
 
 # Dynamische instellingen (zodat zowel handmatige commando's als GitHub Actions werken)
-TOPLEVEL            ?= tb
-COCOTB_TEST_MODULES ?= vga_image_test
+# Dynamische instellingen (zodat zowel handmatige commando's als GitHub Actions werken)
+TOPLEVEL            ?= ei_generator
+COCOTB_TEST_MODULES ?= ei_test
 
 ifneq ($(GATES),yes)
 
@@ -42,8 +43,7 @@ VERILOG_SOURCES += $(PWD)/tb.v
 # Default target voor GitHub Actions (wanneer GitHub simpelweg 'make' of 'make test' aanroept)
 # Default target voor GitHub Actions (wanneer GitHub simpelweg 'make' of 'make test' aanroept)
 all:
-	$(MAKE) sim TOPLEVEL=tb COCOTB_TEST_MODULES=vga_image_test
-	$(MAKE) sim TOPLEVEL=tb COCOTB_TEST_MODULES=ei_test
+	$(MAKE) sim TOPLEVEL=ei_generator COCOTB_TEST_MODULES=ei_test
 # Include cocotb's make rules to take care of the simulator setup
 include $(shell cocotb-config --makefiles)/Makefile.sim
 
