@@ -32,8 +32,8 @@ module renderer (
     input  wire       flash,
     input  wire       flame_frame,
 
-    input  wire       you_win
-    input             overflow // als hartjes vol of geld vol
+    input  wire       you_win,
+    input             overflow, // als hartjes vol of geld vol
 
     output reg  [1:0] R,
     output reg  [1:0] G,
@@ -104,7 +104,7 @@ module renderer (
 
 
   // TWO BARS: satisfaction (5 levels, 3 bits ) & coins (8 bits)  ---------------------
-  wire sat_on
+  wire sat_on;
   wire [2:0] sat_code;
   satisfactionbar u_satbar (
     .x(pix_x - SATBAR_X), .y(pix_y - SATBAR_Y),
@@ -128,7 +128,7 @@ module renderer (
   wire [1:0] heartsinfo_code;
   heartsinfo u_heartsinfo (
     .pix_x(pix_x), .pix_y(pix_y),
-    .hearts(hearts), .overflow(overflow)
+    .hearts(hearts), .overflow(overflow),
     .px_on(heartsinfo_on), .px_code(heartsinfo_code)
   );
 
@@ -138,11 +138,11 @@ module renderer (
   //                       GAME
   // level up moet oplichten als boolean level_up 1 is 
   // voor de rest gewoon vaste display vanonder aan scherm 
-  wire button_on
-  wire [2:0] button_code
+  wire button_on;
+  wire [2:0] button_code;
 
   draw_buttons buttons_u (
-    ..pix_x(pix_x), .pix_y(pix_y),
+    .pix_x(pix_x), .pix_y(pix_y),
     .levelup (level_up),
     .px_on(heartsinfo_on), .px_code(heartsinfo_code)
   );
