@@ -133,10 +133,6 @@ module digit_rom (
     endcase
   end
 endmodule
-
-
-// `default_nettype none
-
 // module ei_generator (
 //     input  wire [9:0] x,
 //     input  wire [9:0] y,
@@ -147,38 +143,96 @@ endmodule
 //     output wire [2:0] px_code
 // );
 
-//   wire signed [11:0] dx = $signed({2'b00, x}) - 12'sd320;
-//   wire signed [11:0] dy = $signed({2'b00, y}) - 12'sd240;
+//     //---------------------------------------------------------
+//     // Middelpunt
+//     //---------------------------------------------------------
+//     wire signed [11:0] dx = $signed({2'b00, x}) - 12'sd320;
+//     wire signed [11:0] dy = $signed({2'b00, y}) - 12'sd240;
 
-//   // Jouw gewenste maten
-//   localparam [11:0] A = 12'd100;
-//   localparam [11:0] B = 12'd166;
+//     //---------------------------------------------------------
+//     // Hoogte en rand
+//     //---------------------------------------------------------
+//     localparam [11:0] B    = 12'd166;
+//     localparam [11:0] RAND = 12'd6;
 
-//   // Schakel direct over naar 64-bits (signed [63:0]). 
-//   // Hiermee kan de chip astronomisch grote getallen berekenen zonder overflow!
-//   wire signed [63:0] dx_ext = dx;
-//   wire signed [63:0] dy_ext = dy;
-//   wire signed [63:0] a_ext  = A;
-//   wire signed [63:0] b_ext  = B;
+//     //---------------------------------------------------------
+//     // 64-bit
+//     //---------------------------------------------------------
+//     wire signed [63:0] dx_ext = dx;
+//     wire signed [63:0] dy_ext = dy;
+//     wire signed [63:0] b_ext  = B;
 
-//   wire signed [63:0] dx_sq  = dx_ext * dx_ext;
-//   wire signed [63:0] dy_sq  = dy_ext * dy_ext;
-//   wire signed [63:0] a_sq   = a_ext  * a_ext;
-//   wire signed [63:0] b_sq   = b_ext  * b_ext;
+//     //---------------------------------------------------------
+//     // Kwadraten
+//     //---------------------------------------------------------
+//     wire signed [63:0] dx_sq = dx_ext * dx_ext;
+//     wire signed [63:0] dy_sq = dy_ext * dy_ext;
 
-//   // De ovaal-vergelijking in 64-bit formaat
-//   wire binnen_box = (dx_ext >= -a_ext) && (dx_ext <= a_ext) && 
-//                     (dy_ext >= -b_ext) && (dy_ext <= b_ext);
+//     wire signed [63:0] b_sq = b_ext * b_ext;
 
-//   wire in_ovaal = binnen_box && ((dx_sq * b_sq + dy_sq * a_sq) <= (a_sq * b_sq));
+//     //---------------------------------------------------------
+//     // Dynamische breedte
+//     //
+//     // boven ≈ 90 px
+//     // midden ≈ 111 px
+//     // onder ≈ 132 px
+//     //---------------------------------------------------------
+//     wire signed [63:0] a_dyn =
+//         64'd90 + (dy_ext + 64'd166) / 8;
 
-//   assign px_on = 1'b1;
-//   assign px_code = in_ovaal ? 3'd3 : 3'd1; // 3 = Rood, 1 = Wit
+//     wire signed [63:0] a_dyn_out = a_dyn + RAND;
 
-//   wire _unused = &{level, mood_anim, bob, 1'b0};
+//     wire signed [63:0] a_dyn_sq     = a_dyn * a_dyn;
+//     wire signed [63:0] a_dyn_out_sq = a_dyn_out * a_dyn_out;
+
+//     //---------------------------------------------------------
+//     // Binnenbox
+//     //---------------------------------------------------------
+//     wire binnen_in =
+//         (dx_ext >= -a_dyn) &&
+//         (dx_ext <=  a_dyn) &&
+//         (dy_ext >= -b_ext) &&
+//         (dy_ext <=  b_ext);
+
+//     wire binnen_out =
+//         (dx_ext >= -a_dyn_out) &&
+//         (dx_ext <=  a_dyn_out) &&
+//         (dy_ext >= -(b_ext+RAND)) &&
+//         (dy_ext <=  (b_ext+RAND));
+
+//     //---------------------------------------------------------
+//     // Eivorm
+//     //---------------------------------------------------------
+//     wire in_ei =
+//         binnen_in &&
+//         ((dx_sq * b_sq + dy_sq * a_dyn_sq)
+//             <= (a_dyn_sq * b_sq));
+
+//     wire signed [63:0] b_out = b_ext + RAND;
+//     wire signed [63:0] b_out_sq = b_out * b_out;
+
+//     wire in_ei_out =
+//         binnen_out &&
+//         ((dx_sq * b_out_sq + dy_sq * a_dyn_out_sq)
+//             <= (a_dyn_out_sq * b_out_sq));
+
+//     //---------------------------------------------------------
+//     // Output
+//     //---------------------------------------------------------
+//     assign px_on = 1'b1;
+
+//     // 2 = groen
+//     // 0 = zwart
+//     // 1 = wit
+
+//     assign px_code =
+//         in_ei      ? 3'd2 :
+//         in_ei_out  ? 3'd0 :
+//                      3'd1;
+
+//     wire _unused = &{level, mood_anim, bob, 1'b0};
 
 // endmodule
-
 `default_nettype none
 
 module ei_generator (
@@ -191,47 +245,98 @@ module ei_generator (
     output wire [2:0] px_code
 );
 
-  wire signed [11:0] dx = $signed({2'b00, x}) - 12'sd320;
-  wire signed [11:0] dy = $signed({2'b00, y}) - 12'sd240;
+    // Ongebruikte signalen direct afvangen
+    wire _unused = &{level, mood_anim, bob, 1'b0};
 
-  // Maten van de ovaal en de randdikte
-  localparam [11:0] A = 12'd100;
-  localparam [11:0] B = 12'd166;
-  localparam [11:0] RAND_DIKTE = 12'd4;
-  
-  localparam [11:0] A_OUT = A + RAND_DIKTE;
-  localparam [11:0] B_OUT = B + RAND_DIKTE;
+    //---------------------------------------------------------
+    // Middelpunt
+    //---------------------------------------------------------
+    wire signed [11:0] dx = $signed({2'b00,x}) - 12'sd320;
+    wire signed [11:0] dy = $signed({2'b00,y}) - 12'sd240;
 
-  wire signed [63:0] dx_ext = dx;
-  wire signed [63:0] dy_ext = dy;
-  
-  wire signed [63:0] a_in   = A;
-  wire signed [63:0] b_in   = B;
-  wire signed [63:0] a_out  = A_OUT;
-  wire signed [63:0] b_out  = B_OUT;
+    //---------------------------------------------------------
+    // Parameters
+    //---------------------------------------------------------
+    localparam signed [63:0] B = 64'd145;
+    localparam signed [63:0] RAND = 64'd8;
 
-  wire signed [63:0] dx_sq  = dx_ext * dx_ext;
-  wire signed [63:0] dy_sq  = dy_ext * dy_ext;
+    //---------------------------------------------------------
+    // 64-bit & Kwadraten
+    //---------------------------------------------------------
+    wire signed [63:0] dx64 = dx;
+    wire signed [63:0] dy64 = dy;
+    wire signed [63:0] dx_sq = dx64 * dx64;
+    wire signed [63:0] dy_sq = dy64 * dy64;
+    wire signed [63:0] b_sq = B * B;
 
-  wire signed [63:0] a_in_sq  = a_in  * a_in;
-  wire signed [63:0] b_in_sq  = b_in  * b_in;
-  wire signed [63:0] a_out_sq = a_out * a_out;
-  wire signed [63:0] b_out_sq = b_out * b_out;
+    // Dynamische breedte (kwadratische eivorm)
+    wire signed [63:0] t = dy64 + 64'd166;
+    wire signed [63:0] a_dyn = 64'd90 + (t * t) / 2500;
+    wire signed [63:0] a_dyn_sq = a_dyn * a_dyn;
 
-  // Omdat dx_sq en dy_sq altijd positief zijn, controleren we de box 
-  // door te kijken of het kwadraat kleiner is dan de straal in het kwadraat!
-  wire binnen_box_in  = (dx_sq <= a_in_sq)  && (dy_sq <= b_in_sq);
-  wire binnen_box_out = (dx_sq <= a_out_sq) && (dy_sq <= b_out_sq);
+    //---------------------------------------------------------
+    // Buitenste ei
+    //---------------------------------------------------------
+    wire signed [63:0] a_out = a_dyn + RAND;
+    wire signed [63:0] b_out = B + RAND;
 
-  wire in_binnen_ovaal = binnen_box_in  && ((dx_sq * b_in_sq  + dy_sq * a_in_sq)  <= (a_in_sq  * b_in_sq));
-  wire in_buiten_ovaal = binnen_box_out && ((dx_sq * b_out_sq + dy_sq * a_out_sq) <= (a_out_sq * b_out_sq));
+    wire signed [63:0] a_out_sq = a_out * a_out;
+    wire signed [63:0] b_out_sq = b_out * b_out;
 
-  assign px_on = 1'b1;
-  
-  assign px_code = in_binnen_ovaal ? 3'd3 :          // Binnenkant = Rood
-                   in_buiten_ovaal ? 3'd0 :          // De rand = Zwart
-                   3'd1;                             // Achtergrond = Wit
+    //---------------------------------------------------------
+    // Binnenboxen
+    //---------------------------------------------------------
+    wire box_in =
+        (dx64 >= -a_dyn) &&
+        (dx64 <=  a_dyn) &&
+        (dy64 >= -B) &&
+        (dy64 <=  B);
 
-  wire _unused = &{level, mood_anim, bob, 1'b0};
+    wire box_out =
+        (dx64 >= -a_out) &&
+        (dx64 <=  a_out) &&
+        (dy64 >= -b_out) &&
+        (dy64 <=  b_out);
+
+    //---------------------------------------------------------
+    // Ovalen
+    //---------------------------------------------------------
+    wire in_ei =
+        box_in &&
+        ((dx_sq * b_sq + dy_sq * a_dyn_sq)
+            <= (a_dyn_sq * b_sq));
+
+    wire in_ei_out =
+        box_out &&
+        ((dx_sq * b_out_sq + dy_sq * a_out_sq)
+            <= (a_out_sq * b_out_sq));
+
+    //---------------------------------------------------------
+    // Vlekjes binnen het ei
+    //---------------------------------------------------------
+    wire signed [63:0] vlek1_dx = dx64 - 64'sd25;
+    wire signed [63:0] vlek1_dy = dy64 - (-64'sd60);
+    wire vlek1 = (vlek1_dx * vlek1_dx + vlek1_dy * vlek1_dy) <= (64'sd20 * 64'sd20);
+
+    wire signed [63:0] vlek2_dx = dx64 - 64'sd30;
+    wire signed [63:0] vlek2_dy = dy64 - 64'sd50;
+    wire vlek2 = (vlek2_dx * vlek2_dx + vlek2_dy * vlek2_dy) <= (64'sd25 * 64'sd25);
+
+    wire signed [63:0] vlek3_dx = dx64 + 64'sd20;
+    wire signed [63:0] vlek3_dy = dy64 - 64'sd0;
+    wire vlek3 = (vlek3_dx * vlek3_dx + vlek3_dy * vlek3_dy) <= (64'sd30 * 64'sd30);
+
+    //---------------------------------------------------------
+    // Rand & Output
+    //---------------------------------------------------------
+    wire border = in_ei_out && !in_ei;
+
+    assign px_on = 1'b1;
+
+    assign px_code =
+        border                       ? 3'd0 : 
+        (in_ei && (vlek1 || vlek2 || vlek3)) ? 3'd2 : 
+        in_ei                        ? 3'd1 : 
+                                       3'd1;  
 
 endmodule

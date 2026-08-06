@@ -8,13 +8,15 @@ TOPLEVEL_LANG   ?= verilog
 SRC_DIR          = $(PWD)/../src
 PROJECT_SOURCES  = project.v vga_display.v hvsync_generator.v anim.v audio.v balance.v bars.v buttons.v chest_draw.v chest_game.v dragon_draw.v dragon_state.v home.v hud.v renderer.v sprites.v 
 
-# List test modules to run, separated by commas and without the .py suffix:
-COCOTB_TEST_MODULES = vga_image_test,ei_test
+# Dynamische instellingen (zodat zowel handmatige commando's als GitHub Actions werken)
+# Dynamische instellingen (zodat zowel handmatige commando's als GitHub Actions werken)
+TOPLEVEL            ?= ei_generator
+COCOTB_TEST_MODULES ?= ei_test
 
 ifneq ($(GATES),yes)
 
-# RTL simulation:
-SIM_BUILD        = sim_build/rtl
+# RTL simulation: (SIM_BUILD is nu dynamisch per TOPLEVEL zodat ze elkaar niet overschrijven)
+SIM_BUILD        = sim_build/$(TOPLEVEL)
 VERILOG_SOURCES += $(addprefix $(SRC_DIR)/,$(PROJECT_SOURCES))
 
 else
@@ -37,15 +39,15 @@ endif
 
 # Include the testbench sources:
 VERILOG_SOURCES += $(PWD)/tb.v
-TOPLEVEL         = tb
 
-# List test modules to run, separated by commas and without the .py suffix:
-# COCOTB_TEST_MODULES = test
-
+# Default target voor GitHub Actions (wanneer GitHub simpelweg 'make' of 'make test' aanroept)
+# Default target voor GitHub Actions (wanneer GitHub simpelweg 'make' of 'make test' aanroept)
+all:
+	$(MAKE) sim TOPLEVEL=ei_generator COCOTB_TEST_MODULES=ei_test
 # Include cocotb's make rules to take care of the simulator setup
 include $(shell cocotb-config --makefiles)/Makefile.sim
 
 # Extend cocotb's clean target to also remove build artifacts
-.PHONY: clean
+.PHONY: clean all
 clean::
 	rm -rf sim_build/ __pycache__/ results.xml tb.fst
