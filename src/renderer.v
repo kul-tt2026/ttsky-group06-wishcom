@@ -1,14 +1,11 @@
 `default_nettype none
 // ---------------------------------------------------------------------------
-// THE BOSS.  The ONLY render file that knows about `mode`.
 //
-// Its four jobs, and nothing else:
 //   1. PLACE things: subtract each drawable's origin -> local coordinates
 //   2. SHOW things: per composition, which drawables are visible
 //   3. STACK things: the layer cascade (first visible layer wins)
 //   4. COLOUR things: map each drawable's px_code to real RGB
 //
-// The drawables answer geometry questions; they never see `mode`.
 // ---------------------------------------------------------------------------
 module renderer (
     input  wire [9:0] pix_x,
@@ -119,9 +116,9 @@ module renderer (
   wire coin_on;
   wire [1:0] coin_code;
   coinbar u_coinbar (
-    .x(pix_x - COIN_X), .y(pix_y - COIN_Y),
+    .x(pix_x - COINBAR_X), .y(pix_y - COINBAR_Y),
     .fill(coins),
-    .px_on(combo_on), .px_code(combo_code)
+    .px_on(coin_on), .px_code(coin_code)
   );
   // vraag: hier nog aantal bijschrijven + overflow
 
@@ -150,18 +147,15 @@ module renderer (
     .px_on(heartsinfo_on), .px_code(heartsinfo_code)
   );
 
-  // TODO (boss owner): menu icons for the four home options + menu_sel
-  // highlight.  Either a fifth drawable (menu_draw.v) or boxes inline here.
-  wire menu_on = 1'b0;
-
   // ======================= 2. SHOW ========================================
   // welke dingen moeten getoond worden bij welke gamemode
   wire show_dragon = (mode == M_HOME);
-  wire show_bars   = (mode == M_HOME);
-  wire show_menu   = (mode == M_HOME);
+  wire show_satbar   = (mode == M_HOME);
+  wire show_buttons   = (mode == M_HOME);
+
   wire show_chests = (mode == M_CHEST);
-  // hud: visible in both HOME and CHEST
-  wire show_hud    = (mode == M_HOME) || (mode == M_CHEST);
+
+  wire show_coin_hearts    = (mode == M_HOME) || (mode == M_CHEST); // altijd getoond 
 
   // ======================= 4. COLOUR ======================================
   // Per-drawable palettes: code -> 6-bit {R,G,B}
@@ -181,6 +175,7 @@ module renderer (
     default: chest_rgb = 6'b100100;
   endcase
 
+//coin_rgb
 // satisfaction (nieuw)
   reg [5:0] sat_rgb;
   always @(*) case (sat_code)
@@ -197,22 +192,27 @@ module renderer (
   // heartsinfo: juist kleuren nog aanpassen: rood: wit (denk ik)
   wire [5:0] heartsinfo_rgb       = (heartsinfo_code  == 2'd1) ? 6'b110000 : 6'b111111;
 
+  //buttons_rgb
+
   // ======================= 3. STACK =======================================
-  // Front to back: hud > bars > dragon > chests > background.
-  localparam [5:0] BG_HOME  = 6'b000001;
-  localparam [5:0] BG_CHEST = 6'b010001;
+  // volgorde: 
+  // GAME: bars > chests > background: show_coin_hearts > show_chests 
+  // HOME: bars > dragon >  background: show_coin_hearts > show_satbar > show_buttons > show_dragon
+
+  localparam [5:0] BG_HOME  = 6'b011011; // background home (lichtblauw)
+  localparam [5:0] BG_CHEST = 6'b100000; //background game (rood)
 
   reg [5:0] rgb;
   always @(*) begin
     if (!video_active)           rgb = 6'b000000;      // MUST stay black
     else if (mode == M_TITLE)    rgb = 6'b000110;      // TODO: title text
     else if (mode == M_GAMEOVER) rgb = 6'b010000;      // TODO: game over text
-    else if (show_hud    && hud_on)    rgb = hud_rgb;
-    else if (show_bars   && sat_on)    rgb = bar_rgb_sat;
-    else if (show_bars   && combo_on)  rgb = bar_rgb_combo;
-    else if (show_menu   && menu_on)   rgb = 6'b111111; // TODO
-    else if (show_dragon && dragon_on) rgb = flash ? ~dragon_rgb : dragon_rgb;
-    else if (show_chests && chest_on)  rgb = chest_rgb;
+    else if (show_coin_hearts    && heartsinfo_on)    rgb = heartsinfo_rgb;
+    else if (show_coin_hearts    && coin_on)          rgb = coin_rgb;
+    else if (show_satbar   && sat_on)                 rgb = sat_rgb;
+    else if (show_buttons  && button_on)              rgb = buttons_rgb;
+    else if (show_chests && chest_on)                 rgb = chest_rgb;
+    else if (show_dragon && dragon_on)                rgb = dragon_rgb;
     else rgb = (mode == M_CHEST) ? BG_CHEST : BG_HOME;
     {R, G, B} = rgb;
   end
