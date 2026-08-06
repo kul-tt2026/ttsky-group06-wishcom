@@ -19,7 +19,7 @@ module renderer (
     input  wire [9:0] coins, //tot 1000: level 1 20, level 2 40, level 3 80, level 160, level 
     input  wire [2:0] level, // max 7 levels 
 
-    input  wire       evolve_now // of je genoeg geld hebt om te evolven 
+    input  wire       evolve_now, // of je genoeg geld hebt om te evolven 
     input  wire [1:0] combo_len, // ongebruikt
 
     input  wire [1:0] chest_frame, // 0 closed, 1 opening, 2 open
