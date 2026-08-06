@@ -19,18 +19,22 @@ module renderer (
     input  wire [1:0] menu_sel,
     input  wire [2:0] hearts, // 3 bit
     input  wire [2:0] satisfaction, // 3 bit => 5 options
-    input  wire [7:0] coins, //255: level 1 20, level 2 40, level 3 80, level 160, level 
+    input  wire [9:0] coins, //tot 1000: level 1 20, level 2 40, level 3 80, level 160, level 
     input  wire [2:0] level, // max 7 levels 
+
     input  wire       evolve_now // of je genoeg geld hebt om te evolven 
     input  wire [1:0] combo_len, // ongebruikt
+
+    input  wire [1:0] chest_frame, // 0 closed, 1 opening, 2 open
     input  wire [1:0] chest_state,
-    input  wire [1:0] chest_sel,
+    input  wire [1:0] chest_sel, // welke kist is selected (0,1,2)
     input  wire [1:0] chest_outcome,
+
     input  wire [1:0] dragon_bob,
     input  wire [1:0] dragon_mood_anim,
-    input  wire [1:0] chest_frame,
     input  wire       flash,
     input  wire       flame_frame,
+
     input  wire       you_win
     input             overflow // als hartjes vol of geld vol
 
@@ -46,10 +50,9 @@ module renderer (
 
   localparam DRAGON_X = 10'd240, DRAGON_Y = 10'd100;
   localparam SATBAR_X = 10'd24,  SATBAR_Y = 10'd56;
-  localparam COIN_X  = 10'd24,  COIN_Y  = 10'd80;
+  localparam COINBAR_X  = 10'd24,  COINBAR_Y  = 10'd80;
   localparam CHEST0_X = 10'd80,  CHEST1_X = 10'd272, CHEST2_X = 10'd464;
-  localparam CHEST_Y  = 10'd300;
-  // (hud places itself; menu icons TODO below)
+  localparam CHEST_Y  = 10'd300; // moet x niet hetzelfde? 
 
   // ======================= drawable instances =============================
   // dragon -----------------------------------------------------------------
@@ -64,8 +67,21 @@ module renderer (
   );
 
   // THREE CHESTS ---------------------------------
+  // chest_frame: staat van box selected?
+  // chest_state: 
+  // chest_sel: chest selection (0,1,2)
+  // chest_outcome: wat er in chest zit
+
+  // 3 verschillende statussen: 
+  // - chest selection: alle 3 chest toe, chest van chest_sel groter 
+  // - gekozen chest opening: chest_sel open met inhoud erin, (chest_outcome), andere 2 toe, opening niet echt open maar 
+  // toont gwn pictogram van inhoud: bommetje (zwart cirkel met rechthoekje), munt (geel cirkel), hartje verliezen (hartje, miss kruis erdoor), 
+  // maal 2 van geld ( X 2 pictogram) 
+  // - rest tonen: alle 3 chests open
+  // 
   wire       c0_on, c1_on, c2_on;
   wire [1:0] c0_code, c1_code, c2_code;
+
   chest_draw u_chest0 (
     .x(pix_x - CHEST0_X), .y(pix_y - CHEST_Y),
     .frame(chest_sel==2'd0 ? chest_frame : 2'd0),
@@ -85,7 +101,8 @@ module renderer (
     .px_on(c2_on), .px_code(c2_code)
   );
   wire       chest_on   = c0_on | c1_on | c2_on;
-  wire [1:0] chest_code = c0_on ? c0_code : c1_on ? c1_code : c2_code;
+  wire [1:0] chest_code = c0_on ? c0_code : c1_on ? c1_code : c2_code; // moet derde niet? 
+
 
   // TWO BARS: satisfaction (5 levels, 3 bits ) & coins (8 bits)  ---------------------
   wire sat_on
