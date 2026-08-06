@@ -143,8 +143,8 @@ module renderer (
 
   draw_buttons buttons_u (
     .pix_x(pix_x), .pix_y(pix_y),
-    .levelup (level_up),
-    .px_on(heartsinfo_on), .px_code(heartsinfo_code)
+    .evolve_now (evolve_now),
+    .px_on(button_on), .px_code(button_code)
   );
 
   // ======================= 2. SHOW ========================================

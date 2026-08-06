@@ -111,6 +111,7 @@ module tt_um_dragonchi (
     .hsync(hsync), .vsync(vsync), .display_on(video_active),
     .hpos(pix_x), .vpos(pix_y)
   );
+  wire overflow;
   renderer u_renderer (
     .pix_x(pix_x), .pix_y(pix_y), .video_active(video_active),
     .mode(mode), .menu_sel(menu_sel),
@@ -120,7 +121,7 @@ module tt_um_dragonchi (
     .chest_outcome(chest_outcome),
     .dragon_bob(dragon_bob), .dragon_mood_anim(dragon_mood_anim),
     .chest_frame(chest_frame), .flash(flash), .flame_frame(flame_frame),
-    .R(R), .G(G), .B(B)
+    .R(R), .G(G), .B(B), .evolve_now(req_evolve), .dragon_state(dragon_state), .you_win(game_over), .overflow(overflow)
   );
 
   
