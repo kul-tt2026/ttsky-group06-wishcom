@@ -40,10 +40,10 @@ endif
 VERILOG_SOURCES += $(PWD)/tb.v
 
 # Default target voor GitHub Actions (wanneer GitHub simpelweg 'make' of 'make test' aanroept)
+# Default target voor GitHub Actions (wanneer GitHub simpelweg 'make' of 'make test' aanroept)
 all:
 	$(MAKE) sim TOPLEVEL=tb COCOTB_TEST_MODULES=vga_image_test
-	$(MAKE) sim TOPLEVEL=dragon_draw COCOTB_TEST_MODULES=ei_test
-
+	$(MAKE) sim TOPLEVEL=tb COCOTB_TEST_MODULES=ei_test
 # Include cocotb's make rules to take care of the simulator setup
 include $(shell cocotb-config --makefiles)/Makefile.sim
 

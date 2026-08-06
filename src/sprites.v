@@ -234,6 +234,7 @@ endmodule
 
 // endmodule
 
+`default_nettype none
 
 module ei_generator (
     input  wire [9:0] x,
@@ -255,7 +256,7 @@ module ei_generator (
     // Parameters
     //---------------------------------------------------------
     localparam signed [63:0] B = 64'd145;
-    localparam signed [63:0] RAND = 64'd8;     // maak eventueel 10 of 12
+    localparam signed [63:0] RAND = 64'd8;
 
     //---------------------------------------------------------
     // 64-bit
@@ -271,28 +272,10 @@ module ei_generator (
 
     wire signed [63:0] b_sq = B * B;
 
-    //---------------------------------------------------------
-// Dynamische breedte (kwadratische eivorm)
-//
-// Boven:
-//    dy = -166  -> a ≈ 90
-//
-// Midden:
-//    dy = 0     -> a ≈ 101
-//
-// Onder:
-//    dy = 166   -> a ≈ 112
-//
-// De top groeit langzaam en wordt daardoor ronder.
-//---------------------------------------------------------
-
-  wire signed [63:0] t = dy64 + 64'd166;
-
-  // kwadratische groei naar beneden
-  wire signed [63:0] a_dyn =
-      64'd90 + (t * t) / 2500;
-
-  wire signed [63:0] a_dyn_sq = a_dyn * a_dyn;
+    // Dynamische breedte (kwadratische eivorm)
+    wire signed [63:0] t = dy64 + 64'd166;
+    wire signed [63:0] a_dyn = 64'd90 + (t * t) / 2500;
+    wire signed [63:0] a_dyn_sq = a_dyn * a_dyn;
 
     //---------------------------------------------------------
     // Buitenste ei
@@ -335,6 +318,23 @@ module ei_generator (
             <= (a_out_sq * b_out_sq));
 
     //---------------------------------------------------------
+    // Kleine cirkeltjes (vlekjes) binnen het ei
+    //---------------------------------------------------------
+    // Vlekje 1: bijvoorbeeld linksboven in het ei
+    wire signed [63:0] vlek1_dx = dx64 - 64'sd;
+    wire signed [63:0] vlek1_dy = dy64 - (-64'sd60);
+    wire vlek1 = (vlek1_dx * vlek1_dx + vlek1_dy * vlek1_dy) <= (64'sd20 * 64'sd20); // straal = 12
+
+    // Vlekje 2: bijvoorbeeld rechtsonder in het ei
+    wire signed [63:0] vlek2_dx = dx64 - 64'sd30;
+    wire signed [63:0] vlek2_dy = dy64 - 64'sd50;
+    wire vlek2 = (vlek2_dx * vlek2_dx + vlek2_dy * vlek2_dy) <= (64'sd25 * 64'sd25); // straal = 15
+
+    wire signed [63:0] vlek3_dx = dx64 + 64'sd20;
+    wire signed [63:0] vlek3_dy = dy64 - 64'sd0;
+    wire vlek3 = (vlek3_dx * vlek3_dx + vlek3_dy * vlek3_dy) <= (64'sd30 * 64'sd30); // straal = 15
+
+    //---------------------------------------------------------
     // Alleen de rand
     //---------------------------------------------------------
     wire border = in_ei_out && !in_ei;
@@ -344,13 +344,16 @@ module ei_generator (
     //---------------------------------------------------------
     assign px_on = 1'b1;
 
-    // 2 = groen
-    // 0 = zwart
-    // 1 = wit
+    // Kleuren:
+    // in_ei = groen (3'd2) of wit (3'd1), afhankelijk van je wens
+    // vlekjes = bijvoorbeeld wit (3'd1) of een andere kleurcode
+    // border = zwart (3'd0)
+    // achtergrond = wit (3'd1)
     assign px_code =
-        in_ei  ? 3'd2 :
-        border ? 3'd0 :
-                 3'd1;
+        border       ? 3'd0 :
+        (in_ei && (vlek1 || vlek2 || vlek3)) ? 3'd2 : // Vlekjes zijn wit
+        in_ei        ? 3'd1 :                // Binnenkant ei is groen
+                       3'd1;                 // Achtergrond
 
     wire _unused = &{level,mood_anim,bob,1'b0};
 
