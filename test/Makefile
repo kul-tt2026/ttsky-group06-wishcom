@@ -8,9 +8,6 @@ TOPLEVEL_LANG   ?= verilog
 SRC_DIR          = $(PWD)/../src
 PROJECT_SOURCES  = project.v vga_display.v hvsync_generator.v anim.v audio.v balance.v bars.v buttons.v chest_draw.v chest_game.v dragon_draw.v dragon_state.v home.v hud.v renderer.v sprites.v 
 
-# List test modules to run, separated by commas and without the .py suffix:
-COCOTB_TEST_MODULES = vga_image_test,ei_test
-
 ifneq ($(GATES),yes)
 
 # RTL simulation:
@@ -37,15 +34,20 @@ endif
 
 # Include the testbench sources:
 VERILOG_SOURCES += $(PWD)/tb.v
-TOPLEVEL         = tb
 
-# List test modules to run, separated by commas and without the .py suffix:
-# COCOTB_TEST_MODULES = test
+# ---------------------------------------------------------------------------
+# Standaard entrypoint voor GitHub Actions (wanneer 'make' wordt aangeroepen)
+# ---------------------------------------------------------------------------
+all:
+	rm -f results.xml
+	$(MAKE) sim TOPLEVEL=tb COCOTB_TEST_MODULES=vga_image_test
+	rm -f results.xml
+	$(MAKE) sim TOPLEVEL=dragon_rom COCOTB_TEST_MODULES=ei_test
 
 # Include cocotb's make rules to take care of the simulator setup
 include $(shell cocotb-config --makefiles)/Makefile.sim
 
 # Extend cocotb's clean target to also remove build artifacts
-.PHONY: clean
+.PHONY: clean all
 clean::
 	rm -rf sim_build/ __pycache__/ results.xml tb.fst
