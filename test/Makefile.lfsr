@@ -1,0 +1,14 @@
+SIM = icarus
+TOPLEVEL_LANG = verilog
+FST = -fst
+
+# We laden NU alleen de dual_lfsr code in
+VERILOG_SOURCES = $(PWD)/../src/dual_lfsr.v
+
+# Dit is de module die we willen testen
+TOPLEVEL = dual_lfsr
+
+# En dit is de naam van ons nieuwe Python script (zonder .py)
+MODULE = test_lfsr
+
+include $(shell cocotb-config --makefiles)/Makefile.sim
