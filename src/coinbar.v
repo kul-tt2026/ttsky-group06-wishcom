@@ -1,4 +1,5 @@
 `default_nettype none
+
 // ---------------------------------------------------------------------------
 // COINBAR -- VERTICAAL.  8 vakjes, vult van ONDER naar BOVEN.
 //
