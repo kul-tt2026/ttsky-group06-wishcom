@@ -117,7 +117,7 @@ module renderer (
   wire [1:0] coin_code;
   coinbar u_coinbar (
     .x(pix_x - COINBAR_X), .y(pix_y - COINBAR_Y),
-    .fill(coins),
+    .coins(coins),
     .px_on(coin_on), .px_code(coin_code)
   );
   // vraag: hier nog aantal bijschrijven + overflow
