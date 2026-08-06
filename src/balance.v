@@ -94,17 +94,23 @@ module balance (
   wire [3:0] seen_recent = (4'b1 << history[0]) | 
                            (4'b1 << history[1]) | 
                            (4'b1 << history[2]);
-
-  wire [2:0] num_unique_3 = seen_recent[0] + seen_recent[1] + seen_recent[2] + seen_recent[3];
+  wire [2:0] num_unique_3 = {2'b0, seen_recent[0]} + 
+                            {2'b0, seen_recent[1]} + 
+                            {2'b0, seen_recent[2]} + 
+                            {2'b0, seen_recent[3]};
 
   // Update combo_len voor de renderer (progress bar 0..3)
   always @(*) begin
-    if (unique_last_4) begin
-      combo_len = 2'd3; // 4 unieke acties = combo vol!
-    end else begin
-      combo_len = (num_unique_3 > 3'd1) ? (num_unique_3 - 1'b1) : 2'd0;
-    end
+  if (unique_last_4) begin
+    combo_len = 2'd3;           // Situatie 1: Combo compleet (4 unieke) -> Balk is vol (3/3)
+  end else begin
+    case (num_unique_3)
+      3'd2:    combo_len = 2'd1; // Situatie 2: 2 unieke acties gezien  -> Balk op 1/3
+      3'd3:    combo_len = 2'd2; // Situatie 3: 3 unieke acties gezien  -> Balk op 2/3
+      default: combo_len = 2'd0; // Situatie 4: 0 of 1 unieke actie    -> Balk op 0/3
+    endcase
   end
+end
 
   // --- STAP 1: Acties direct vangen op de snelle klok ---
   always @(posedge clk) begin
