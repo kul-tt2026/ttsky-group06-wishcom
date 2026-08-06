@@ -8,10 +8,14 @@ TOPLEVEL_LANG   ?= verilog
 SRC_DIR          = $(PWD)/../src
 PROJECT_SOURCES  = project.v vga_display.v hvsync_generator.v anim.v audio.v balance.v bars.v buttons.v chest_draw.v chest_game.v dragon_draw.v dragon_state.v home.v hud.v renderer.v sprites.v 
 
+# Dynamische instellingen (zodat zowel handmatige commando's als GitHub Actions werken)
+TOPLEVEL            ?= tb
+COCOTB_TEST_MODULES ?= vga_image_test
+
 ifneq ($(GATES),yes)
 
-# RTL simulation:
-SIM_BUILD        = sim_build/rtl
+# RTL simulation: (SIM_BUILD is nu dynamisch per TOPLEVEL zodat ze elkaar niet overschrijven)
+SIM_BUILD        = sim_build/$(TOPLEVEL)
 VERILOG_SOURCES += $(addprefix $(SRC_DIR)/,$(PROJECT_SOURCES))
 
 else
@@ -35,14 +39,10 @@ endif
 # Include the testbench sources:
 VERILOG_SOURCES += $(PWD)/tb.v
 
-# ---------------------------------------------------------------------------
-# Standaard entrypoint voor GitHub Actions (wanneer 'make' wordt aangeroepen)
-# ---------------------------------------------------------------------------
+# Default target voor GitHub Actions (wanneer GitHub simpelweg 'make' of 'make test' aanroept)
 all:
-	rm -f results.xml
 	$(MAKE) sim TOPLEVEL=tb COCOTB_TEST_MODULES=vga_image_test
-	rm -f results.xml
-	$(MAKE) sim TOPLEVEL=dragon_rom COCOTB_TEST_MODULES=ei_test
+	$(MAKE) sim TOPLEVEL=dragon_draw COCOTB_TEST_MODULES=ei_test
 
 # Include cocotb's make rules to take care of the simulator setup
 include $(shell cocotb-config --makefiles)/Makefile.sim
