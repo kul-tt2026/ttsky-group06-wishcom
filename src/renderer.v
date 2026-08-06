@@ -30,7 +30,7 @@ module renderer (
     input  wire [1:0] chest_sel, // welke kist is selected (0,1,2)
     input  wire [1:0] chest_outcome,
 
-    input  wire [1:0] dragon_bob,
+    input  wire [1:0] dragon_state, // weet niet of dit voldoende bits heeft 
     input  wire [1:0] dragon_mood_anim,
     input  wire       flash,
     input  wire       flame_frame,
@@ -55,14 +55,16 @@ module renderer (
   localparam CHEST_Y  = 10'd300; // moet x niet hetzelfde? 
 
   // ======================= drawable instances =============================
-  // dragon -----------------------------------------------------------------
+  // DRAGON -----------------------------------------------------------------
+  // uiterlijk draak hangt af van dragon_state
+  // als in toekomst genoeg tijd, beinvloed mood ook uiterlijk van draak (houden we momenteel achterwegen)
+ 
   wire        dragon_on; //of er een pixel van draak is
   wire [2:0]  dragon_code; //welke kleur die moet krijgen als er pixel is 
-  
-  //initialiseer draak 
+
   dragon_draw u_dragon (
     .x(pix_x - DRAGON_X), .y(pix_y - DRAGON_Y),
-    .level(level), .mood_anim(dragon_mood_anim), .bob(dragon_bob),
+    .state(dragon_state), .mood_anim(dragon_mood_anim),
     .px_on(dragon_on), .px_code(dragon_code)
   );
 
@@ -133,7 +135,20 @@ module renderer (
     .px_on(heartsinfo_on), .px_code(heartsinfo_code)
   );
 
+  // BUTTONS ----------------------------------------
+  // 5 knoppen:            FOOD
+  //             WATER    level up    SLEEP
+  //                       GAME
+  // level up moet oplichten als boolean level_up 1 is 
+  // voor de rest gewoon vaste display vanonder aan scherm 
+  wire button_on
+  wire [2:0] button_code
 
+  draw_buttons buttons_u (
+    ..pix_x(pix_x), .pix_y(pix_y),
+    .levelup (level_up),
+    .px_on(heartsinfo_on), .px_code(heartsinfo_code)
+  );
 
   // TODO (boss owner): menu icons for the four home options + menu_sel
   // highlight.  Either a fifth drawable (menu_draw.v) or boxes inline here.
