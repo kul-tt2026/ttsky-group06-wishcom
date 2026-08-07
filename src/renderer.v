@@ -15,16 +15,16 @@ module renderer (
     input  wire [9:0] pix_y,
     input  wire       video_active,
 
-    input  wire [1:0] mode,          // 0 TITLE, 1 HOME, 2 CHEST, 3 GAMEOVER
+    input  wire [2:0] mode,          // 0 TITLE, 1 HOME, 2 CHEST, 3 GAMEOVER
     input  wire [1:0] menu_sel,
-    input  wire [1:0] hearts,
-    input  wire [1:0] satisfaction,
-    input  wire [7:0] coins,
+    input  wire [2:0] hearts,
+    input  wire [2:0] satisfaction,
+    input  wire [9:0] coins,
     input  wire [2:0] level,
     input  wire [1:0] combo_len,
     input  wire [1:0] chest_state,
     input  wire [1:0] chest_sel,
-    input  wire [1:0] chest_outcome,
+    input  wire [2:0] chest_outcome,
     input  wire [1:0] dragon_bob,
     input  wire [1:0] dragon_mood_anim,
     input  wire [1:0] chest_frame,
