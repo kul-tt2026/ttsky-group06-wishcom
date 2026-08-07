@@ -6,17 +6,12 @@ SIM             ?= icarus
 FST             ?= -fst # Use more efficient FST format
 TOPLEVEL_LANG   ?= verilog
 SRC_DIR          = $(PWD)/../src
-PROJECT_SOURCES  = project.v hvsync_generator.v anim.v audio.v balance.v coinbar.v draw_buttons.v hearts.v buttons.v chest_draw.v chest_game.v dragon_draw.v dragon_state.v home.v hud.v renderer.v sprites.v 
-
-# Dynamische instellingen (zodat zowel handmatige commando's als GitHub Actions werken)
-# Dynamische instellingen (zodat zowel handmatige commando's als GitHub Actions werken)
-TOPLEVEL            ?= ei_generator
-COCOTB_TEST_MODULES ?= ei_test
+PROJECT_SOURCES  = project.v
 
 ifneq ($(GATES),yes)
 
-# RTL simulation: (SIM_BUILD is nu dynamisch per TOPLEVEL zodat ze elkaar niet overschrijven)
-SIM_BUILD        = sim_build/$(TOPLEVEL)
+# RTL simulation:
+SIM_BUILD        = sim_build/rtl
 VERILOG_SOURCES += $(addprefix $(SRC_DIR)/,$(PROJECT_SOURCES))
 
 else
@@ -39,15 +34,15 @@ endif
 
 # Include the testbench sources:
 VERILOG_SOURCES += $(PWD)/tb.v
+TOPLEVEL         = tb
 
-# Default target voor GitHub Actions (wanneer GitHub simpelweg 'make' of 'make test' aanroept)
-# Default target voor GitHub Actions (wanneer GitHub simpelweg 'make' of 'make test' aanroept)
-all:
-	$(MAKE) sim TOPLEVEL=ei_generator COCOTB_TEST_MODULES=ei_test
+# List test modules to run, separated by commas and without the .py suffix:
+COCOTB_TEST_MODULES = test
+
 # Include cocotb's make rules to take care of the simulator setup
 include $(shell cocotb-config --makefiles)/Makefile.sim
 
 # Extend cocotb's clean target to also remove build artifacts
-.PHONY: clean all
+.PHONY: clean
 clean::
 	rm -rf sim_build/ __pycache__/ results.xml tb.fst
