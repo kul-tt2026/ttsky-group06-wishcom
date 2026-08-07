@@ -61,7 +61,7 @@ module renderer (
 
   dragon_draw u_dragon (
     .x(pix_x - DRAGON_X), .y(pix_y - DRAGON_Y),
-    .state(dragon_state), .mood_anim(dragon_mood_anim),
+    .state(dragon_form), .mood_anim(dragon_mood_anim),
     .px_on(dragon_on), .px_code(dragon_code)
   );
 
@@ -174,6 +174,24 @@ module renderer (
     2'd3: chest_rgb = 6'b111000;       // gold
     default: chest_rgb = 6'b100100;
   endcase
+
+  reg [5:0] coin_rgb;
+  always @(*) case (chest_code)
+    2'd1: coin_rgb = 6'b000000;
+    2'd2: coin_rgb = 6'b100100;       // wood
+    2'd3: coin_rgb = 6'b111000;       // gold
+    default: coin_rgb = 6'b100100;
+  endcase
+
+  reg [5:0] buttons_rgb;
+  always @(*) case (chest_code)
+    2'd1: buttons_rgb = 6'b000000;
+    2'd2: buttons_rgb = 6'b100100;       // wood
+    2'd3: buttons_rgb = 6'b111000;       // gold
+    default: buttons_rgb = 6'b100100;
+  endcase
+
+  
 
 //coin_rgb
 // satisfaction (nieuw)
