@@ -34,10 +34,10 @@ module home (
   always @(posedge clk) begin
     if (!rst_n) begin
       mode<=M_TITLE; menu_sel<=3'd0;
-      act_feed<=0; act_drink<=0; act_sleep<=0; req_evolve<=0; restart<=0;
+      act_feed<=0; act_drink<=0; act_sleep<=0; req_evolve<=0; restart<=0; act_minigame<=0;
     end else if (frame_tick) begin
       // default: pulses last one frame only
-      act_feed<=0; act_drink<=0; act_sleep<=0; req_evolve<=0; restart<=0;
+      act_feed<=0; act_drink<=0; act_sleep<=0; req_evolve<=0; restart<=0; act_minigame<=0;
 
       case (mode)
         M_TITLE: begin
@@ -61,6 +61,9 @@ module home (
         M_GAMEOVER: begin
           // TODO Person A: START -> restart + mode <= M_HOME
         end
+
+        M_CONTINUE: begin
+
       endcase
     end
   end
