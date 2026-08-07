@@ -29,11 +29,11 @@ module home (
     output reg        req_evolve,      // -> dragon_state
     output reg        restart          // -> dragon_state (new game reset)
 );
-  localparam M_TITLE=2'd0, M_HOME=3'd1, M_CHEST=3'd2, M_GAMEOVER=3'd3, M_CONTINUE=3'd4, M_YOU_WIN=3'd5;
+  localparam M_TITLE=3'd0, M_HOME=3'd1, M_CHEST=3'd2, M_GAMEOVER=3'd3, M_CONTINUE=3'd4, M_YOU_WIN=3'd5;
 
   always @(posedge clk) begin
     if (!rst_n) begin
-      mode<=M_TITLE; menu_sel<=2'd0;
+      mode<=M_TITLE; menu_sel<=3'd0;
       act_feed<=0; act_drink<=0; act_sleep<=0; req_evolve<=0; restart<=0;
     end else if (frame_tick) begin
       // default: pulses last one frame only

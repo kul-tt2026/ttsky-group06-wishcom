@@ -30,7 +30,7 @@ module dragon_state (
     output wire       evolve_now            // renderer: light up the option
 );
   localparam MAX_HEARTS = 3'd5;
-  localparam MAX_SAT    = 3'd5;
+  localparam MAX_SAT    = 3'd4;
   localparam MAX_LEVEL  = 3'd7;
   localparam COIN_CAP = 10'd999;
   localparam [2:0] FORM_A = 3'd3;
