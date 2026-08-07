@@ -32,9 +32,9 @@ module dragon_state (
     input  wire       req_evolve,
 
     // the stats -- read-only for everyone else
-    output reg  [1:0] hearts,             // 3..0
-    output reg  [1:0] satisfaction,       // 0 miserable .. 3 happy
-    output reg  [7:0] coins,
+    output reg  [2:0] hearts,             // 3..0
+    output reg  [2:0] satisfaction,       // 0 miserable .. 3 happy
+    output reg  [9:0] coins,
     output reg  [2:0] level,              // 0..7
     output reg        game_over
 );

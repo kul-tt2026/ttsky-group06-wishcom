@@ -1,4 +1,7 @@
+
 {
-  "verilog.linting.linter": "verilator",
-  "verilog.formatting.verilogHDL.formatter": "verible-verilog-format"
+  "verilog.linting.linter": "iverilog",
+  "verilog.linting.arguments": "-f .vscode/iverilog_files.f",
+  "verilog.autoCreateProject": false,
+  "verilog.ctags.enabled": false
 }

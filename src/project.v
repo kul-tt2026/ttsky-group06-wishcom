@@ -21,6 +21,13 @@ module tt_um_dragonchi (
   //   .hsync(hsync), .vsync(vsync), .display_on(video_active),
   //   .hpos(pix_x), .vpos(pix_y)
   // );
+
+   // VGA singals:
+  wire hsync, vsync, video_active;
+  wire [1:0] R, G, B;
+  wire [9:0] pix_x, pix_y;
+  wire [1:0] dragenform; 
+  
   reg vsync_d;
   always @(posedge clk) begin
     if (!rst_n) vsync_d <= 1'b1; else vsync_d <= vsync;
@@ -99,12 +106,7 @@ module tt_um_dragonchi (
 
   // ---- screen painter (render group) ----
 
-  // VGA singals:
-  wire hsync, vsync, video_active;
-  wire [1:0] R, G, B;
-  wire [9:0] pix_x, pix_y;
-  wire overflow = 0; //nog niet geimplementeerd
-  wire [1:0] dragenform; 
+ 
 
   // ---- TinyVGA Pmod.  Do not touch. ----
   assign uo_out = {hsync, B[0], G[0], R[0], vsync, B[1], G[1], R[1]};
@@ -113,7 +115,7 @@ module tt_um_dragonchi (
     .hsync(hsync), .vsync(vsync), .display_on(video_active),
     .hpos(pix_x), .vpos(pix_y)
   );
-  wire overflow;
+  wire overflow = 1'b0;
   renderer u_renderer (
     .pix_x(pix_x), .pix_y(pix_y), .video_active(video_active),
     .mode(mode), .menu_sel(menu_sel),
@@ -123,7 +125,7 @@ module tt_um_dragonchi (
     .chest_outcome(chest_outcome),
     .dragon_mood_anim(dragon_mood_anim),
     .chest_frame(chest_frame), .flash(flash), .flame_frame(flame_frame),
-    .R(R), .G(G), .B(B), .evolve_now(req_evolve), .dragon_form(dragon_form), .you_win(game_over), .overflow(overflow)
+    .R(R), .G(G), .B(B), .evolve_now(req_evolve), .dragon_form(dragenform), .you_win(game_over), .overflow(overflow)
   );
 
   

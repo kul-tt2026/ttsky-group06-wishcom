@@ -14,5 +14,5 @@ module dragon_draw (
   assign px_on   = 1'b0;            // placeholder: invisible
   assign px_code = 3'd0;
 
-  wire _unused = &{x, y, level, mood_anim, bob, 1'b0};
+  wire _unused = &{x, y, state, mood_anim, 1'b0};
 endmodule

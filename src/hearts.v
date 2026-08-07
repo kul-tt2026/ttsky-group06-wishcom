@@ -7,7 +7,7 @@
 module hearts (
     input  wire [9:0] pix_x,        // ABSOLUTE screen coordinates
     input  wire [9:0] pix_y,
-    input  wire [1:0] hearts,
+    input  wire [2:0] hearts,
     input             overflow,
     output wire       px_on,
     output wire [1:0] px_code       

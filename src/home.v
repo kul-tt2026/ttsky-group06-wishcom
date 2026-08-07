@@ -17,7 +17,7 @@ module home (
     input  wire [7:0] btn_pressed,
     input  wire       game_over,       // from dragon_state
     input  wire       minigame_done,   // from chest_game
-    input  wire [7:0] coins,           // to grey out evolve when unaffordable
+    input  wire [9:0] coins,           // to grey out evolve when unaffordable
 
     output reg  [1:0] mode,            // 0 TITLE, 1 HOME, 2 CHEST, 3 GAMEOVER
     output reg  [1:0] menu_sel,        // cursor over the four options

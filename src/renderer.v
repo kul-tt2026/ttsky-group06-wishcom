@@ -126,7 +126,7 @@ module renderer (
   // --- vraag: wat bedoelen ze met absolute coordinaten? en waarom hierwel absolute coordinaten? 
   wire heartsinfo_on;
   wire [1:0] heartsinfo_code;
-  heartsinfo u_heartsinfo (
+  hearts u_heartsinfo (
     .pix_x(pix_x), .pix_y(pix_y),
     .hearts(hearts), .overflow(overflow),
     .px_on(heartsinfo_on), .px_code(heartsinfo_code)
@@ -142,7 +142,7 @@ module renderer (
   wire [2:0] button_code;
 
   draw_buttons buttons_u (
-    .pix_x(pix_x), .pix_y(pix_y),
+    .x(pix_x), .y(pix_y),
     .evolve_now (evolve_now),
     .px_on(button_on), .px_code(button_code)
   );
