@@ -16,7 +16,7 @@ module draw_buttons (
 );
 
   assign px_on   = 1'b0;
-  assign px_code = 2'd0;
+  assign px_code = 3'd0;
 
   wire _unused = &{x, y, evolve_now, 1'b0};
 endmodule

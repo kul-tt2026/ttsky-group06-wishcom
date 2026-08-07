@@ -43,9 +43,9 @@ module dragon_state (
 
   always @(posedge clk) begin
     if (!rst_n || restart) begin
-      hearts       <= 2'd3;
-      satisfaction <= 2'd2;               // start neutral
-      coins        <= 8'd0;
+      hearts       <= 3'd3;
+      satisfaction <= 3'd2;               // start neutral
+      coins        <= 10'd0;
       level        <= 3'd0;
       game_over    <= 1'b0;
     end else if (frame_tick && !game_over) begin
