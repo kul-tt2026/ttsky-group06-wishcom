@@ -30,6 +30,9 @@ module renderer (
     input  wire [1:0] chest_frame,
     input  wire       flash,
     input  wire       flame_frame,
+    input  wire       overflow,
+    input  wire       evolve_now,
+
 
     output reg  [1:0] R,
     output reg  [1:0] G,
@@ -161,5 +164,5 @@ module renderer (
     {R, G, B} = rgb;
   end
 
-  wire _unused = &{menu_sel, chest_state, chest_outcome, flame_frame, 1'b0};
+  wire _unused = &{menu_sel, chest_state, chest_outcome, overflow, evolve_now, flame_frame, 1'b0};
 endmodule

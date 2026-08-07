@@ -18,6 +18,7 @@ module home (
     input  wire       game_over,       // from dragon_state
     input  wire       minigame_done,   // from chest_game
     input  wire [9:0] coins,           // to grey out evolve when unaffordable
+    input  wire       you_win,
 
     output reg  [2:0] mode,            // 0 TITLE, 1 HOME, 2 CHEST, 3 GAMEOVER, 4 CONTINUE 5 YOU_WIN
     output reg  [2:0] menu_sel,        // cursor over the five options
@@ -64,5 +65,5 @@ module home (
     end
   end
 
-  wire _unused = &{btn_pressed, game_over, minigame_done, coins, 1'b0};
+  wire _unused = &{btn_pressed, game_over, minigame_done, coins, you_win, 1'b0};
 endmodule

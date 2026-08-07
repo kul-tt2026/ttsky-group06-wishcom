@@ -30,15 +30,14 @@ module balance (
     input  wire       act_feed,        // pulses from home.v
     input  wire       act_drink,
     input  wire       act_sleep,
-    input  wire       act_minigame,
-    input  wire [2:0] satisfaction,    // 4e actie: minigame gespeeld
+    input  wire       act_minigame,     // 4e actie: minigame gespeeld
+    input  wire [2:0] satisfaction,    
 
     output reg        req_heart_gain,  // -> dragon_state
     output reg        req_heart_lose,
     output reg        req_sat_up,
     output reg        req_sat_down,
 
-    output reg [2:0]  satisfaction,
     output reg  [1:0] combo_len        // -> renderer (progress bar 0..3)
 );
 
@@ -136,7 +135,6 @@ end
         history[i] <= 2'b00;
       end
       actions_count  <= 3'd0;
-      satisfaction     <= 3'd3;     // Start op neutraal humeur (3)
       req_heart_gain <= 1'b0;
       req_heart_lose <= 1'b0;
       req_sat_up     <= 1'b0;
