@@ -11,7 +11,7 @@ module dragon_draw (
     input  wire [9:0] x,            // local, 0 = left edge of the dragon
     input  wire [9:0] y,            // local, 0 = top edge
     input  wire [2:0] level,        // evolution stage -> shape/size
-    input  wire [1:0] mood_anim,    // 0 calm 1 wiggle 2 droop 3 shake
+    input  wire [2:0] mood_anim,    // 0 calm 1 wiggle 2 droop 3 shake
     input  wire [1:0] bob,          // idle bounce offset (apply to y here
                                     // or let the boss shift the origin --
                                     // pick ONE, write it in SIGNALS.md)

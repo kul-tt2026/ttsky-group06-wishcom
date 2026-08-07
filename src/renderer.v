@@ -26,7 +26,7 @@ module renderer (
     input  wire [1:0] chest_sel,
     input  wire [2:0] chest_outcome,
     input  wire [1:0] dragon_bob,
-    input  wire [1:0] dragon_mood_anim,
+    input  wire [2:0] dragon_mood_anim,
     input  wire [1:0] chest_frame,
     input  wire       flash,
     input  wire       flame_frame,
