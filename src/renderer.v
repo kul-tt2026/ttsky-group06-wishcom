@@ -16,7 +16,7 @@ module renderer (
     input  wire       video_active,
 
     input  wire [2:0] mode,          // 0 TITLE, 1 HOME, 2 CHEST, 3 GAMEOVER
-    input  wire [1:0] menu_sel,
+    input  wire [2:0] menu_sel,
     input  wire [2:0] hearts,
     input  wire [2:0] satisfaction,
     input  wire [9:0] coins,
