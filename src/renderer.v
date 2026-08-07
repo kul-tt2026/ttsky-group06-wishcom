@@ -15,7 +15,7 @@ module renderer (
     input  wire [9:0] pix_y,
     input  wire       video_active,
 
-    input  wire [2:0] mode,          // 0 TITLE, 1 HOME, 2 CHEST, 3 GAMEOVER
+    input  wire [2:0] mode,          // 0 TITLE, 1 HOME, 2 CHEST, 3 GAMEOVER 4 YOU WIN
     input  wire [2:0] menu_sel,
     input  wire [2:0] hearts,
     input  wire [2:0] satisfaction,
@@ -38,7 +38,7 @@ module renderer (
     output reg  [1:0] G,
     output reg  [1:0] B
 );
-  localparam M_TITLE=2'd0, M_HOME=2'd1, M_CHEST=2'd2, M_GAMEOVER=2'd3;
+  localparam M_TITLE=2'd0, M_HOME=2'd1, M_CHEST=2'd2, M_GAMEOVER=2'd3, M_YOU_WIN=2'd4;
 
   // ======================= 1. PLACE =======================================
   // Every position is a constant HERE, in one file.  Moving anything on
