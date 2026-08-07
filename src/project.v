@@ -26,7 +26,7 @@ module tt_um_dragonchi (
   wire hsync, vsync, video_active;
   wire [1:0] R, G, B;
   wire [9:0] pix_x, pix_y;
-  wire [1:0] dragenform; 
+  wire [1:0] dragon_form; 
   
   reg vsync_d;
   always @(posedge clk) begin
@@ -125,7 +125,7 @@ module tt_um_dragonchi (
     .chest_outcome(chest_outcome),
     .dragon_mood_anim(dragon_mood_anim),
     .chest_frame(chest_frame), .flash(flash), .flame_frame(flame_frame),
-    .R(R), .G(G), .B(B), .evolve_now(req_evolve), .dragon_form(dragenform), .you_win(game_over), .overflow(overflow)
+    .R(R), .G(G), .B(B), .evolve_now(req_evolve), .dragon_form(dragon_form), .you_win(game_over), .overflow(overflow)
   );
 
   
