@@ -78,12 +78,12 @@ module chest_game (
 
   always @(*) begin
       case (round)
-          3'd0: begin itemA = O_COIN; itemB = O_COIN; itemC = O_BOMB;  reward = 8'd40;  end
-          3'd1: begin itemA = O_COIN; itemB = O_2X;   itemC = O_CURSED;reward = 8'd60;  end
-          3'd2: begin itemA = O_COIN; itemB = O_2X;   itemC = O_BOMB2; reward = 8'd100; end
-          3'd3: begin itemA = O_COIN; itemB = O_2X;   itemC = O_BOMB2; reward = 8'd160; end
-          3'd4: begin itemA = O_2X;   itemB = O_2X;   itemC = O_BOMB2;reward = 8'd0; end
-          3'd5: begin itemA = O_2X;   itemB = O_CURSED;itemC = O_BOMB2; reward = 8'd0;   end
+          4'd0: begin itemA = O_COIN; itemB = O_COIN; itemC = O_BOMB;  reward = 8'd40;  end
+          4'd1: begin itemA = O_COIN; itemB = O_2X;   itemC = O_CURSED;reward = 8'd60;  end
+          4'd2: begin itemA = O_COIN; itemB = O_2X;   itemC = O_BOMB2; reward = 8'd100; end
+          4'd3: begin itemA = O_COIN; itemB = O_2X;   itemC = O_BOMB2; reward = 8'd160; end
+          4'd4: begin itemA = O_2X;   itemB = O_2X;   itemC = O_BOMB2;reward = 8'd0; end
+          4'd5: begin itemA = O_2X;   itemB = O_CURSED;itemC = O_BOMB2; reward = 8'd0;   end
           default: begin itemA = O_2X; itemB = O_CURSED; itemC = O_BOMB2; reward = 8'd0; end
       endcase
   end
@@ -95,7 +95,7 @@ module chest_game (
       timer<=0; dealt<=0; minigame_done<=0;
       pot <= 0; round <= 0; pot_payout <= 0;
       req_coins_add<=0; req_heart_lose_chest<=0;
-      for (i=0;i<3;i=i+1) contents[i]<=2'd0;
+      for (i=0;i<3;i=i+1) contents[i]<=3'd0;
     end
     else if (frame_tick) begin
       req_coins_add<=0; req_heart_lose_chest<=0;
@@ -119,6 +119,7 @@ module chest_game (
                   3'd3: begin contents[0]<=itemB; contents[1]<=itemC; contents[2]<=itemA; end
                   3'd4: begin contents[0]<=itemC; contents[1]<=itemA; contents[2]<=itemB; end
                   3'd5: begin contents[0]<=itemC; contents[1]<=itemB; contents[2]<=itemA; end
+                  default: begin contents[0]<=itemA; contents[1]<=itemB; contents[2]<=itemC; end
               endcase
           end
 
@@ -185,6 +186,7 @@ module chest_game (
                     dealt <= 0;
                     chest_state <= C_PICK;
                     end
+                default: ;  // lege default ma anders geeft dat warning
             endcase
           end
         end
