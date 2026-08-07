@@ -26,7 +26,8 @@ module tt_um_dragonchi (
   wire hsync, vsync, video_active;
   wire [1:0] R, G, B;
   wire [9:0] pix_x, pix_y;
-  wire [1:0] dragon_form; 
+  wire [1:0] dragon_form;
+  assign dragon_form = 2'd2; //tijdelijk oplossing
   
   reg vsync_d;
   always @(posedge clk) begin

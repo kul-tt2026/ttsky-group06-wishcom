@@ -38,7 +38,7 @@ module chest_game (
   reg [15:0] lfsr;
   always @(posedge clk) begin
     if (!rst_n) lfsr <= 16'hACE1;
-    else        lfsr <= {lfsr[0], lfsr[15:1] ^ (lfsr[0] ? 16'hB400 : 16'h0000)};
+    else        lfsr <= {lfsr[0], lfsr[15:1]} ^ (lfsr[0] ? 16'hB400 : 16'h0000);
   end
 
   reg [1:0] contents [0:2];

@@ -59,6 +59,7 @@ module renderer (
   wire        dragon_on; //of er een pixel van draak is
   wire [2:0]  dragon_code; //welke kleur die moet krijgen als er pixel is 
 
+
   dragon_draw u_dragon (
     .x(pix_x - DRAGON_X), .y(pix_y - DRAGON_Y),
     .state(dragon_form), .mood_anim(dragon_mood_anim),
@@ -235,5 +236,5 @@ module renderer (
     {R, G, B} = rgb;
   end
 
-  wire _unused = &{menu_sel, chest_state, chest_outcome, flame_frame, 1'b0};
+  wire _unused = &{menu_sel, chest_state, chest_outcome, flame_frame, level, combo_len, flash, you_win,1'b0};
 endmodule
