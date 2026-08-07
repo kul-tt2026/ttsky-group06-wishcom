@@ -67,7 +67,7 @@ module chest_game (
   reg       dealt;  // have the chests been shuffled yet?
 
   reg [9:0]  pot;
-  reg [2:0]  round;
+  reg [3:0]  round;
 
   // -------------------------------------------------------------------------
   // DE ROUND TABLE (Combinatorial)

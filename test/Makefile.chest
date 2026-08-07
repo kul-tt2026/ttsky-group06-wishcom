@@ -1,0 +1,11 @@
+SIM = icarus
+TOPLEVEL_LANG = verilog
+FST = -fst
+
+# Voeg HIER beide source files toe, of gebruik een wildcard: $(PWD)/../src/*.v
+VERILOG_SOURCES = $(PWD)/../src/chest_game.v $(PWD)/../src/dual_lfsr.v
+
+TOPLEVEL = chest_game
+MODULE = test_chest
+
+include $(shell cocotb-config --makefiles)/Makefile.sim
