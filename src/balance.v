@@ -173,11 +173,11 @@ end
         // --- IMPACT OP LEVENS (HARTJES) ---
         
         // Stijging naar 4 of 5 -> req_heart_gain pulse
-        if ((actions_count >= 3'd3) && unique_last_4 && (satisfaction == 3'd3 || satisfaction == 3'd4 || satisfaction == 3'd5)) begin
+        if ((actions_count >= 3'd3) && unique_last_4 && (satisfaction == 3'd2 || satisfaction == 3'd3 || satisfaction == 3'd4)) begin
           req_heart_gain <= 1'b1;
         end
         // Daling naar 2 of 1 -> req_heart_lose pulse
-        else if ((actions_count >= 3'd5) && missing_an_action && (satisfaction == 3'd3 || satisfaction == 3'd2 || satisfaction == 3'd1)) begin
+        else if ((actions_count >= 3'd5) && missing_an_action && (satisfaction == 3'd2 || satisfaction == 3'd1 || satisfaction == 3'd0)) begin
           req_heart_lose <= 1'b1;
         end
 
