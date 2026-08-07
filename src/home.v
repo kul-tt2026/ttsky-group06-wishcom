@@ -17,17 +17,18 @@ module home (
     input  wire [7:0] btn_pressed,
     input  wire       game_over,       // from dragon_state
     input  wire       minigame_done,   // from chest_game
-    input  wire [7:0] coins,           // to grey out evolve when unaffordable
+    input  wire [9:0] coins,           // to grey out evolve when unaffordable
 
-    output reg  [1:0] mode,            // 0 TITLE, 1 HOME, 2 CHEST, 3 GAMEOVER
-    output reg  [1:0] menu_sel,        // cursor over the four options
+    output reg  [2:0] mode,            // 0 TITLE, 1 HOME, 2 CHEST, 3 GAMEOVER, 4 CONTINUE 5 YOU_WIN
+    output reg  [2:0] menu_sel,        // cursor over the five options
     output reg        act_feed,        // one-frame pulses ->  balance.v
     output reg        act_drink,
     output reg        act_sleep,
+    output reg        act_minigame,
     output reg        req_evolve,      // -> dragon_state
     output reg        restart          // -> dragon_state (new game reset)
 );
-  localparam M_TITLE=2'd0, M_HOME=2'd1, M_CHEST=2'd2, M_GAMEOVER=2'd3;
+  localparam M_TITLE=2'd0, M_HOME=3'd1, M_CHEST=3'd2, M_GAMEOVER=3'd3, M_CONTINUE=3'd4, M_YOU_WIN=3'd5;
 
   always @(posedge clk) begin
     if (!rst_n) begin

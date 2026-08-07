@@ -16,7 +16,7 @@ module anim (
     input  wire [1:0] chest_state,      // to run the chest-open sequence
 
     output reg  [1:0] dragon_bob,       // idle bounce 0..2
-    output reg  [1:0] dragon_mood_anim, // 0 calm 1 wiggle 2 droop 3 shake
+    output reg  [2:0] dragon_mood_anim, // 0 calm 1 wiggle 2 droop 3 shake
     output reg  [1:0] chest_frame,      // 0 closed 1 opening 2 open
     output reg        flash,            // evolve fanfare blink
     output reg        flame_frame       // flame flicker
