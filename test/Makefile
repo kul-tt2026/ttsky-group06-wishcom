@@ -6,7 +6,7 @@ SIM             ?= icarus
 FST             ?= -fst # Use more efficient FST format
 TOPLEVEL_LANG   ?= verilog
 SRC_DIR          = $(PWD)/../src
-PROJECT_SOURCES  = project.v vga_display.v hvsync_generator.v anim.v audio.v balance.v bars.v buttons.v chest_draw.v chest_game.v dragon_draw.v dragon_state.v home.v hud.v hvsync_generator.v images.v renderer.v sprites.v 
+PROJECT_SOURCES  = project.v vga_display.v hvsync_generator.v anim.v audio.v balance.v bars.v buttons.v chest_draw.v chest_game.v dragon_draw.v dragon_state.v home.v hud.v hvsync_generator.v images.v renderer.v sprites.v dual_lfsr.v
 
 # List test modules to run, separated by commas and without the .py suffix:
 COCOTB_TEST_MODULES = vga_image_test

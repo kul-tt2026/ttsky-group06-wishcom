@@ -25,7 +25,7 @@ module chest_game (
 
     output reg  [1:0] chest_state,        // 0 picking, 1 opening, 2 result
     output reg  [1:0] chest_sel,          // cursor 0..2
-    output reg  [2:0] chest_outcome,      // 0 level, 1 coins, 2 lose-heart
+    output reg  [2:0] chest_outcome,      // BOM, andere BOM, coin, 2x, CURSED
 
     output reg        req_coins_add,      // -> dragon_state
     output reg  [9:0] pot_payout,         // Amount of coins to add to total
@@ -168,20 +168,20 @@ module chest_game (
                     minigame_done <= 1;
                 end
                 O_CURSED: begin
-                    pot_payout <= pot + reward;
+                    pot_payout <= (pot + reward > 11'd999) ? 10'd999 : (pot+reward);
                     req_coins_add <= 1;
                     req_heart_lose_chest <= 1;
                     minigame_done <= 1;
                 end
                 O_COIN: begin
-                    pot <= pot + reward;
-                    round <= round + 1;
+                    pot <= (pot + reward > 11'd999) ? 10'd999 : (pot+reward);
+                    round <= (round == 4'd15) ? 4'd15 : (round + 1);
                     dealt <= 0;
                     chest_state <= C_PICK;
                 end
                 O_2X: begin
-                    pot <= pot << 1;  // aka *2
-                    round <= round + 1;
+                    pot <= (pot << 1 > 11'd999) ? 10'd999 : (pot << 1);  // aka *2
+                    round <= (round == 4'd15) ? 4'd15 : (round + 1);
                     dealt <= 0;
                     chest_state <= C_PICK;
                     end
