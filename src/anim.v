@@ -12,7 +12,7 @@ module anim (
     input  wire       rst_n,
     input  wire       frame_tick,
     input  wire [1:0] mode,             // to pause animations off-home
-    input  wire [1:0] satisfaction,     // 0 miserable .. 3 happy
+    input  wire [2:0] satisfaction,     // 0 miserable .. 3 happy
     input  wire [1:0] chest_state,      // to run the chest-open sequence
 
     output reg  [1:0] dragon_bob,       // idle bounce 0..2
