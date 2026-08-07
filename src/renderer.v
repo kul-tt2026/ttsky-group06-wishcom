@@ -118,8 +118,9 @@ module renderer (
   wire show_bars   = (mode == M_HOME);
   wire show_menu   = (mode == M_HOME);
   wire show_chests = (mode == M_CHEST);
+  wire show_you_win = (mode == M_YOU_WIN);
   // hud: visible in both HOME and CHEST
-  wire show_hud    = (mode == M_HOME) || (mode == M_CHEST);
+  wire show_hud    = (mode == M_HOME) || (mode == M_CHEST) || (mode == M_YOU_WIN);
 
   // ======================= 4. COLOUR ======================================
   // Per-drawable palettes: code -> 6-bit {R,G,B}.  TODO: real colours once
@@ -148,12 +149,14 @@ module renderer (
   // Front to back: hud > bars > dragon > chests > background.
   localparam [5:0] BG_HOME  = 6'b000001;
   localparam [5:0] BG_CHEST = 6'b010001;
+  
 
   reg [5:0] rgb;
   always @(*) begin
     if (!video_active)           rgb = 6'b000000;      // MUST stay black
     else if (mode == M_TITLE)    rgb = 6'b000110;      // TODO: title text
     else if (mode == M_GAMEOVER) rgb = 6'b010000;      // TODO: game over text
+    else if (mode == M_YOU_WIN)  rgb = 6'b111100;      // TODO: you win text (bijv. felgeel/goud)
     else if (show_hud    && hud_on)    rgb = hud_rgb;
     else if (show_bars   && sat_on)    rgb = bar_rgb_sat;
     else if (show_bars   && combo_on)  rgb = bar_rgb_combo;
