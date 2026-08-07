@@ -56,7 +56,7 @@ module tt_um_dragonchi (
     .game_over(game_over), .minigame_done(minigame_done), .coins(coins),
     .mode(mode), .menu_sel(menu_sel),
     .act_feed(act_feed), .act_drink(act_drink), .act_sleep(act_sleep),
-    .req_evolve(req_evolve), .restart(restart), .you_win(you_win),
+    .req_evolve(req_evolve), .restart(restart), .you_win(you_win)
   );
 
   // ---- balance game (Person B) ----
@@ -130,7 +130,7 @@ module tt_um_dragonchi (
     .chest_outcome(chest_outcome),
     .dragon_bob(dragon_bob), .dragon_mood_anim(dragon_mood_anim),
     .chest_frame(chest_frame), .flash(flash), .flame_frame(flame_frame),
-    .R(R), .G(G), .B(B), 
+    .R(R), .G(G), .B(B)
   );
 
   
