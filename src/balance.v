@@ -30,7 +30,8 @@ module balance (
     input  wire       act_feed,        // pulses from home.v
     input  wire       act_drink,
     input  wire       act_sleep,
-    input  wire       act_minigame,    // 4e actie: minigame gespeeld
+    input  wire       act_minigame,
+    input  wire [2:0] satisfaction,    // 4e actie: minigame gespeeld
 
     output reg        req_heart_gain,  // -> dragon_state
     output reg        req_heart_lose,
@@ -165,16 +166,10 @@ end
         // A) Stijgen: Minstens 4 acties gedaan EN alle 4 uniek in history[0:3]
         if ((actions_count >= 3'd3) && unique_last_4) begin
           req_sat_up <= 1'b1;
-          if (satisfaction < 3'd5) begin
-            satisfaction <= satisfaction + 1'b1;
-          end
         end 
         // B) Dalen: Minstens 6 acties gedaan EN 1 van de 4 acties ontbreekt in history[0:5]
         else if ((actions_count >= 3'd5) && missing_an_action) begin
           req_sat_down <= 1'b1;
-          if (satisfaction > 3'd1) begin
-            satisfaction <= satisfaction - 1'b1;
-          end
         end
 
         // --- IMPACT OP LEVENS (HARTJES) ---
