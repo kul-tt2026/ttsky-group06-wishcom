@@ -19,7 +19,7 @@ project:
   source_files:
     - "project.v"
     - "hvsync_generator.v"
-    - "vga_display.v"
+    #- "vga_display.v"
     - "anim.v"
     - "audio.v"
     - "balance.v"
