@@ -12,7 +12,7 @@ module dual_lfsr (
     wire feedback_a = lfsr_a[15] ^ lfsr_a[13] ^ lfsr_a[12] ^ lfsr_a[10];    // choose different values from the loop to avoid it getting stuck
     wire feedback_b = lfsr_b[15] ^ lfsr_b[14] ^ lfsr_b[12] ^ lfsr_b[3];
 
-    always @(posedge clk or negedge rst_n) begin
+    always @(posedge clk) begin
         if (!rst_n) begin
             lfsr_a <= 16'hACE1;
             lfsr_b <= 16'hBED2;

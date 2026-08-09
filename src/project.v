@@ -105,7 +105,8 @@ module tt_um_dragonchi (
   );
 
   // ---- animation heartbeat (Person B) ----
-  wire [1:0] dragon_bob, dragon_mood_anim, chest_frame;
+  wire [1:0] dragon_bob, chest_frame;
+  wire [2:0] dragon_mood_anim;
   wire flash, flame_frame;
   anim u_anim (
     .clk(clk), .rst_n(rst_n), .frame_tick(frame_tick),

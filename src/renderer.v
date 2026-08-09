@@ -95,7 +95,7 @@ module renderer (
   );
   bars u_combobar (
     .x(pix_x - COMBO_X), .y(pix_y - COMBO_Y),
-    .fill(combo_len),
+    .fill({1'b0, combo_len}),
     .px_on(combo_on), .px_code(combo_code)
   );
 
@@ -167,5 +167,5 @@ module renderer (
     {R, G, B} = rgb;
   end
 
-  wire _unused = &{menu_sel, chest_state, chest_outcome, overflow, evolve_now, flame_frame, 1'b0};
+  wire _unused = &{menu_sel, chest_state, chest_outcome, overflow, evolve_now, flame_frame, show_you_win, 1'b0};
 endmodule
