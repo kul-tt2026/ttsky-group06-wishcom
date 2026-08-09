@@ -68,7 +68,7 @@ module tt_um_dragonchi (
     .req_heart_gain(req_heart_gain), .req_heart_lose(req_heart_lose),
     .req_sat_up(req_sat_up), .req_sat_down(req_sat_down),
     .combo_len(combo_len),
-    .act_minigame(act_minigame)
+    .act_minigame(act_minigame), .satisfaction(satisfaction)
   );
 
   // ---- chest minigame (Person C) ----
