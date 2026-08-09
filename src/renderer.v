@@ -38,7 +38,7 @@ module renderer (
     output reg  [1:0] G,
     output reg  [1:0] B
 );
-  localparam M_TITLE=2'd0, M_HOME=2'd1, M_CHEST=2'd2, M_GAMEOVER=2'd3, M_YOU_WIN=2'd4;
+  localparam [2:0] M_TITLE=3'd0, M_HOME=3'd1, M_CHEST=3'd2, M_GAMEOVER=3'd3, M_YOU_WIN=3'd4;
 
   // ======================= 1. PLACE =======================================
   // Every position is a constant HERE, in one file.  Moving anything on

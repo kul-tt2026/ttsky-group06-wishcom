@@ -9,7 +9,7 @@
 module bars (
     input  wire [9:0] x,            // local
     input  wire [9:0] y,
-    input  wire [1:0] fill,         // how many of the 4 segments are lit
+    input  wire [2:0] fill,         // how many of the 4 segments are lit
     output wire       px_on,
     output wire [1:0] px_code       // 1 = frame/empty segment, 2 = lit segment
 );
