@@ -1,25 +1,6 @@
 `default_nettype none
 // ---------------------------------------------------------------------------
 // THE BALANCE GAME.  OWNER: PERSON B.
-//
-// Watches the care actions (feed / drink / sleep) on the home screen and
-// judges them:
-//   * the SAME action three times in a row  -> over-care:
-//         req_sat_down pulse  AND  req_heart_lose pulse
-//   * FOUR different actions consecutively  -> balanced care:
-//         req_heart_gain pulse (and the streak resets)
-//   * a well-spaced action                  -> req_sat_up (small reward)
-//
-// DESIGN DECISIONS STILL OPEN (settle with the team before coding):
-//   1. Only three care actions exist but the combo needs four DIFFERENT
-//      ones.  Either (a) entering the minigame counts as the 4th action
-//      type, or (b) add a 4th care action (pet?), or (c) combo length = 3.
-//      The skeleton assumes (a): home.v could route a "played" pulse here.
-//   2. Does feed,feed,sleep,feed count as strike 2 or strike 1?  Skeleton
-//      assumes consecutive-only: any different action resets same_count.
-//
-// This module is fully testable in simulation: pulse the act_* inputs,
-// check the req_* outputs.  Write that test before wiring anything up.
 // ---------------------------------------------------------------------------
 module balance (
     input  wire       clk,
@@ -60,30 +41,42 @@ module balance (
   // Interne statusregisters
   reg [1:0] history [0:5];        // Schuifregister voor de laatste 6 acties
   reg [2:0] actions_count;        // Totaal aantal acties uitgevoerd (max 6)
-  integer i;
 
   // 1. Controle op 4 verschillende acties in de laatste 4 stappen (history[0:3])
   wire unique_last_4 = (history[0] != history[1]) && (history[0] != history[2]) && 
                        (history[0] != history[3]) && (history[1] != history[2]) && 
                        (history[1] != history[3]) && (history[2] != history[3]);
 
-  // 2. Tellers om te controleren of alle 4 de acties voorkomen in history[0:5]
+  // 2. Tellers om te controleren of alle 4 de acties voorkomen in history[0:5] (geen 'i' lus meer in always @(*))
   reg [2:0] count_00, count_01, count_10, count_11;
   always @(*) begin
-    count_00 = 3'd0;
-    count_01 = 3'd0; 
-    count_10 = 3'd0; 
-    count_11 = 3'd0;
-    for (i = 0; i < 6; i = i + 1) begin
-      if (i < actions_count) begin
-        case (history[i])
-          A_MINIGAME: count_00 = count_00 + 1'b1;
-          A_FEED:     count_01 = count_01 + 1'b1;
-          A_DRINK:    count_10 = count_10 + 1'b1;
-          A_SLEEP:    count_11 = count_11 + 1'b1;
-        endcase
-      end
-    end
+    count_00 = ((actions_count > 3'd0 && history[0] == A_MINIGAME) ? 3'd1 : 3'd0) +
+               ((actions_count > 3'd1 && history[1] == A_MINIGAME) ? 3'd1 : 3'd0) +
+               ((actions_count > 3'd2 && history[2] == A_MINIGAME) ? 3'd1 : 3'd0) +
+               ((actions_count > 3'd3 && history[3] == A_MINIGAME) ? 3'd1 : 3'd0) +
+               ((actions_count > 3'd4 && history[4] == A_MINIGAME) ? 3'd1 : 3'd0) +
+               ((actions_count > 3'd5 && history[5] == A_MINIGAME) ? 3'd1 : 3'd0);
+
+    count_01 = ((actions_count > 3'd0 && history[0] == A_FEED) ? 3'd1 : 3'd0) +
+               ((actions_count > 3'd1 && history[1] == A_FEED) ? 3'd1 : 3'd0) +
+               ((actions_count > 3'd2 && history[2] == A_FEED) ? 3'd1 : 3'd0) +
+               ((actions_count > 3'd3 && history[3] == A_FEED) ? 3'd1 : 3'd0) +
+               ((actions_count > 3'd4 && history[4] == A_FEED) ? 3'd1 : 3'd0) +
+               ((actions_count > 3'd5 && history[5] == A_FEED) ? 3'd1 : 3'd0);
+
+    count_10 = ((actions_count > 3'd0 && history[0] == A_DRINK) ? 3'd1 : 3'd0) +
+               ((actions_count > 3'd1 && history[1] == A_DRINK) ? 3'd1 : 3'd0) +
+               ((actions_count > 3'd2 && history[2] == A_DRINK) ? 3'd1 : 3'd0) +
+               ((actions_count > 3'd3 && history[3] == A_DRINK) ? 3'd1 : 3'd0) +
+               ((actions_count > 3'd4 && history[4] == A_DRINK) ? 3'd1 : 3'd0) +
+               ((actions_count > 3'd5 && history[5] == A_DRINK) ? 3'd1 : 3'd0);
+
+    count_11 = ((actions_count > 3'd0 && history[0] == A_SLEEP) ? 3'd1 : 3'd0) +
+               ((actions_count > 3'd1 && history[1] == A_SLEEP) ? 3'd1 : 3'd0) +
+               ((actions_count > 3'd2 && history[2] == A_SLEEP) ? 3'd1 : 3'd0) +
+               ((actions_count > 3'd3 && history[3] == A_SLEEP) ? 3'd1 : 3'd0) +
+               ((actions_count > 3'd4 && history[4] == A_SLEEP) ? 3'd1 : 3'd0) +
+               ((actions_count > 3'd5 && history[5] == A_SLEEP) ? 3'd1 : 3'd0);
   end
 
   // Minstens 1 van de 4 acties ontbreekt in de laatste 6 stappen
@@ -101,16 +94,16 @@ module balance (
 
   // Update combo_len voor de renderer (progress bar 0..3)
   always @(*) begin
-  if (unique_last_4) begin
-    combo_len = 2'd3;           // Situatie 1: Combo compleet (4 unieke) -> Balk is vol (3/3)
-  end else begin
-    case (num_unique_3)
-      3'd2:    combo_len = 2'd1; // Situatie 2: 2 unieke acties gezien  -> Balk op 1/3
-      3'd3:    combo_len = 2'd2; // Situatie 3: 3 unieke acties gezien  -> Balk op 2/3
-      default: combo_len = 2'd0; // Situatie 4: 0 of 1 unieke actie    -> Balk op 0/3
-    endcase
+    if (unique_last_4) begin
+      combo_len = 2'd3;           // Situatie 1: Combo compleet (4 unieke) -> Balk is vol (3/3)
+    end else begin
+      case (num_unique_3)
+        3'd2:    combo_len = 2'd1; // Situatie 2: 2 unieke acties gezien  -> Balk op 1/3
+        3'd3:    combo_len = 2'd2; // Situatie 3: 3 unieke acties gezien  -> Balk op 2/3
+        default: combo_len = 2'd0; // Situatie 4: 0 of 1 unieke actie    -> Balk op 0/3
+      endcase
+    end
   end
-end
 
   // --- STAP 1: Acties direct vangen op de snelle klok ---
   always @(posedge clk) begin
@@ -129,10 +122,11 @@ end
   end
 
   // --- STAP 2: Spellogica verwerken op de vertraagde frame_tick ---
+  integer idx; // Lokaal voor het synchrone klokblok
   always @(posedge clk) begin
     if (!rst_n || restart) begin
-      for (i = 0; i < 6; i = i + 1) begin
-        history[i] <= 2'b00;
+      for (idx = 0; idx < 6; idx = idx + 1) begin
+        history[idx] <= 2'b00;
       end
       actions_count  <= 3'd0;
       req_heart_gain <= 1'b0;
@@ -149,8 +143,8 @@ end
       if (act_latched || any_act_in) begin
         
         // Schuifregister bijwerken
-        for (i = 5; i > 0; i = i - 1) begin
-          history[i] <= history[i-1];
+        for (idx = 5; idx > 0; idx = idx - 1) begin
+          history[idx] <= history[idx-1];
         end
         history[0] <= act_latched ? latched_action : this_act_in;
 
