@@ -31,6 +31,7 @@ project:
     - "dragon_state.v"
     - "home.v"
     - "hud.v"
+    - "images.v"
     - "renderer.v"
     - "sprites.v"
     - "dual_lfsr.v"
