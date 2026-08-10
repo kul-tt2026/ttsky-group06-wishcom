@@ -5,7 +5,7 @@
 // Geen cocotb nodig -> loopt in een seconde.
 // commandos: dos2unix render_tb.v ../src/*.v
 //cd /mnt/c/Users/annab/tinytapeout/ttsky-group06-wishcom/test
-//iverilog -g2012 -o sim render_tb.v ../src/satisfactionbar.v ../src/coinbar.v
+//iverilog -g2012 -o sim render_tb.v ../src/satisfactionbar.v ../src/coinbar.v ../src/hearts.v
 //vvp sim
 //python3 -c "from PIL import Image; Image.open('frame.ppm').save('frame.png')"
 // python3 -c "
@@ -15,8 +15,9 @@
 module render_tb;
 
   // ---- zet hier wat je wil testen -----------------------------------------
-  localparam [9:0] SATBAR_X  = 10'd100, SATBAR_Y  = 10'd56;
-  localparam [9:0] COINBAR_X = 10'd24, COINBAR_Y = 10'd80;
+  localparam [9:0] HEARTS_X  = 10'd168, HEARTS_Y  = 10'd16;  // 304 x 24
+  localparam [9:0] SATBAR_X  = 10'd294, SATBAR_Y  = 10'd48;  // 162 x 24
+  localparam [9:0] COINBAR_X = 10'd24,  COINBAR_Y = 10'd80;  //  24 x 132
 
   reg  [9:0] pix_x, pix_y;
   wire [9:0] px = pix_y;
@@ -42,6 +43,20 @@ module render_tb;
     .px_on(coin_on), .px_code(coin_code)
   );
 
+  // --- hearts------------------------------
+  reg  [2:0] hcount;
+  reg        ovf;
+  wire       h_on;
+  wire [1:0] h_code;
+
+  hearts u_hearts (
+    .x(px - HEARTS_X), .y(py - HEARTS_Y),
+    .hearts(hcount), .overflow(ovf),
+    .px_on(h_on), .px_code(h_code)
+  );
+
+  
+
   // ---- palet: exact zoals in renderer.v ------------------------------------
   reg [5:0] sat_rgb;
   always @(*) case (sat_code)
@@ -63,13 +78,15 @@ module render_tb;
     default: coin_rgb = 6'b00_00_00;
   endcase
 
+  wire [5:0] hearts_rgb = (h_code == 2'd1) ? 6'b11_00_00 : 6'b11_11_11;
 
 
   localparam [5:0] BG_HOME = 6'b01_10_11;
 
   reg [5:0] rgb;
   always @(*) begin
-    if      (sat_on)  rgb = sat_rgb;
+    if      (h_on) rgb = hearts_rgb;
+    else if      (sat_on)  rgb = sat_rgb;
     else if (coin_on) rgb = coin_rgb;
     else              rgb = BG_HOME;
   end
@@ -77,7 +94,9 @@ module render_tb;
   integer f, xi, yi;
   initial begin
     sat  = 3'd0;      // 0-5
-    coins = 10'd700;; // 0-1000
+    coins = 10'd700; // 0-1000
+    hcount = 3'd2;      // 0..5
+    ovf    = 1'b1;      // label aan
     f = $fopen("frame.ppm", "w");
     $fwrite(f, "P3\n640 480\n255\n");
     for (yi = 0; yi < 480; yi = yi + 1) begin

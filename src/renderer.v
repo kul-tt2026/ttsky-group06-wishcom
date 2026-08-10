@@ -41,6 +41,13 @@ module renderer (
 );
   localparam M_TITLE=2'd0, M_HOME=2'd1, M_CHEST=2'd2, M_GAMEOVER=2'd3;
 
+  // ======================= 0. ROTATE ======================================
+  // Fysiek scherm: 640x480 liggend.  Wij tekenen in PORTRET: 480 x 640.
+  // De monitor staat 90 graden gedraaid.
+  wire [9:0] px = pix_y;              // 0..479  -> portret-breedte
+  wire [9:0] py = 10'd639 - pix_x;    // 0..639  -> portret-hoogte
+
+
   // ======================= 1. PLACE =======================================
   // Every position is a constant HERE, in one file.  Moving anything on
   // screen is a one-line edit.
@@ -50,6 +57,7 @@ module renderer (
   localparam COINBAR_X  = 10'd24,  COINBAR_Y  = 10'd80;
   localparam CHEST0_X = 10'd80,  CHEST1_X = 10'd272, CHEST2_X = 10'd464;
   localparam CHEST_Y  = 10'd300; // moet x niet hetzelfde? 
+  localparam HEARTS_X = 10'd168, HEARTS_Y = 10'd16;
 
   // ======================= drawable instances =============================
   // DRAGON -----------------------------------------------------------------
@@ -61,7 +69,7 @@ module renderer (
 
 
   dragon_draw u_dragon (
-    .x(pix_x - DRAGON_X), .y(pix_y - DRAGON_Y),
+    .x(px - DRAGON_X), .y(py - DRAGON_Y),
     .state(dragon_form), .mood_anim(dragon_mood_anim),
     .px_on(dragon_on), .px_code(dragon_code)
   );
@@ -83,19 +91,19 @@ module renderer (
   wire [1:0] c0_code, c1_code, c2_code;
 
   chest_draw u_chest0 (
-    .x(pix_x - CHEST0_X), .y(pix_y - CHEST_Y),
+    .x(px - CHEST0_X), .y(py - CHEST_Y),
     .frame(chest_sel==2'd0 ? chest_frame : 2'd0),
     .highlighted(chest_sel==2'd0),
     .px_on(c0_on), .px_code(c0_code)
   );
   chest_draw u_chest1 (
-    .x(pix_x - CHEST1_X), .y(pix_y - CHEST_Y),
+    .x(px - CHEST1_X), .y(py - CHEST_Y),
     .frame(chest_sel==2'd1 ? chest_frame : 2'd0),
     .highlighted(chest_sel==2'd1),
     .px_on(c1_on), .px_code(c1_code)
   );
   chest_draw u_chest2 (
-    .x(pix_x - CHEST2_X), .y(pix_y - CHEST_Y),
+    .x(px - CHEST2_X), .y(py - CHEST_Y),
     .frame(chest_sel==2'd2 ? chest_frame : 2'd0),
     .highlighted(chest_sel==2'd2),
     .px_on(c2_on), .px_code(c2_code)
@@ -108,7 +116,7 @@ module renderer (
   wire sat_on;
   wire [2:0] sat_code;
   satisfactionbar u_satbar (
-    .x(pix_x - SATBAR_X), .y(pix_y - SATBAR_Y),
+    .x(px - SATBAR_X), .y(py - SATBAR_Y),
     .sat(satisfaction),
     .px_on(sat_on), .px_code(sat_code)
   );
@@ -117,7 +125,7 @@ module renderer (
   wire coin_on;
   wire [1:0] coin_code;
   coinbar u_coinbar (
-    .x(pix_x - COINBAR_X), .y(pix_y - COINBAR_Y),
+    .x(px - COINBAR_X), .y(py - COINBAR_Y),
     .coins(coins),
     .px_on(coin_on), .px_code(coin_code)
   );
@@ -128,7 +136,7 @@ module renderer (
   wire heartsinfo_on;
   wire [1:0] heartsinfo_code;
   hearts u_heartsinfo (
-    .pix_x(pix_x), .pix_y(pix_y),
+    .pix_x(px - HEARTS_X), .pix_y(py - HEARTS_Y),
     .hearts(hearts), .overflow(overflow),
     .px_on(heartsinfo_on), .px_code(heartsinfo_code)
   );
@@ -143,7 +151,7 @@ module renderer (
   wire [2:0] button_code;
 
   draw_buttons buttons_u (
-    .x(pix_x), .y(pix_y),
+    .x(px), .y(py),
     .evolve_now (evolve_now),
     .px_on(button_on), .px_code(button_code)
   );
