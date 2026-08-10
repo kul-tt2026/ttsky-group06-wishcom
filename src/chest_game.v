@@ -169,18 +169,18 @@ module chest_game (
                     minigame_done <= 1;
                 end
                 O_CURSED: begin
-                    pot_payout <= (pot + reward > 11'd999) ? 10'd999 : (pot+reward);
+                    pot_payout <= (pot + {2'b0, reward} > 11'd999) ? 10'd999 : (pot + {2'b0, reward});
                     req_coins_add <= 1;
                     req_heart_lose_chest <= 1;
                     minigame_done <= 1;
                 end
                 O_COIN: begin
-                    pot <= (pot + reward > 11'd999) ? 10'd999 : (pot+reward);
+                    pot <= (pot + {2'b0, reward} > 11'd999) ? 10'd999 : (pot + {2'b0, reward});
                     round <= (round == 4'd15) ? 4'd15 : (round + 1);
                     chest_state <= C_MENU;
                 end
                 O_2X: begin
-                    pot <= (pot << 1 > 11'd999) ? 10'd999 : (pot << 1);  // aka *2
+                    pot <= ({1'b0, pot} << 1 > 11'd999) ? 10'd999 : (pot << 1);  // aka *2
                     round <= (round == 4'd15) ? 4'd15 : (round + 1);
                     chest_state <= C_MENU;
                     end
