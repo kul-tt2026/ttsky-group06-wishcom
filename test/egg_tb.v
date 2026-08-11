@@ -3,7 +3,9 @@
 
 module egg_tb;
 
-  reg  [9:0] x, y;
+  reg  [9:0] pix_x, pix_y;
+  wire [9:0] px = pix_y;
+  wire [9:0] py = 10'd639 - pix_x;
   reg  [2:0] level;
   reg  [1:0] mood_anim;
   reg  [1:0] bob;        // Aangepast van [2:0] naar [1:0]
@@ -13,8 +15,8 @@ module egg_tb;
 
   // Instantiateer de ei_generator module
   ei_generator u_ei (
-    .x(x),
-    .y(y),
+    .x(px),
+    .y(py),
     .level(level),
     .mood_anim(mood_anim),
     .bob(bob),
@@ -28,7 +30,7 @@ module egg_tb;
     case (px_code)
       3'd0: rgb = 6'b00_00_00; // Rand: Zwart
       3'd1: rgb = 6'b11_11_11; // Ei basis: Wit
-      3'd2: rgb = 6'b11_00_00; // Vlekjes: Rood
+      3'd2: rgb = 6'b00_11_00; // Vlekjes: groen
       default: rgb = 6'b01_01_01; // Donkergrijs
     endcase
   end
@@ -47,8 +49,8 @@ module egg_tb;
 
     for (yi = 0; yi < 480; yi = yi + 1) begin
       for (xi = 0; xi < 640; xi = xi + 1) begin
-        x = xi[9:0];
-        y = yi[9:0];
+        pix_x = xi[9:0];
+        pix_y = yi[9:0];
 
         #1;
 
