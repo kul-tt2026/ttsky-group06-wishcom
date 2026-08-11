@@ -79,7 +79,7 @@ module tt_um_dragonchi (
   wire req_coins_add, req_heart_lose_chest;
   chest_game u_chest_game (
     .clk(clk), .rst_n(rst_n), .frame_tick(frame_tick),
-    .active(mode == 3'd2),
+    .active(mode == 3'd3),
     .btn_pressed(btn_pressed),
     .pot_payout(coins_amount),
     .chest_state(chest_state), .chest_sel(chest_sel),
