@@ -46,6 +46,7 @@ module tt_um_dragonchi (
   // ---- home screen / mode control (Person A) ----
   wire [2:0] mode;
   wire [2:0] menu_sel;
+  wire [1:0] egg_frame;
   wire you_win, overflow, evolve_now;
   wire act_feed, act_drink, act_sleep, act_minigame, req_evolve, restart;
   wire game_over, minigame_done;
@@ -56,7 +57,8 @@ module tt_um_dragonchi (
     .game_over(game_over), .minigame_done(minigame_done), .coins(coins),
     .mode(mode), .menu_sel(menu_sel),
     .act_feed(act_feed), .act_drink(act_drink), .act_sleep(act_sleep),
-    .req_evolve(req_evolve), .restart(restart), .you_win(you_win), .act_minigame(act_minigame)
+    .req_evolve(req_evolve), .restart(restart), .you_win(you_win), .act_minigame(act_minigame),
+    .egg_frame(egg_frame)
   );
 
   // ---- balance game (Person B) ----
@@ -122,6 +124,8 @@ module tt_um_dragonchi (
     .hsync(hsync), .vsync(vsync), .display_on(video_active),
     .hpos(pix_x), .vpos(pix_y)
   );
+
+
   renderer u_renderer (
     .pix_x(pix_x), .pix_y(pix_y), .video_active(video_active),
     .mode(mode), .menu_sel(menu_sel),
@@ -131,7 +135,8 @@ module tt_um_dragonchi (
     .chest_outcome(chest_outcome),
     .dragon_bob(dragon_bob), .dragon_mood_anim(dragon_mood_anim),
     .chest_frame(chest_frame), .flash(flash), .flame_frame(flame_frame),
-    .R(R), .G(G), .B(B), .overflow(overflow), .evolve_now(evolve_now)
+    .R(R), .G(G), .B(B), .overflow(overflow), .evolve_now(evolve_now),
+    .egg_frame(egg_frame)
   );
 
   
