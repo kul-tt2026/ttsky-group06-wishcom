@@ -12,8 +12,8 @@ module renderer (
     input  wire [9:0] pix_y,
     input  wire       video_active,
 
-    input  wire [1:0] mode,          // 0 TITLE, 1 HOME, 2 CHEST, 3 GAMEOVER
-    input  wire [1:0] menu_sel,
+    input  wire [2:0] mode,          // 0 TITLE, 1 HOME, 2 CHEST, 3 GAMEOVER
+    input  wire [2:0] menu_sel,
     input  wire [2:0] hearts, // 3 bit
     input  wire [2:0] satisfaction, // 3 bit => 5 options
     input  wire [9:0] coins, //tot 1000: level 1 20, level 2 40, level 3 80, level 160, level 
@@ -25,10 +25,10 @@ module renderer (
     input  wire [1:0] chest_frame, // 0 closed, 1 opening, 2 open
     input  wire [1:0] chest_state,
     input  wire [1:0] chest_sel, // welke kist is selected (0,1,2)
-    input  wire [1:0] chest_outcome,
+    input  wire [2:0] chest_outcome,
 
     input  wire [1:0] dragon_form, // weet niet of dit voldoende bits heeft 
-    input  wire [1:0] dragon_mood_anim,
+    input  wire [2:0] dragon_mood_anim,
     input  wire       flash,
     input  wire       flame_frame,
 
