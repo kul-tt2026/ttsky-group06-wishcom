@@ -19,7 +19,7 @@ module chest_game (
     input  wire       clk,
     input  wire       rst_n,
     input  wire       frame_tick,
-    input  wire       active,             // mode == M_CHEST (from home.v)
+    input  wire       active,            // mode == M_CHEST (from home.v)
     input  wire [7:0] btn_pressed,
 
     output reg  [1:0] chest_state,        // 0 picking, 1 opening, 2 result

@@ -15,7 +15,7 @@ module dragon_state (
     input  wire       clk,
     input  wire       rst_n,
     input  wire       frame_tick,
-    input  wire       restart,            // from home.v: new game
+    input  wire       restart,            // from home.vo: new game
 
     // requests from balance.v
     input  wire       req_heart_gain,
