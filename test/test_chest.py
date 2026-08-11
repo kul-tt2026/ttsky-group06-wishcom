@@ -37,7 +37,7 @@ async def test_chest_game_win_and_cashout(dut):
     # 3. Activeer de minigame
     dut.active.value = 1
     
-    # KANSER: Geef de chip 1 frame_tick om de kisten te schudden (dealt = 1 maken)
+    # RNG: Geef de chip 1 frame_tick om de kisten te schudden (dealt = 1 maken)
     await pulse_frame_tick(dut, 1)
     
     assert int(dut.chest_state.value) == C_PICK, "State is niet C_PICK na activatie"
@@ -64,7 +64,7 @@ async def test_chest_game_win_and_cashout(dut):
     await pulse_frame_tick(dut, 1) # Verwerkt de knopdruk
     dut.btn_pressed.value = 0      # Laat knop weer los!
 
-    # KANSER: Geef de klok 1 tick de tijd om de nieuwe state (C_OPEN) te registreren!
+    # RNG: Geef de klok 1 tick de tijd om de nieuwe state (C_OPEN) te registreren!
     await ClockCycles(dut.clk, 1)
 
     # Nu MOET hij in C_OPEN (1) zitten!
@@ -142,7 +142,7 @@ async def test_chest_game_bomb(dut):
     # 3. Activeer de minigame
     dut.active.value = 1
     
-    # KANSER: Geef de chip 1 frame_tick om de kisten te schudden (dealt = 1 maken)
+    # RNG: Geef de chip 1 frame_tick om de kisten te schudden (dealt = 1 maken)
     await pulse_frame_tick(dut, 1)
     
     assert int(dut.chest_state.value) == C_PICK, "State is niet C_PICK na activatie"
@@ -174,7 +174,7 @@ async def test_chest_game_bomb(dut):
 
     print("BOM kist gekozen!")
 
-    # KANSER: Geef de klok 1 tick de tijd om de nieuwe state (C_OPEN) te registreren!
+    # RNG: Geef de klok 1 tick de tijd om de nieuwe state (C_OPEN) te registreren!
     await ClockCycles(dut.clk, 1)
 
     # Nu MOET hij in C_OPEN (1) zitten!
@@ -241,7 +241,7 @@ async def test_chest_game_BOMB2(dut):
     # 3. Activeer de minigame
     dut.active.value = 1
     
-    # KANSER: Geef de chip 1 frame_tick om de kisten te schudden (dealt = 1 maken)
+    # RNG: Geef de chip 1 frame_tick om de kisten te schudden (dealt = 1 maken)
     await pulse_frame_tick(dut, 1)
     
     assert int(dut.chest_state.value) == C_PICK, "State is niet C_PICK na activatie"
@@ -345,7 +345,7 @@ async def test_chest_game_BOMB2(dut):
 
     print("BOMB2 kist gekozen!")
 
-    # KANSER: Geef de klok 1 tick de tijd om de nieuwe state (C_OPEN) te registreren!
+    # RNG: Geef de klok 1 tick de tijd om de nieuwe state (C_OPEN) te registreren!
     await ClockCycles(dut.clk, 1)
 
     # Nu MOET hij in C_OPEN (1) zitten!
@@ -411,7 +411,7 @@ async def test_chest_game_CURSED(dut):
     # 3. Activeer de minigame
     dut.active.value = 1
     
-    # KANSER: Geef de chip 1 frame_tick om de kisten te schudden (dealt = 1 maken)
+    # RNG: Geef de chip 1 frame_tick om de kisten te schudden (dealt = 1 maken)
     await pulse_frame_tick(dut, 1)
     
     assert int(dut.chest_state.value) == C_PICK, "State is niet C_PICK na activatie"
@@ -436,7 +436,7 @@ async def test_chest_game_CURSED(dut):
     await pulse_frame_tick(dut, 1) # Verwerkt de knopdruk
     dut.btn_pressed.value = 0      # Laat knop weer los!
 
-    # KANSER: Geef de klok 1 tick de tijd om de nieuwe state (C_OPEN) te registreren!
+    # RNG: Geef de klok 1 tick de tijd om de nieuwe state (C_OPEN) te registreren!
     await ClockCycles(dut.clk, 1)
 
     # Nu MOET hij in C_OPEN (1) zitten!
@@ -509,7 +509,7 @@ async def test_chest_game_CURSED(dut):
 
     print("cursed kist gekozen!")
 
-    # KANSER: Geef de klok 1 tick de tijd om de nieuwe state (C_OPEN) te registreren!
+    # RNG: Geef de klok 1 tick de tijd om de nieuwe state (C_OPEN) te registreren!
     await ClockCycles(dut.clk, 1)
 
     # Nu MOET hij in C_OPEN (1) zitten!
@@ -575,7 +575,7 @@ async def test_chest_game_2x(dut):
     # 3. Activeer de minigame
     dut.active.value = 1
     
-    # KANSER: Geef de chip 1 frame_tick om de kisten te schudden (dealt = 1 maken)
+    # RNG: Geef de chip 1 frame_tick om de kisten te schudden (dealt = 1 maken)
     await pulse_frame_tick(dut, 1)
     
     assert int(dut.chest_state.value) == C_PICK, "State is niet C_PICK na activatie"
@@ -600,7 +600,7 @@ async def test_chest_game_2x(dut):
     await pulse_frame_tick(dut, 1) # Verwerkt de knopdruk
     dut.btn_pressed.value = 0      # Laat knop weer los!
 
-    # KANSER: Geef de klok 1 tick de tijd om de nieuwe state (C_OPEN) te registreren!
+    # RNG: Geef de klok 1 tick de tijd om de nieuwe state (C_OPEN) te registreren!
     await ClockCycles(dut.clk, 1)
 
     # Nu MOET hij in C_OPEN (1) zitten!
@@ -673,7 +673,7 @@ async def test_chest_game_2x(dut):
 
     print("2x kist gekozen!")
 
-    # KANSER: Geef de klok 1 tick de tijd om de nieuwe state (C_OPEN) te registreren!
+    # RNG: Geef de klok 1 tick de tijd om de nieuwe state (C_OPEN) te registreren!
     await ClockCycles(dut.clk, 1)
 
     # Nu MOET hij in C_OPEN (1) zitten!
@@ -866,3 +866,395 @@ async def test_chest_game_perfect_run(dut):
             assert int(dut.chest_state.value) == C_PICK, "Chip resette niet netjes nadat active 0 werd!"
 
             print(f"✅ PERFECT RUN GESLAAGD! De speler heeft de game uitgespeeld en {hardware_pot} munten gewonnen!")
+
+
+
+@cocotb.test()
+async def test_chest_down_bounds(dut):
+    # 1. Start de klok
+    cocotb.start_soon(Clock(dut.clk, 40, units="ns").start())
+
+    # 2. Reset de chip
+    dut.active.value = 0
+    dut.btn_pressed.value = 0
+    dut.frame_tick.value = 0
+    dut.rst_n.value = 0
+    await ClockCycles(dut.clk, 5)
+    dut.rst_n.value = 1
+    await ClockCycles(dut.clk, 2)
+
+    # 3. Activeer de minigame
+    dut.active.value = 1
+    
+    # RNG: Geef de chip 1 frame_tick om de kisten te schudden (dealt = 1 maken)
+    await pulse_frame_tick(dut, 1)
+    
+    assert int(dut.chest_state.value) == C_PICK, "State is niet C_PICK na activatie"
+
+    # 4. Spam down
+    for i in range(7):
+        # Druk op DOWN
+        dut.btn_pressed.value = (1 << BTN_DOWN)
+        await pulse_frame_tick(dut, 1)
+        dut.btn_pressed.value = 0
+        await pulse_frame_tick(dut, 1) # Wacht 1 frame voor debounce/loslaten
+    
+    assert int(dut.chest_sel.value) >= 0 and int(dut.chest_sel.value) < 3, f"chest_sel oob"
+
+    
+
+@cocotb.test()
+async def test_chest_up_bounds(dut):
+    # 1. Start de klok
+    cocotb.start_soon(Clock(dut.clk, 40, units="ns").start())
+
+    # 2. Reset de chip
+    dut.active.value = 0
+    dut.btn_pressed.value = 0
+    dut.frame_tick.value = 0
+    dut.rst_n.value = 0
+    await ClockCycles(dut.clk, 5)
+    dut.rst_n.value = 1
+    await ClockCycles(dut.clk, 2)
+
+    # 3. Activeer de minigame
+    dut.active.value = 1
+    
+    # RNG: Geef de chip 1 frame_tick om de kisten te schudden (dealt = 1 maken)
+    await pulse_frame_tick(dut, 1)
+    
+    assert int(dut.chest_state.value) == C_PICK, "State is niet C_PICK na activatie"
+
+    # 4. Spam down
+    for i in range(7):
+        # Druk op DOWN
+        dut.btn_pressed.value = (1 << BTN_UP)
+        await pulse_frame_tick(dut, 1)
+        dut.btn_pressed.value = 0
+        await pulse_frame_tick(dut, 1) # Wacht 1 frame voor debounce/loslaten
+    
+    assert int(dut.chest_sel.value) >= 0 and int(dut.chest_sel.value) < 3, f"chest_sel oob"
+
+
+
+@cocotb.test()
+async def test_chest_quit_round_zero(dut):
+    # 1. Start de klok
+    cocotb.start_soon(Clock(dut.clk, 40, units="ns").start())
+
+    # 2. Reset de chip
+    dut.active.value = 0
+    dut.btn_pressed.value = 0
+    dut.frame_tick.value = 0
+    dut.rst_n.value = 0
+    await ClockCycles(dut.clk, 5)
+    dut.rst_n.value = 1
+    await ClockCycles(dut.clk, 2)
+
+    # 3. Activeer de minigame
+    dut.active.value = 1
+    
+    # RNG: Geef de chip 1 frame_tick om de kisten te schudden (dealt = 1 maken)
+    await pulse_frame_tick(dut, 1)
+    
+    assert int(dut.chest_state.value) == C_PICK, "State is niet C_PICK na activatie"
+
+    # 4. Druk op DOWN
+    dut.btn_pressed.value = (1 << BTN_DOWN)
+    await pulse_frame_tick(dut, 1)
+    dut.btn_pressed.value = 0
+    await pulse_frame_tick(dut, 1) # Wacht 1 frame voor debounce/loslaten
+    
+    # 5. QUIT
+    dut.btn_pressed.value = (1 << BTN_BACK)
+    await pulse_frame_tick(dut, 1)
+    dut.btn_pressed.value = 0
+
+    assert int(dut.pot_payout.value) == 0, f"pot_payout was {int(dut.pot_payout.value)}, moest 0 zijn"
+    assert int(dut.minigame_done.value) == 1, "minigame_done niet verstuurd!"
+    assert int(dut.req_heart_lose_chest.value) == 0, "req_heart_lose_chest is niet 0 na quit"
+
+
+
+@cocotb.test()
+async def test_quit_round_any(dut):
+    # 1. Start de klok
+    cocotb.start_soon(Clock(dut.clk, 40, units="ns").start())
+
+    # 2. Reset de chip
+    dut.active.value = 0
+    dut.btn_pressed.value = 0
+    dut.frame_tick.value = 0
+    dut.rst_n.value = 0
+    await ClockCycles(dut.clk, 5)
+    dut.rst_n.value = 1
+    await ClockCycles(dut.clk, 2)
+
+    # 3. Activeer de minigame
+    dut.active.value = 1
+    
+    # RNG: Geef de chip 1 frame_tick om de kisten te schudden (dealt = 1 maken)
+    await pulse_frame_tick(dut, 1)
+    
+    assert int(dut.chest_state.value) == C_PICK, "State is niet C_PICK na activatie"
+
+    # 4. Speel 2 rondes (0 & 1)
+    for huidige_ronde in range(2):
+        print(f"\n--- Start Ronde {huidige_ronde + 1} ---")
+        
+        # SPIEKEN: We zoeken de beste kist (O_2X is prioriteit, anders O_COIN)
+        doel_kist = 0
+        gevonden_item = O_COIN
+        for i in range(3):
+            inhoud = int(dut.contents[i].value)
+            if inhoud == O_2X:
+                doel_kist = i
+                gevonden_item = O_2X
+                break # 2X is het beste, we kunnen stoppen met zoeken
+            elif inhoud == O_COIN:
+                doel_kist = i
+                gevonden_item = O_COIN
+        
+        item_naam = "2X" if gevonden_item == O_2X else "COIN"
+        print(f"Spieken: We hebben een {item_naam} gevonden in kist {doel_kist}.")
+
+        # CURSOR VERPLAATSEN
+        huidige_sel = int(dut.chest_sel.value)
+        while huidige_sel != doel_kist:
+            if huidige_sel < doel_kist:
+                dut.btn_pressed.value = (1 << BTN_DOWN)
+            else:
+                dut.btn_pressed.value = (1 << BTN_UP)
+            
+            await pulse_frame_tick(dut, 1)
+            dut.btn_pressed.value = 0
+            await pulse_frame_tick(dut, 1)
+            huidige_sel = int(dut.chest_sel.value)
+
+        # KIST OPENEN (SELECT)
+        dut.btn_pressed.value = (1 << BTN_SELECT)
+        await pulse_frame_tick(dut, 1)
+        dut.btn_pressed.value = 0
+        await ClockCycles(dut.clk, 1) # Registratie tick
+        
+        assert int(dut.chest_state.value) == C_OPEN, "Niet naar C_OPEN gegaan!"
+
+        # ANIMATIE 1 DOORVERWERKEN (C_OPEN -> C_RESULT)
+        timeout = 0
+        while int(dut.chest_state.value) == C_OPEN:
+            await pulse_frame_tick(dut, 1)
+            timeout += 1
+            if timeout > 100: assert False, "Vastgelopen in C_OPEN"
+            
+        assert int(dut.chest_state.value) == C_RESULT, "Niet naar C_RESULT gegaan!"
+
+        # ANIMATIE 2 DOORVERWERKEN (C_RESULT -> Verder)
+        timeout = 0
+        while int(dut.chest_state.value) == C_RESULT:
+            await pulse_frame_tick(dut, 1)
+            timeout += 1
+            if timeout > 100: assert False, "Vastgelopen in C_RESULT"
+
+        # We zouden nu terug in C_MENU moeten zijn (want COIN triggert geen game over)
+        assert int(dut.chest_state.value) == C_MENU, "Niet terug in C_MENU beland"        
+
+        # naar volgende ronde vanuit C_MENU (SELECT)
+        dut.btn_pressed.value = (1 << BTN_SELECT)
+        await pulse_frame_tick(dut, 1)
+        dut.btn_pressed.value = 0
+
+        #Geef de chip exact 1 frame om de nieuwe kisten te vullen!
+        await pulse_frame_tick(dut, 1)
+
+        # We moeten door naar de volgende ronde, dus terug in C_PICK
+        assert int(dut.chest_state.value) == C_PICK, "Spel had door moeten gaan, maar is gestopt!"
+
+
+    # 5. Druk op DOWN
+    dut.btn_pressed.value = (1 << BTN_DOWN)
+    await pulse_frame_tick(dut, 1)
+    dut.btn_pressed.value = 0
+    await pulse_frame_tick(dut, 1) # Wacht 1 frame voor debounce/loslaten
+    
+    # 6. QUIT
+    dut.btn_pressed.value = (1 << BTN_BACK)
+    await pulse_frame_tick(dut, 1)
+    dut.btn_pressed.value = 0
+
+    assert int(dut.req_coins_add.value) == 1, f"req_coins_add is niet 1 na quit"
+    assert int(dut.pot_payout.value) == 80, f"pot_payout was {int(dut.pot_payout.value)}, moest 80 zijn"
+    assert int(dut.minigame_done.value) == 1, "minigame_done niet verstuurd!"
+    assert int(dut.req_heart_lose_chest.value) == 0, "req_heart_lose_chest is niet 0 na quit"
+
+
+
+@cocotb.test()
+async def test_button_smash_during_animation_has_no_effect(dut):
+    # 1. Start de klok
+    cocotb.start_soon(Clock(dut.clk, 40, units="ns").start())
+
+    # 2. Reset de chip
+    dut.active.value = 0
+    dut.btn_pressed.value = 0
+    dut.frame_tick.value = 0
+    dut.rst_n.value = 0
+    await ClockCycles(dut.clk, 5)
+    dut.rst_n.value = 1
+    await ClockCycles(dut.clk, 2)
+
+    # 3. Activeer de minigame
+    dut.active.value = 1
+    
+    # RNG: Geef de chip 1 frame_tick om de kisten te schudden (dealt = 1 maken)
+    await pulse_frame_tick(dut, 1)
+    
+    assert int(dut.chest_state.value) == C_PICK, "State is niet C_PICK na activatie"
+
+    # 4. SPIEKEN: Waar zit de munt?
+    doel_kist = 0
+    for i in range(3):
+        if int(dut.contents[i].value) == O_COIN:
+            doel_kist = i
+            break
+
+    # 5. Navigeer de cursor naar de juiste kist
+    huidige_sel = int(dut.chest_sel.value)
+    while huidige_sel < doel_kist:
+        # Druk op RECHTS (btn 5 -> bitmask 1 << 5 = 32, of 1 << BTN_DOWN)
+        dut.btn_pressed.value = (1 << BTN_DOWN)
+        await pulse_frame_tick(dut, 1)
+        dut.btn_pressed.value = 0
+        await pulse_frame_tick(dut, 1) # Wacht 1 frame voor debounce/loslaten
+        huidige_sel = int(dut.chest_sel.value)
+
+    # 6. Druk op SELECT om de kist te openen
+    dut.btn_pressed.value = (1 << BTN_SELECT)
+    await pulse_frame_tick(dut, 1) # Verwerkt de knopdruk
+    dut.btn_pressed.value = 0      # Laat knop weer los!
+
+    # RNG: Geef de klok 1 tick de tijd om de nieuwe state (C_OPEN) te registreren!
+    await ClockCycles(dut.clk, 1)
+
+    # Nu MOET hij in C_OPEN (1) zitten!
+    assert int(dut.chest_state.value) == C_OPEN, f"Moest C_OPEN (1) zijn, maar was state {int(dut.chest_state.value)}"
+
+    # 7. Spoel de animatie timers door
+    # We wachten dynamisch tot de state verandert (met een timeout voor de veiligheid)
+    timeout_counter = 0
+    while int(dut.chest_state.value) == C_OPEN:
+        await pulse_frame_tick(dut, 1)
+        timeout_counter += 1
+        dut.btn_pressed.value = 0b1111_1111     # push all buttons at once
+        if timeout_counter > 100:
+            assert False, f"Timeout! Chip zat na 100 frames nog steeds vast in C_OPEN"
+
+    assert int(dut.chest_state.value) == C_RESULT, "Niet naar C_RESULT gegaan na animatie 1"
+    
+    # Wacht nu op de tweede animatie (C_RESULT -> C_PICK)
+    timeout_counter = 0
+    while int(dut.chest_state.value) == C_RESULT:
+        await pulse_frame_tick(dut, 1)
+        timeout_counter += 1
+        dut.btn_pressed.value = 0b1111_1111     # push all buttons at once
+        if timeout_counter > 100:
+            assert False, f"Timeout! Chip zat na 100 frames nog steeds vast in C_RESULT"
+
+    # We zouden nu terug in C_MENU moeten zijn (want COIN triggert geen game over)
+    assert int(dut.chest_state.value) == C_MENU, "Niet terug in C_MENU beland"
+    
+    # 8. Check de winst! Pot = 40 (reward van ronde 0) en round = 1
+    huidige_pot = int(dut.pot.value)
+    huidige_ronde = int(dut.round.value)
+    assert huidige_pot == 40, f"Pot zou 40 moeten zijn, maar is {huidige_pot}"
+    assert huidige_ronde == 1, f"Ronde zou 1 moeten zijn, maar is {huidige_ronde}"
+
+    # 10. Check uitgaande signalen voor cashout
+    assert int(dut.req_coins_add.value) == 0, "req_coins_add is niet 1 na cashout!"
+    assert int(dut.pot_payout.value) == 0, f"pot_payout was {int(dut.pot_payout.value)}, moest 0 zijn"
+    assert int(dut.minigame_done.value) == 0, "minigame_done niet verstuurd!"
+    assert int(dut.req_heart_lose_chest.value) == 0, "req_heart_lose_chest is niet 0 na cashout"
+
+    # 9. Cash out (Stop op tijd)
+    dut.btn_pressed.value = (1 << BTN_BACK)
+    await pulse_frame_tick(dut, 1)
+    dut.btn_pressed.value = 0
+    
+    # Wacht 1 clock tick om de combinatorische logica (en reset) door te laten tikken
+    await ClockCycles(dut.clk, 1) 
+
+    # 10. Check uitgaande signalen
+    assert int(dut.req_coins_add.value) == 1, "req_coins_add is niet 1 na cashout!"
+    assert int(dut.pot_payout.value) == 40, f"pot_payout was {int(dut.pot_payout.value)}, moest 40 zijn"
+    assert int(dut.minigame_done.value) == 1, "minigame_done niet verstuurd!"
+    assert int(dut.req_heart_lose_chest.value) == 0, "req_heart_lose_chest is niet 0 na cashout"
+
+    # home.v ziet minigame_done en sluit de game:
+    dut.active.value = 0
+    await pulse_frame_tick(dut, 1)
+    
+    # Verifieer dat de chip echt terug reset naar het begin!
+    assert int(dut.chest_state.value) == C_PICK, "Chip resette niet netjes nadat active 0 werd!"
+
+
+
+@cocotb.test()
+async def test_unexpected_active_zero(dut):
+    # 1. Start de klok
+    cocotb.start_soon(Clock(dut.clk, 40, units="ns").start())
+
+    # 2. Reset de chip
+    dut.active.value = 0
+    dut.btn_pressed.value = 0
+    dut.frame_tick.value = 0
+    dut.rst_n.value = 0
+    await ClockCycles(dut.clk, 5)
+    dut.rst_n.value = 1
+    await ClockCycles(dut.clk, 2)
+
+    # 3. Activeer de minigame
+    dut.active.value = 1
+    
+    # RNG: Geef de chip 1 frame_tick om de kisten te schudden (dealt = 1 maken)
+    await pulse_frame_tick(dut, 1)
+    
+    assert int(dut.chest_state.value) == C_PICK, "State is niet C_PICK na activatie"
+
+    # 4. SPIEKEN: Waar zit de munt?
+    doel_kist = 0
+    for i in range(3):
+        if int(dut.contents[i].value) == O_COIN:
+            doel_kist = i
+            break
+
+    # 5. Navigeer de cursor naar de juiste kist
+    huidige_sel = int(dut.chest_sel.value)
+    while huidige_sel < doel_kist:
+        # Druk op RECHTS (btn 5 -> bitmask 1 << 5 = 32, of 1 << BTN_DOWN)
+        dut.btn_pressed.value = (1 << BTN_DOWN)
+        await pulse_frame_tick(dut, 1)
+        dut.btn_pressed.value = 0
+        await pulse_frame_tick(dut, 1) # Wacht 1 frame voor debounce/loslaten
+        huidige_sel = int(dut.chest_sel.value)
+
+    # 6. Druk op SELECT om de kist te openen
+    dut.btn_pressed.value = (1 << BTN_SELECT)
+    await pulse_frame_tick(dut, 1) # Verwerkt de knopdruk
+    dut.btn_pressed.value = 0      # Laat knop weer los!
+
+    # RNG: Geef de klok 1 tick de tijd om de nieuwe state (C_OPEN) te registreren!
+    await ClockCycles(dut.clk, 1)
+
+    # Nu MOET hij in C_OPEN (1) zitten!
+    assert int(dut.chest_state.value) == C_OPEN, f"Moest C_OPEN (1) zijn, maar was state {int(dut.chest_state.value)}"
+
+    # make active 0 out of nowhere (eg home.v interrupts for some reason)
+    dut.active.value = 0
+
+    # Wacht 1 clock tick om de combinatorische logica (en reset) door te laten tikken
+    await ClockCycles(dut.clk, 2) 
+    
+    # Verifieer dat de chip echt terug reset naar het begin!
+    assert int(dut.chest_state.value) == C_PICK, "Chip resette niet netjes nadat active 0 werd! (state)"
+    assert int(dut.dealt.value) == 0, "Chip resette niet netjes nadat active 0 werd! (dealt)"
+    assert int(dut.pot.value) == 0, "Chip resette niet netjes nadat active 0 werd! (pot)"
+    assert int(dut.round.value) == 0, "Chip resette niet netjes nadat active 0 werd! (round)"
