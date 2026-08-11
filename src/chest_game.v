@@ -153,10 +153,9 @@ module chest_game (
         end
 
         C_RESULT: begin
-          // TODO Person C: when timer==0:
+          //  when timer==0:
           //  * fire the matching req_* pulse for chest_outcome
           //  * dealt<=0; chest_state<=C_PICK; minigame_done<=1
-          //    (decide with the team: one chest per visit, or several?)
           if (timer == 0) begin
             case (chest_outcome)
                 O_BOMB: begin
@@ -169,7 +168,7 @@ module chest_game (
                     minigame_done <= 1;
                 end
                 O_CURSED: begin
-                    pot_payout <= (pot + {2'b0, reward} > 11'd999) ? 10'd999 : (pot + {2'b0, reward});
+                    pot_payout <= pot; //(pot + {2'b0, reward} > 11'd999) ? 10'd999 : (pot + {2'b0, reward});
                     req_coins_add <= 1;
                     req_heart_lose_chest <= 1;
                     minigame_done <= 1;

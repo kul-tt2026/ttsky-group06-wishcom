@@ -118,6 +118,13 @@ async def test_chest_game_win_and_cashout(dut):
     assert int(dut.minigame_done.value) == 1, "minigame_done niet verstuurd!"
     assert int(dut.req_heart_lose_chest.value) == 0, "req_heart_lose_chest is niet 0 na cashout"
 
+    # home.v ziet minigame_done en sluit de game:
+    dut.active.value = 0
+    await pulse_frame_tick(dut, 1)
+    
+    # Verifieer dat de chip echt terug reset naar het begin!
+    assert int(dut.chest_state.value) == C_PICK, "Chip resette niet netjes nadat active 0 werd!"
+
 @cocotb.test()
 async def test_chest_game_bomb(dut):
     # 1. Start de klok
@@ -207,6 +214,13 @@ async def test_chest_game_bomb(dut):
     assert int(dut.pot_payout.value) == 0, f"pot_payout was {int(dut.pot_payout.value)}, moest 0 zijn"
     assert int(dut.minigame_done.value) == 1, "minigame_done niet verstuurd!"
     assert int(dut.req_heart_lose_chest.value) == 0, "req_heart_lose_chest is niet 0 na bom"
+
+    # home.v ziet minigame_done en sluit de game:
+    dut.active.value = 0
+    await pulse_frame_tick(dut, 1)
+    
+    # Verifieer dat de chip echt terug reset naar het begin!
+    assert int(dut.chest_state.value) == C_PICK, "Chip resette niet netjes nadat active 0 werd!"
 
     
 
@@ -372,6 +386,13 @@ async def test_chest_game_BOMB2(dut):
     assert int(dut.minigame_done.value) == 1, "minigame_done niet verstuurd!"
     assert int(dut.req_heart_lose_chest.value) == 1, "req_heart_lose_chest is niet 1 na bomb2"
 
+    # home.v ziet minigame_done en sluit de game:
+    dut.active.value = 0
+    await pulse_frame_tick(dut, 1)
+    
+    # Verifieer dat de chip echt terug reset naar het begin!
+    assert int(dut.chest_state.value) == C_PICK, "Chip resette niet netjes nadat active 0 werd!"
+
 
 @cocotb.test()
 async def test_chest_game_CURSED(dut):
@@ -525,9 +546,16 @@ async def test_chest_game_CURSED(dut):
 
     # 10. Check uitgaande signalen
     assert int(dut.req_coins_add.value) == 1, "req_coins_add is niet 1 na cursed!"
-    assert int(dut.pot_payout.value) == 100, f"pot_payout was {int(dut.pot_payout.value)}, moest 100 zijn"
+    assert int(dut.pot_payout.value) == 40, f"pot_payout was {int(dut.pot_payout.value)}, moest 40 zijn"
     assert int(dut.minigame_done.value) == 1, "minigame_done niet verstuurd!"
     assert int(dut.req_heart_lose_chest.value) == 1, "req_heart_lose_chest is niet 1 na cursed"
+
+    # home.v ziet minigame_done en sluit de game:
+    dut.active.value = 0
+    await pulse_frame_tick(dut, 1)
+    
+    # Verifieer dat de chip echt terug reset naar het begin!
+    assert int(dut.chest_state.value) == C_PICK, "Chip resette niet netjes nadat active 0 werd!"
 
 
 @cocotb.test()
@@ -674,7 +702,7 @@ async def test_chest_game_2x(dut):
     # 9. Check de winst! Pot = 80 (reward van ronde 0) en round = 2
     huidige_pot = int(dut.pot.value)
     huidige_ronde = int(dut.round.value)
-    assert huidige_pot == 80, f"Pot zou 40 moeten zijn, maar is {huidige_pot}"
+    assert huidige_pot == 80, f"Pot zou 80 moeten zijn, maar is {huidige_pot}"
     assert huidige_ronde == 2, f"Ronde zou 0 moeten zijn, maar is {huidige_ronde}"
 
     # 10. Check uitgaande signalen
@@ -696,6 +724,13 @@ async def test_chest_game_2x(dut):
     assert int(dut.pot_payout.value) == 80, f"pot_payout was {int(dut.pot_payout.value)}, moest 80 zijn"
     assert int(dut.minigame_done.value) == 1, "minigame_done niet verstuurd!"
     assert int(dut.req_heart_lose_chest.value) == 0, "req_heart_lose_chest is niet 0 na 2x"
+
+    # home.v ziet minigame_done en sluit de game:
+    dut.active.value = 0
+    await pulse_frame_tick(dut, 1)
+    
+    # Verifieer dat de chip echt terug reset naar het begin!
+    assert int(dut.chest_state.value) == C_PICK, "Chip resette niet netjes nadat active 0 werd!"
 
 
 @cocotb.test()
@@ -823,4 +858,11 @@ async def test_chest_game_perfect_run(dut):
 
             eind_payout = int(dut.pot_payout.value)
             assert eind_payout == verwachte_pot, f"Payout was {eind_payout}, maar verwachtte de 999 cap!"
+
+            # home.v ziet minigame_done en sluit de game:
+            dut.active.value = 0
+            await pulse_frame_tick(dut, 1)
+            # Verifieer dat de chip echt terug reset naar het begin!
+            assert int(dut.chest_state.value) == C_PICK, "Chip resette niet netjes nadat active 0 werd!"
+
             print(f"✅ PERFECT RUN GESLAAGD! De speler heeft de game uitgespeeld en {hardware_pot} munten gewonnen!")
