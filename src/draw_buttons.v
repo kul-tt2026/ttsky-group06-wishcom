@@ -11,7 +11,7 @@ module draw_buttons (
     input  wire [9:0] x,            // local
     input  wire [9:0] y,
     input  wire evolve_now,         // of level_up border
-    output wire       px_on
+    output wire       px_on,
     output wire [2:0] px_code       // 
 );
 
