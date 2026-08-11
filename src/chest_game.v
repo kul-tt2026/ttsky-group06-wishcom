@@ -188,19 +188,19 @@ module chest_game (
             endcase
           end
         end
-      C_MENU: begin
-        if (btn_pressed[6]) begin
-          dealt <= 0;
-          chest_state <= C_PICK;
-        end
-        else if (btn_pressed[7]) begin
-          if (pot > 0) begin
-                  req_coins_add <= 1;
-                  pot_payout <= pot;
+        C_MENU: begin
+          if (btn_pressed[6]) begin
+            dealt <= 0;
+            chest_state <= C_PICK;
           end
-          minigame_done <= 1;
+          else if (btn_pressed[7]) begin
+            if (pot > 0) begin
+                    req_coins_add <= 1;
+                    pot_payout <= pot;
+            end
+            minigame_done <= 1;
+          end
         end
-      end
 
       default: chest_state<=C_PICK;
       endcase

@@ -2,10 +2,13 @@ SIM = icarus
 TOPLEVEL_LANG = verilog
 FST = -fst
 
-# Voeg HIER beide source files toe, of gebruik een wildcard: $(PWD)/../src/*.v
+# We laden NU alleen de dual_lfsr & chest_game code in
 VERILOG_SOURCES = $(PWD)/../src/chest_game.v $(PWD)/../src/dual_lfsr.v
 
+# Dit is de module die we willen testen
 TOPLEVEL = chest_game
+
+# En dit is de naam van ons nieuwe Python script (zonder .py)
 MODULE = test_chest
 
 include $(shell cocotb-config --makefiles)/Makefile.sim
