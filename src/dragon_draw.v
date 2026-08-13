@@ -2,7 +2,6 @@
 module dragon_draw(
     input  wire [9:0] x,            // local, 0 = left edge of the dragon
     input  wire [9:0] y,           // local, 0 = top edge
-    input  wire [1:0] state,        // evolution stage -> shape/size
     input  wire [2:0] level,
     input  wire [2:0] mood_anim,    // nog onbepaald
     output wire       px_on,      // 1 = the dragon covers this dot
@@ -43,29 +42,29 @@ module dragon_draw(
       .px_code   (egg_px_code)
   );
 
-  wire       lvl1_px_on;
-  wire [2:0] lvl1_px_code;
+  wire       lvl2_px_on;
+  wire [2:0] lvl2_px_code;
 
   dragon_l1_generator u_dragon_lvl1 (
       .x         (x),
       .y         (y),
       .mood_anim (mood_anim),
-      .px_on     (lvl1_px_on),
-      .px_code   (lvl1_px_code)
+      .px_on     (lvl2_px_on),
+      .px_code   (lvl2_px_code)
   );
 
   // 3. Stuur de outputs aan op basis van lvl1_on (met een ternary operator / multiplexer)
   // 1. Schakel de daadwerkelijke outputs aan/uit op basis van lvl1_on
   // Outputs doorsturen afhankelijk van welke status actief is
   assign px_on = lvl1_on ? egg_px_on :
-                 lvl2_on ? lvl1_px_on :
+                 lvl2_on ? lvl2_px_on :
                  1'b0; // Buiten deze niveaus staat de pixel uit
 
   assign px_code = lvl1_on ? egg_px_code :
-                   lvl2_on ? lvl1_px_code :
+                   lvl2_on ? lvl2_px_code :
                    3'd0; // Buiten deze niveaus is de kleur code 0
 
-  wire _unused = &{x, y, state, mood_anim, 1'b0};
+  wire _unused = &{x, y, mood_anim, 1'b0};
 endmodule
 
 

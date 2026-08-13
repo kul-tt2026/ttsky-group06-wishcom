@@ -383,23 +383,29 @@ module dragon_l1_generator (
     // 8x Schaling (272x288 px)
     // Offset X = 320 - (272/2) = 184
     // Offset Y = 240 - (288/2) = 96
-    wire signed [11:0] raw_x = $signed({2'b00, x}) - 12'sd184;
-    wire signed [11:0] raw_y = $signed({2'b00, y}) - 12'sd96;
+    // Vorm de lokale scherm-X en Y om naar de 8x geschaalde sprite
+    // (Gebruik x en y direct zonder de dubbele offset van 184/96!)
+    wire signed [11:0] raw_x = $signed({2'b00, x});
+    wire signed [11:0] raw_y = $signed({2'b00, y});
 
-    // Deel door 8 met shift (>>> 3)
+    // Deel door 8 (>>> 3)
     wire signed [11:0] rel_x = raw_x >>> 3;
     wire signed [11:0] rel_y = raw_y >>> 3;
 
+    // Binnen de grenzen van de geschaalde sprite (34*8 = 272, 36*8 = 288)
     wire in_bounds = (raw_x >= 0 && raw_x < 272) && (raw_y >= 0 && raw_y < 288);
 
     wire [5:0] row = in_bounds ? rel_y[5:0] : 6'd0;
     wire [5:0] col = in_bounds ? rel_x[5:0] : 6'd0;
+    
 
     reg [2:0] code;
 
     //---------------------------------------------------------
     // ROM Logica (gegenereerd uit je afbeelding)
     //---------------------------------------------------------
+
+
     always @(*) begin
         code = color0;
         if (in_bounds) begin
