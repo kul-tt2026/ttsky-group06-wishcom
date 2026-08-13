@@ -7,19 +7,17 @@ module egg_tb;
   wire [9:0] px = pix_y;
   wire [9:0] py = 10'd639 - pix_x;
   reg  [2:0] level;
-  reg  [1:0] mood_anim;
-  reg  [1:0] bob;        // Aangepast van [2:0] naar [1:0]
+  reg  [2:0] mood_anim;
 
   wire       px_on;
   wire [2:0] px_code;    // Zorg dat dit [2:0] is
 
   // Instantiateer de ei_generator module
-  ei_generator u_ei (
+  dragon_draw u_ei (
     .x(px),
     .y(py),
     .level(level),
     .mood_anim(mood_anim),
-    .bob(bob),
     .px_on(px_on),
     .px_code(px_code)
   );
@@ -28,10 +26,14 @@ module egg_tb;
   reg [5:0] rgb;
   always @(*) begin
     case (px_code)
-      3'd0: rgb = 6'b00_00_00; // Rand: Zwart
-      3'd1: rgb = 6'b11_11_11; // Ei basis: Wit
-      3'd2: rgb = 6'b00_11_00; // Vlekjes: groen
-      default: rgb = 6'b01_01_01; // Donkergrijs
+      3'd0: rgb = 6'b00_00_00; // Uit / Zwart
+      3'd1: rgb = 6'b00_00_00; // Zwart
+      3'd2: rgb = 6'b00_10_00; // Medium groen
+      3'd3: rgb = 6'b01_11_01; // Fel groen met een tikje rood/blauw
+      3'd4: rgb = 6'b11_11_11; // Maximaal R, G en B
+      3'd5: rgb = 6'b10_10_10; // Medium grijs
+      3'd6: rgb = 6'b01_01_01; // Donkergrijs
+      default: rgb = 6'b00_00_00;
     endcase
   end
 
@@ -40,7 +42,6 @@ module egg_tb;
   initial begin
     level     = 3'd1; 
     mood_anim = 2'd0; 
-    bob       = 2'd0; 
 
     $display("Starten van 640x480 ei_generator render test...");
 

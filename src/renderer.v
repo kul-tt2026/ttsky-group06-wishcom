@@ -71,7 +71,8 @@ module renderer (
   dragon_draw u_dragon (
     .x(px - DRAGON_X), .y(py - DRAGON_Y),
     .state(dragon_form), .mood_anim(dragon_mood_anim),
-    .px_on(dragon_on), .px_code(dragon_code)
+    .px_on(dragon_on), .px_code(dragon_code),
+    .level(level)
   );
 
   // THREE CHESTS ---------------------------------
@@ -170,10 +171,14 @@ module renderer (
   // Per-drawable palettes: code -> 6-bit {R,G,B}
   reg [5:0] dragon_rgb;
   always @(*) case (dragon_code)
-    3'd1: dragon_rgb = 6'b000000;      // outline
-    3'd2: dragon_rgb = 6'b011001;      // body green
-    3'd3: dragon_rgb = 6'b101110;      // belly
-    default: dragon_rgb = 6'b011001;
+    3'd0: dragon_rgb = 6'b00_00_00; // Uit / Zwart
+    3'd1: dragon_rgb = 6'b00_00_00; // Zwart
+    3'd2: dragon_rgb = 6'b00_10_00; // Medium groen
+    3'd3: dragon_rgb = 6'b01_11_01; // Fel groen met een tikje rood/blauw
+    3'd4: dragon_rgb = 6'b11_11_11; // Maximaal R, G en B
+    3'd5: dragon_rgb = 6'b10_10_10; // Medium grijs
+    3'd6: dragon_rgb = 6'b01_01_01; // Donkergrijs
+    default: dragon_rgb = 6'b00_00_00;
   endcase
 
   reg [5:0] chest_rgb;

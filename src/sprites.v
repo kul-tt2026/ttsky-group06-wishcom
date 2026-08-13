@@ -12,35 +12,35 @@
 // The placeholder egg below exists so the pipeline can be tested end-to-end
 // before any real art is converted.
 // ---------------------------------------------------------------------------
-module dragon_rom (
-    input  wire [2:0] level,
-    input  wire [5:0] row,
-    input  wire [5:0] col,
-    output reg  [2:0] code       // 0=transparent 1=outline 2=body 3=belly ...
-);
-  always @(*) begin
-    code = 3'd0;
-    // placeholder: 16x16 egg shown for every level.
-    // codes: 1=outline, 2=body
-    if (row<6'd16 && col<6'd16) begin
-      case (row[3:0])
-        4'd0 : code = (col>=6 && col<=9)  ? 3'd1 : 3'd0;
-        4'd1 : code = (col>=5 && col<=10) ? ((col==5||col==10)?3'd1:3'd2) : 3'd0;
-        4'd2 : code = (col>=4 && col<=11) ? ((col==4||col==11)?3'd1:3'd2) : 3'd0;
-        4'd3 : code = (col>=3 && col<=12) ? ((col==3||col==12)?3'd1:3'd2) : 3'd0;
-        4'd4,4'd5 : code = (col>=2 && col<=13) ? ((col==2||col==13)?3'd1:3'd2) : 3'd0;
-        4'd6,4'd7,4'd8,4'd9,4'd10 :
-               code = (col>=1 && col<=14) ? ((col==1||col==14)?3'd1:3'd2) : 3'd0;
-        4'd11,4'd12 : code = (col>=2 && col<=13) ? ((col==2||col==13)?3'd1:3'd2) : 3'd0;
-        4'd13: code = (col>=3 && col<=12) ? ((col==3||col==12)?3'd1:3'd2) : 3'd0;
-        4'd14: code = (col>=4 && col<=11) ? ((col==4||col==11)?3'd1:3'd2) : 3'd0;
-        4'd15: code = (col>=6 && col<=9)  ? 3'd1 : 3'd0;
-        default: code = 3'd0;
-      endcase
-    end
-  end
-  wire _unused = &{level, row[5:4], col[5:4], 1'b0};
-endmodule
+// module dragon_rom (
+//     input  wire [2:0] level,
+//     input  wire [5:0] row,
+//     input  wire [5:0] col,
+//     output reg  [2:0] code       // 0=transparent 1=outline 2=body 3=belly ...
+// );
+//   always @(*) begin
+//     code = color0;
+//     // placeholder: 16x16 egg shown for every level.
+//     // codes: 1=outline, 2=body
+//     if (row<6'd16 && col<6'd16) begin
+//       case (row[3:0])
+//         4'd0 : code = (col>=6 && col<=9)  ? 3'd1 : 3'd0;
+//         4'd1 : code = (col>=5 && col<=10) ? ((col==5||col==10)?3'd1:3'd2) : 3'd0;
+//         4'd2 : code = (col>=4 && col<=11) ? ((col==4||col==11)?3'd1:3'd2) : 3'd0;
+//         4'd3 : code = (col>=3 && col<=12) ? ((col==3||col==12)?3'd1:3'd2) : 3'd0;
+//         4'd4,4'd5 : code = (col>=2 && col<=13) ? ((col==2||col==13)?3'd1:3'd2) : 3'd0;
+//         4'd6,4'd7,4'd8,4'd9,4'd10 :
+//                code = (col>=1 && col<=14) ? ((col==1||col==14)?3'd1:3'd2) : 3'd0;
+//         4'd11,4'd12 : code = (col>=2 && col<=13) ? ((col==2||col==13)?3'd1:3'd2) : 3'd0;
+//         4'd13: code = (col>=3 && col<=12) ? ((col==3||col==12)?3'd1:3'd2) : 3'd0;
+//         4'd14: code = (col>=4 && col<=11) ? ((col==4||col==11)?3'd1:3'd2) : 3'd0;
+//         4'd15: code = (col>=6 && col<=9)  ? 3'd1 : 3'd0;
+//         default: code = color0;
+//       endcase
+//     end
+//   end
+//   wire _unused = &{level, row[5:4], col[5:4], 1'b0};
+// endmodule
 
 module chest_rom (
     input  wire [1:0] frame,     // 0 closed, 1 opening, 2 open
@@ -238,15 +238,13 @@ endmodule
 module ei_generator (
     input  wire [9:0] x,
     input  wire [9:0] y,
-    input  wire [2:0] level,
-    input  wire [1:0] mood_anim,
-    input  wire [1:0] bob,
+    input  wire [2:0] mood_anim,
     output wire       px_on,
     output wire [2:0] px_code
 );
 
     // Ongebruikte signalen direct afvangen
-    wire _unused = &{level, mood_anim, bob, 1'b0};
+    wire _unused = &{ mood_anim, 1'b0};
 
     //---------------------------------------------------------
     // Middelpunt
@@ -336,7 +334,1421 @@ module ei_generator (
     assign px_code =
         border                       ? 3'd0 : 
         (in_ei && (vlek1 || vlek2 || vlek3)) ? 3'd2 : 
-        in_ei                        ? 3'd1 : 
-                                       3'd1;  
+        in_ei                        ? 3'd4 : 
+                                       3'd4;  
+
+endmodule
+
+`default_nettype none
+
+module dragon_l1_generator (
+    input  wire [9:0] x,          // Scherm coördinaat X (0..639)
+    input  wire [9:0] y,          // Scherm coördinaat Y (0..479)
+    input  wire [2:0] mood_anim,  // Animatie status (optioneel te gebruiken)
+    output wire       px_on,      // 1 = er is een draak-pixel op deze coördinaat
+    output wire [2:0] px_code     // Kleurcode (0=transparant, 1=outline, 2=groen, etc.)
+);
+
+    // Ongebruikte signalen netjes afvangen
+    wire _unused = &{mood_anim, 1'b0};
+    // ---------------------------------------------------------
+    // Kleuren-placeholders (pas de waarden HIER aan)
+    // ---------------------------------------------------------
+    // ---------------------------------------------------------
+    // Kleuren-placeholders (Gecorrigeerd!)
+    // ---------------------------------------------------------
+    localparam [2:0] color0 = 3'd0; // TRANSPARANT (Achtergrond, geen pixel)
+    localparam [2:0] color1 = 3'd1; // ZWART (Omtrek / Oogjes)
+    localparam [2:0] color2 = 3'd2; // Medium groen (Lijfje & Eivlekken)
+    localparam [2:0] color3 = 3'd3; // Fel groen (Buikje & Staart)
+    localparam [2:0] color4 = 3'd4; // WIT (Eierschaal & Oogglim)
+    localparam [2:0] color5 = 3'd5; // Medium grijs (Horentjes)
+    localparam [2:0] color6 = 3'd6; // Donkergrijs (Schaduw horentjes)
+    //---------------------------------------------------------
+    // Positionering (Middelpunt van de sprite op 320, 240)
+    // Draak is 34 px breed en 36 px hoog.
+    // X-bereik: 320 - 17 = 303
+    // Y-bereik: 240 - 18 = 222
+    //---------------------------------------------------------
+    // 1. Oorspronkelijke relatieve positie berekenen (t.o.v. het midden 320, 240)
+    // Bij 2x vergroting is de draak op het scherm 68x72 pixels.
+    // Middelpunt-offset: 320 - 34 = 286, 240 - 36 = 204
+   //---------------------------------------------------------
+    // 16x Schaling (Draak wordt 544 x 576 pixels op het scherm)
+    // 
+    // Midden van scherm = (320, 240)
+    // Halve breedte = 544 / 2 = 272 -> Offset X = 320 - 272 = 48
+    // Halve hoogte  = 576 / 2 = 288 -> Offset Y = 240 - 288 = -48
+    //---------------------------------------------------------
+    // 8x Schaling (272x288 px)
+    // Offset X = 320 - (272/2) = 184
+    // Offset Y = 240 - (288/2) = 96
+    wire signed [11:0] raw_x = $signed({2'b00, x}) - 12'sd184;
+    wire signed [11:0] raw_y = $signed({2'b00, y}) - 12'sd96;
+
+    // Deel door 8 met shift (>>> 3)
+    wire signed [11:0] rel_x = raw_x >>> 3;
+    wire signed [11:0] rel_y = raw_y >>> 3;
+
+    wire in_bounds = (raw_x >= 0 && raw_x < 272) && (raw_y >= 0 && raw_y < 288);
+
+    wire [5:0] row = in_bounds ? rel_y[5:0] : 6'd0;
+    wire [5:0] col = in_bounds ? rel_x[5:0] : 6'd0;
+
+    reg [2:0] code;
+
+    //---------------------------------------------------------
+    // ROM Logica (gegenereerd uit je afbeelding)
+    //---------------------------------------------------------
+    always @(*) begin
+        code = color0;
+        if (in_bounds) begin
+            case (row[5:0])
+               
+                // Generated from lvl1.png (34x36)
+// Module / block name: dragon_l1
+    6'd0: case (col[5:0])
+    6'd0: code = color0;
+    6'd1: code = color0;
+    6'd2: code = color0;
+    6'd3: code = color0;
+    6'd4: code = color0;
+    6'd5: code = color0;
+    6'd6: code = color0;
+    6'd7: code = color0;
+    6'd8: code = color0;
+    6'd9: code = color0;
+    6'd10: code = color0;
+    6'd11: code = color0;
+    6'd12: code = color0;
+    6'd13: code = color0;
+    6'd14: code = color0;
+    6'd15: code = color0;
+    6'd16: code = color0;
+    6'd17: code = color0;
+    6'd18: code = color0;
+    6'd19: code = color0;
+    6'd20: code = color0;
+    6'd21: code = color0;
+    6'd22: code = color0;
+    6'd23: code = color0;
+    6'd24: code = color0;
+    6'd25: code = color0;
+    6'd26: code = color0;
+    6'd27: code = color0;
+    6'd28: code = color0;
+    6'd29: code = color0;
+    6'd30: code = color0;
+    6'd31: code = color0;
+    6'd32: code = color0;
+    6'd33: code = color0;
+    default: code = color4;
+  endcase
+  6'd1: case (col[5:0])
+    6'd0: code = color0;
+    6'd1: code = color0;
+    6'd2: code = color0;
+    6'd3: code = color0;
+    6'd4: code = color0;
+    6'd5: code = color0;
+    6'd6: code = color0;
+    6'd7: code = color0;
+    6'd8: code = color0;
+    6'd9: code = color0;
+    6'd10: code = color0;
+    6'd11: code = color6;
+    6'd12: code = color6;
+    6'd13: code = color6;
+    6'd14: code = color0;
+    6'd15: code = color0;
+    6'd16: code = color0;
+    6'd17: code = color0;
+    6'd18: code = color0;
+    6'd19: code = color0;
+    6'd20: code = color0;
+    6'd21: code = color0;
+    6'd22: code = color0;
+    6'd23: code = color0;
+    6'd24: code = color0;
+    6'd25: code = color0;
+    6'd26: code = color0;
+    6'd27: code = color0;
+    6'd28: code = color0;
+    6'd29: code = color0;
+    6'd30: code = color0;
+    6'd31: code = color0;
+    6'd32: code = color0;
+    6'd33: code = color0;
+    default: code = color4;
+  endcase
+  6'd2: case (col[5:0])
+    6'd0: code = color0;
+    6'd1: code = color0;
+    6'd2: code = color0;
+    6'd3: code = color0;
+    6'd4: code = color0;
+    6'd5: code = color0;
+    6'd6: code = color0;
+    6'd7: code = color0;
+    6'd8: code = color0;
+    6'd9: code = color0;
+    6'd10: code = color0;
+    6'd11: code = color6;
+    6'd12: code = color5;
+    6'd13: code = color6;
+    6'd14: code = color0;
+    6'd15: code = color0;
+    6'd16: code = color0;
+    6'd17: code = color6;
+    6'd18: code = color6;
+    6'd19: code = color0;
+    6'd20: code = color0;
+    6'd21: code = color0;
+    6'd22: code = color0;
+    6'd23: code = color0;
+    6'd24: code = color0;
+    6'd25: code = color0;
+    6'd26: code = color0;
+    6'd27: code = color0;
+    6'd28: code = color0;
+    6'd29: code = color0;
+    6'd30: code = color0;
+    6'd31: code = color0;
+    6'd32: code = color0;
+    6'd33: code = color0;
+    default: code = color4;
+  endcase
+  6'd3: case (col[5:0])
+    6'd0: code = color0;
+    6'd1: code = color0;
+    6'd2: code = color0;
+    6'd3: code = color0;
+    6'd4: code = color0;
+    6'd5: code = color0;
+    6'd6: code = color0;
+    6'd7: code = color0;
+    6'd8: code = color0;
+    6'd9: code = color0;
+    6'd10: code = color6;
+    6'd11: code = color5;
+    6'd12: code = color5;
+    6'd13: code = color6;
+    6'd14: code = color0;
+    6'd15: code = color0;
+    6'd16: code = color6;
+    6'd17: code = color6;
+    6'd18: code = color5;
+    6'd19: code = color6;
+    6'd20: code = color0;
+    6'd21: code = color0;
+    6'd22: code = color0;
+    6'd23: code = color0;
+    6'd24: code = color0;
+    6'd25: code = color0;
+    6'd26: code = color0;
+    6'd27: code = color0;
+    6'd28: code = color0;
+    6'd29: code = color0;
+    6'd30: code = color0;
+    6'd31: code = color0;
+    6'd32: code = color0;
+    6'd33: code = color0;
+    default: code = color4;
+  endcase
+  6'd4: case (col[5:0])
+    6'd0: code = color0;
+    6'd1: code = color0;
+    6'd2: code = color0;
+    6'd3: code = color0;
+    6'd4: code = color0;
+    6'd5: code = color0;
+    6'd6: code = color0;
+    6'd7: code = color0;
+    6'd8: code = color0;
+    6'd9: code = color0;
+    6'd10: code = color0;
+    6'd11: code = color0;
+    6'd12: code = color5;
+    6'd13: code = color6;
+    6'd14: code = color0;
+    6'd15: code = color6;
+    6'd16: code = color6;
+    6'd17: code = color5;
+    6'd18: code = color5;
+    6'd19: code = color6;
+    6'd20: code = color0;
+    6'd21: code = color0;
+    6'd22: code = color0;
+    6'd23: code = color0;
+    6'd24: code = color0;
+    6'd25: code = color0;
+    6'd26: code = color0;
+    6'd27: code = color0;
+    6'd28: code = color0;
+    6'd29: code = color0;
+    6'd30: code = color0;
+    6'd31: code = color0;
+    6'd32: code = color0;
+    6'd33: code = color0;
+    default: code = color4;
+  endcase
+  6'd5: case (col[5:0])
+    6'd0: code = color0;
+    6'd1: code = color0;
+    6'd2: code = color0;
+    6'd3: code = color0;
+    6'd4: code = color0;
+    6'd5: code = color0;
+    6'd6: code = color0;
+    6'd7: code = color0;
+    6'd8: code = color0;
+    6'd9: code = color3;
+    6'd10: code = color3;
+    6'd11: code = color3;
+    6'd12: code = color0;
+    6'd13: code = color0;
+    6'd14: code = color0;
+    6'd15: code = color6;
+    6'd16: code = color5;
+    6'd17: code = color5;
+    6'd18: code = color6;
+    6'd19: code = color6;
+    6'd20: code = color0;
+    6'd21: code = color0;
+    6'd22: code = color0;
+    6'd23: code = color0;
+    6'd24: code = color0;
+    6'd25: code = color0;
+    6'd26: code = color0;
+    6'd27: code = color0;
+    6'd28: code = color0;
+    6'd29: code = color0;
+    6'd30: code = color0;
+    6'd31: code = color0;
+    6'd32: code = color0;
+    6'd33: code = color0;
+    default: code = color4;
+  endcase
+  6'd6: case (col[5:0])
+    6'd0: code = color0;
+    6'd1: code = color0;
+    6'd2: code = color0;
+    6'd3: code = color0;
+    6'd4: code = color0;
+    6'd5: code = color0;
+    6'd6: code = color0;
+    6'd7: code = color0;
+    6'd8: code = color3;
+    6'd9: code = color3;
+    6'd10: code = color3;
+    6'd11: code = color3;
+    6'd12: code = color3;
+    6'd13: code = color3;
+    6'd14: code = color3;
+    6'd15: code = color6;
+    6'd16: code = color5;
+    6'd17: code = color6;
+    6'd18: code = color0;
+    6'd19: code = color0;
+    6'd20: code = color0;
+    6'd21: code = color0;
+    6'd22: code = color0;
+    6'd23: code = color0;
+    6'd24: code = color0;
+    6'd25: code = color0;
+    6'd26: code = color0;
+    6'd27: code = color0;
+    6'd28: code = color0;
+    6'd29: code = color0;
+    6'd30: code = color0;
+    6'd31: code = color0;
+    6'd32: code = color0;
+    6'd33: code = color0;
+    default: code = color4;
+  endcase
+  6'd7: case (col[5:0])
+    6'd0: code = color0;
+    6'd1: code = color0;
+    6'd2: code = color0;
+    6'd3: code = color0;
+    6'd4: code = color0;
+    6'd5: code = color0;
+    6'd6: code = color0;
+    6'd7: code = color3;
+    6'd8: code = color3;
+    6'd9: code = color3;
+    6'd10: code = color3;
+    6'd11: code = color3;
+    6'd12: code = color3;
+    6'd13: code = color3;
+    6'd14: code = color3;
+    6'd15: code = color3;
+    6'd16: code = color6;
+    6'd17: code = color6;
+    6'd18: code = color0;
+    6'd19: code = color0;
+    6'd20: code = color0;
+    6'd21: code = color0;
+    6'd22: code = color0;
+    6'd23: code = color0;
+    6'd24: code = color0;
+    6'd25: code = color0;
+    6'd26: code = color0;
+    6'd27: code = color0;
+    6'd28: code = color0;
+    6'd29: code = color0;
+    6'd30: code = color0;
+    6'd31: code = color0;
+    6'd32: code = color0;
+    6'd33: code = color0;
+    default: code = color4;
+  endcase
+  6'd8: case (col[5:0])
+    6'd0: code = color0;
+    6'd1: code = color0;
+    6'd2: code = color0;
+    6'd3: code = color0;
+    6'd4: code = color0;
+    6'd5: code = color0;
+    6'd6: code = color0;
+    6'd7: code = color3;
+    6'd8: code = color3;
+    6'd9: code = color3;
+    6'd10: code = color3;
+    6'd11: code = color2;
+    6'd12: code = color0;
+    6'd13: code = color3;
+    6'd14: code = color3;
+    6'd15: code = color3;
+    6'd16: code = color3;
+    6'd17: code = color3;
+    6'd18: code = color0;
+    6'd19: code = color0;
+    6'd20: code = color0;
+    6'd21: code = color0;
+    6'd22: code = color0;
+    6'd23: code = color0;
+    6'd24: code = color0;
+    6'd25: code = color0;
+    6'd26: code = color0;
+    6'd27: code = color0;
+    6'd28: code = color0;
+    6'd29: code = color0;
+    6'd30: code = color0;
+    6'd31: code = color0;
+    6'd32: code = color0;
+    6'd33: code = color0;
+    default: code = color4;
+  endcase
+  6'd9: case (col[5:0])
+    6'd0: code = color0;
+    6'd1: code = color0;
+    6'd2: code = color0;
+    6'd3: code = color0;
+    6'd4: code = color0;
+    6'd5: code = color3;
+    6'd6: code = color3;
+    6'd7: code = color3;
+    6'd8: code = color3;
+    6'd9: code = color3;
+    6'd10: code = color3;
+    6'd11: code = color0;
+    6'd12: code = color0;
+    6'd13: code = color3;
+    6'd14: code = color3;
+    6'd15: code = color3;
+    6'd16: code = color3;
+    6'd17: code = color3;
+    6'd18: code = color0;
+    6'd19: code = color0;
+    6'd20: code = color0;
+    6'd21: code = color0;
+    6'd22: code = color0;
+    6'd23: code = color0;
+    6'd24: code = color0;
+    6'd25: code = color0;
+    6'd26: code = color0;
+    6'd27: code = color0;
+    6'd28: code = color0;
+    6'd29: code = color0;
+    6'd30: code = color0;
+    6'd31: code = color0;
+    6'd32: code = color0;
+    6'd33: code = color0;
+    default: code = color4;
+  endcase
+  6'd10: case (col[5:0])
+    6'd0: code = color0;
+    6'd1: code = color0;
+    6'd2: code = color0;
+    6'd3: code = color0;
+    6'd4: code = color3;
+    6'd5: code = color2;
+    6'd6: code = color3;
+    6'd7: code = color3;
+    6'd8: code = color3;
+    6'd9: code = color3;
+    6'd10: code = color3;
+    6'd11: code = color0;
+    6'd12: code = color0;
+    6'd13: code = color3;
+    6'd14: code = color3;
+    6'd15: code = color3;
+    6'd16: code = color3;
+    6'd17: code = color3;
+    6'd18: code = color0;
+    6'd19: code = color0;
+    6'd20: code = color0;
+    6'd21: code = color0;
+    6'd22: code = color0;
+    6'd23: code = color0;
+    6'd24: code = color0;
+    6'd25: code = color0;
+    6'd26: code = color0;
+    6'd27: code = color0;
+    6'd28: code = color0;
+    6'd29: code = color0;
+    6'd30: code = color0;
+    6'd31: code = color0;
+    6'd32: code = color0;
+    6'd33: code = color0;
+    default: code = color4;
+  endcase
+  6'd11: case (col[5:0])
+    6'd0: code = color0;
+    6'd1: code = color0;
+    6'd2: code = color0;
+    6'd3: code = color0;
+    6'd4: code = color3;
+    6'd5: code = color3;
+    6'd6: code = color3;
+    6'd7: code = color0;
+    6'd8: code = color3;
+    6'd9: code = color3;
+    6'd10: code = color3;
+    6'd11: code = color3;
+    6'd12: code = color3;
+    6'd13: code = color3;
+    6'd14: code = color3;
+    6'd15: code = color3;
+    6'd16: code = color3;
+    6'd17: code = color3;
+    6'd18: code = color0;
+    6'd19: code = color0;
+    6'd20: code = color0;
+    6'd21: code = color0;
+    6'd22: code = color0;
+    6'd23: code = color0;
+    6'd24: code = color0;
+    6'd25: code = color0;
+    6'd26: code = color0;
+    6'd27: code = color0;
+    6'd28: code = color0;
+    6'd29: code = color0;
+    6'd30: code = color0;
+    6'd31: code = color0;
+    6'd32: code = color0;
+    6'd33: code = color0;
+    default: code = color4;
+  endcase
+  6'd12: case (col[5:0])
+    6'd0: code = color0;
+    6'd1: code = color0;
+    6'd2: code = color0;
+    6'd3: code = color0;
+    6'd4: code = color3;
+    6'd5: code = color3;
+    6'd6: code = color3;
+    6'd7: code = color3;
+    6'd8: code = color3;
+    6'd9: code = color3;
+    6'd10: code = color3;
+    6'd11: code = color3;
+    6'd12: code = color3;
+    6'd13: code = color3;
+    6'd14: code = color3;
+    6'd15: code = color3;
+    6'd16: code = color3;
+    6'd17: code = color3;
+    6'd18: code = color0;
+    6'd19: code = color0;
+    6'd20: code = color0;
+    6'd21: code = color0;
+    6'd22: code = color0;
+    6'd23: code = color0;
+    6'd24: code = color0;
+    6'd25: code = color0;
+    6'd26: code = color0;
+    6'd27: code = color0;
+    6'd28: code = color0;
+    6'd29: code = color0;
+    6'd30: code = color0;
+    6'd31: code = color0;
+    6'd32: code = color0;
+    6'd33: code = color0;
+    default: code = color4;
+  endcase
+  6'd13: case (col[5:0])
+    6'd0: code = color0;
+    6'd1: code = color0;
+    6'd2: code = color0;
+    6'd3: code = color0;
+    6'd4: code = color3;
+    6'd5: code = color3;
+    6'd6: code = color3;
+    6'd7: code = color3;
+    6'd8: code = color3;
+    6'd9: code = color3;
+    6'd10: code = color3;
+    6'd11: code = color3;
+    6'd12: code = color3;
+    6'd13: code = color3;
+    6'd14: code = color3;
+    6'd15: code = color3;
+    6'd16: code = color3;
+    6'd17: code = color0;
+    6'd18: code = color0;
+    6'd19: code = color0;
+    6'd20: code = color0;
+    6'd21: code = color0;
+    6'd22: code = color0;
+    6'd23: code = color0;
+    6'd24: code = color0;
+    6'd25: code = color0;
+    6'd26: code = color0;
+    6'd27: code = color0;
+    6'd28: code = color0;
+    6'd29: code = color0;
+    6'd30: code = color0;
+    6'd31: code = color0;
+    6'd32: code = color0;
+    6'd33: code = color0;
+    default: code = color4;
+  endcase
+  6'd14: case (col[5:0])
+    6'd0: code = color0;
+    6'd1: code = color0;
+    6'd2: code = color0;
+    6'd3: code = color0;
+    6'd4: code = color0;
+    6'd5: code = color3;
+    6'd6: code = color3;
+    6'd7: code = color3;
+    6'd8: code = color3;
+    6'd9: code = color3;
+    6'd10: code = color3;
+    6'd11: code = color3;
+    6'd12: code = color3;
+    6'd13: code = color3;
+    6'd14: code = color3;
+    6'd15: code = color3;
+    6'd16: code = color3;
+    6'd17: code = color0;
+    6'd18: code = color0;
+    6'd19: code = color0;
+    6'd20: code = color0;
+    6'd21: code = color0;
+    6'd22: code = color0;
+    6'd23: code = color0;
+    6'd24: code = color0;
+    6'd25: code = color0;
+    6'd26: code = color0;
+    6'd27: code = color0;
+    6'd28: code = color0;
+    6'd29: code = color0;
+    6'd30: code = color0;
+    6'd31: code = color0;
+    6'd32: code = color0;
+    6'd33: code = color0;
+    default: code = color4;
+  endcase
+  6'd15: case (col[5:0])
+    6'd0: code = color0;
+    6'd1: code = color0;
+    6'd2: code = color0;
+    6'd3: code = color0;
+    6'd4: code = color0;
+    6'd5: code = color0;
+    6'd6: code = color0;
+    6'd7: code = color3;
+    6'd8: code = color3;
+    6'd9: code = color3;
+    6'd10: code = color3;
+    6'd11: code = color3;
+    6'd12: code = color3;
+    6'd13: code = color3;
+    6'd14: code = color3;
+    6'd15: code = color3;
+    6'd16: code = color3;
+    6'd17: code = color0;
+    6'd18: code = color0;
+    6'd19: code = color0;
+    6'd20: code = color0;
+    6'd21: code = color0;
+    6'd22: code = color0;
+    6'd23: code = color0;
+    6'd24: code = color0;
+    6'd25: code = color3;
+    6'd26: code = color0;
+    6'd27: code = color0;
+    6'd28: code = color0;
+    6'd29: code = color0;
+    6'd30: code = color0;
+    6'd31: code = color0;
+    6'd32: code = color0;
+    6'd33: code = color0;
+    default: code = color4;
+  endcase
+  6'd16: case (col[5:0])
+    6'd0: code = color0;
+    6'd1: code = color0;
+    6'd2: code = color0;
+    6'd3: code = color0;
+    6'd4: code = color0;
+    6'd5: code = color0;
+    6'd6: code = color0;
+    6'd7: code = color0;
+    6'd8: code = color0;
+    6'd9: code = color0;
+    6'd10: code = color0;
+    6'd11: code = color0;
+    6'd12: code = color3;
+    6'd13: code = color3;
+    6'd14: code = color3;
+    6'd15: code = color3;
+    6'd16: code = color3;
+    6'd17: code = color0;
+    6'd18: code = color0;
+    6'd19: code = color0;
+    6'd20: code = color0;
+    6'd21: code = color0;
+    6'd22: code = color0;
+    6'd23: code = color0;
+    6'd24: code = color3;
+    6'd25: code = color3;
+    6'd26: code = color0;
+    6'd27: code = color0;
+    6'd28: code = color0;
+    6'd29: code = color0;
+    6'd30: code = color0;
+    6'd31: code = color0;
+    6'd32: code = color0;
+    6'd33: code = color0;
+    default: code = color4;
+  endcase
+  6'd17: case (col[5:0])
+    6'd0: code = color0;
+    6'd1: code = color0;
+    6'd2: code = color0;
+    6'd3: code = color0;
+    6'd4: code = color0;
+    6'd5: code = color0;
+    6'd6: code = color0;
+    6'd7: code = color0;
+    6'd8: code = color0;
+    6'd9: code = color2;
+    6'd10: code = color2;
+    6'd11: code = color2;
+    6'd12: code = color3;
+    6'd13: code = color3;
+    6'd14: code = color3;
+    6'd15: code = color3;
+    6'd16: code = color3;
+    6'd17: code = color0;
+    6'd18: code = color0;
+    6'd19: code = color0;
+    6'd20: code = color0;
+    6'd21: code = color0;
+    6'd22: code = color0;
+    6'd23: code = color3;
+    6'd24: code = color3;
+    6'd25: code = color3;
+    6'd26: code = color0;
+    6'd27: code = color0;
+    6'd28: code = color0;
+    6'd29: code = color0;
+    6'd30: code = color0;
+    6'd31: code = color0;
+    6'd32: code = color0;
+    6'd33: code = color0;
+    default: code = color4;
+  endcase
+  6'd18: case (col[5:0])
+    6'd0: code = color0;
+    6'd1: code = color0;
+    6'd2: code = color0;
+    6'd3: code = color0;
+    6'd4: code = color0;
+    6'd5: code = color0;
+    6'd6: code = color0;
+    6'd7: code = color0;
+    6'd8: code = color0;
+    6'd9: code = color2;
+    6'd10: code = color2;
+    6'd11: code = color2;
+    6'd12: code = color2;
+    6'd13: code = color3;
+    6'd14: code = color3;
+    6'd15: code = color3;
+    6'd16: code = color3;
+    6'd17: code = color0;
+    6'd18: code = color0;
+    6'd19: code = color0;
+    6'd20: code = color0;
+    6'd21: code = color0;
+    6'd22: code = color0;
+    6'd23: code = color3;
+    6'd24: code = color2;
+    6'd25: code = color3;
+    6'd26: code = color0;
+    6'd27: code = color0;
+    6'd28: code = color0;
+    6'd29: code = color0;
+    6'd30: code = color0;
+    6'd31: code = color0;
+    6'd32: code = color0;
+    6'd33: code = color0;
+    default: code = color4;
+  endcase
+  6'd19: case (col[5:0])
+    6'd0: code = color0;
+    6'd1: code = color0;
+    6'd2: code = color0;
+    6'd3: code = color0;
+    6'd4: code = color0;
+    6'd5: code = color0;
+    6'd6: code = color0;
+    6'd7: code = color0;
+    6'd8: code = color0;
+    6'd9: code = color0;
+    6'd10: code = color2;
+    6'd11: code = color2;
+    6'd12: code = color2;
+    6'd13: code = color3;
+    6'd14: code = color3;
+    6'd15: code = color3;
+    6'd16: code = color3;
+    6'd17: code = color3;
+    6'd18: code = color0;
+    6'd19: code = color0;
+    6'd20: code = color0;
+    6'd21: code = color0;
+    6'd22: code = color3;
+    6'd23: code = color2;
+    6'd24: code = color2;
+    6'd25: code = color3;
+    6'd26: code = color3;
+    6'd27: code = color0;
+    6'd28: code = color0;
+    6'd29: code = color0;
+    6'd30: code = color0;
+    6'd31: code = color0;
+    6'd32: code = color0;
+    6'd33: code = color0;
+    default: code = color4;
+  endcase
+  6'd20: case (col[5:0])
+    6'd0: code = color0;
+    6'd1: code = color0;
+    6'd2: code = color0;
+    6'd3: code = color0;
+    6'd4: code = color0;
+    6'd5: code = color0;
+    6'd6: code = color0;
+    6'd7: code = color6;
+    6'd8: code = color6;
+    6'd9: code = color6;
+    6'd10: code = color2;
+    6'd11: code = color2;
+    6'd12: code = color0;
+    6'd13: code = color0;
+    6'd14: code = color3;
+    6'd15: code = color3;
+    6'd16: code = color3;
+    6'd17: code = color3;
+    6'd18: code = color0;
+    6'd19: code = color0;
+    6'd20: code = color0;
+    6'd21: code = color0;
+    6'd22: code = color3;
+    6'd23: code = color2;
+    6'd24: code = color2;
+    6'd25: code = color2;
+    6'd26: code = color3;
+    6'd27: code = color0;
+    6'd28: code = color0;
+    6'd29: code = color0;
+    6'd30: code = color0;
+    6'd31: code = color0;
+    6'd32: code = color0;
+    6'd33: code = color0;
+    default: code = color4;
+  endcase
+  6'd21: case (col[5:0])
+    6'd0: code = color0;
+    6'd1: code = color0;
+    6'd2: code = color0;
+    6'd3: code = color0;
+    6'd4: code = color0;
+    6'd5: code = color0;
+    6'd6: code = color6;
+    6'd7: code = color0;
+    6'd8: code = color0;
+    6'd9: code = color0;
+    6'd10: code = color2;
+    6'd11: code = color0;
+    6'd12: code = color2;
+    6'd13: code = color2;
+    6'd14: code = color0;
+    6'd15: code = color3;
+    6'd16: code = color3;
+    6'd17: code = color3;
+    6'd18: code = color0;
+    6'd19: code = color2;
+    6'd20: code = color0;
+    6'd21: code = color0;
+    6'd22: code = color0;
+    6'd23: code = color0;
+    6'd24: code = color0;
+    6'd25: code = color0;
+    6'd26: code = color0;
+    6'd27: code = color0;
+    6'd28: code = color0;
+    6'd29: code = color0;
+    6'd30: code = color0;
+    6'd31: code = color0;
+    6'd32: code = color0;
+    6'd33: code = color0;
+    default: code = color4;
+  endcase
+  6'd22: case (col[5:0])
+    6'd0: code = color0;
+    6'd1: code = color0;
+    6'd2: code = color0;
+    6'd3: code = color0;
+    6'd4: code = color0;
+    6'd5: code = color0;
+    6'd6: code = color6;
+    6'd7: code = color0;
+    6'd8: code = color2;
+    6'd9: code = color0;
+    6'd10: code = color0;
+    6'd11: code = color0;
+    6'd12: code = color2;
+    6'd13: code = color3;
+    6'd14: code = color0;
+    6'd15: code = color3;
+    6'd16: code = color3;
+    6'd17: code = color0;
+    6'd18: code = color0;
+    6'd19: code = color2;
+    6'd20: code = color0;
+    6'd21: code = color2;
+    6'd22: code = color2;
+    6'd23: code = color2;
+    6'd24: code = color2;
+    6'd25: code = color0;
+    6'd26: code = color5;
+    6'd27: code = color5;
+    6'd28: code = color0;
+    6'd29: code = color0;
+    6'd30: code = color0;
+    6'd31: code = color0;
+    6'd32: code = color0;
+    6'd33: code = color0;
+    default: code = color4;
+  endcase
+  6'd23: case (col[5:0])
+    6'd0: code = color0;
+    6'd1: code = color0;
+    6'd2: code = color0;
+    6'd3: code = color0;
+    6'd4: code = color2;
+    6'd5: code = color0;
+    6'd6: code = color0;
+    6'd7: code = color2;
+    6'd8: code = color2;
+    6'd9: code = color2;
+    6'd10: code = color0;
+    6'd11: code = color2;
+    6'd12: code = color3;
+    6'd13: code = color3;
+    6'd14: code = color0;
+    6'd15: code = color0;
+    6'd16: code = color3;
+    6'd17: code = color0;
+    6'd18: code = color2;
+    6'd19: code = color2;
+    6'd20: code = color2;
+    6'd21: code = color2;
+    6'd22: code = color2;
+    6'd23: code = color2;
+    6'd24: code = color2;
+    6'd25: code = color2;
+    6'd26: code = color5;
+    6'd27: code = color5;
+    6'd28: code = color0;
+    6'd29: code = color0;
+    6'd30: code = color0;
+    6'd31: code = color0;
+    6'd32: code = color0;
+    6'd33: code = color0;
+    default: code = color4;
+  endcase
+  6'd24: case (col[5:0])
+    6'd0: code = color0;
+    6'd1: code = color0;
+    6'd2: code = color0;
+    6'd3: code = color0;
+    6'd4: code = color2;
+    6'd5: code = color2;
+    6'd6: code = color2;
+    6'd7: code = color2;
+    6'd8: code = color2;
+    6'd9: code = color2;
+    6'd10: code = color2;
+    6'd11: code = color2;
+    6'd12: code = color3;
+    6'd13: code = color3;
+    6'd14: code = color3;
+    6'd15: code = color0;
+    6'd16: code = color0;
+    6'd17: code = color0;
+    6'd18: code = color2;
+    6'd19: code = color2;
+    6'd20: code = color2;
+    6'd21: code = color2;
+    6'd22: code = color3;
+    6'd23: code = color3;
+    6'd24: code = color2;
+    6'd25: code = color2;
+    6'd26: code = color5;
+    6'd27: code = color5;
+    6'd28: code = color0;
+    6'd29: code = color0;
+    6'd30: code = color0;
+    6'd31: code = color0;
+    6'd32: code = color0;
+    6'd33: code = color0;
+    default: code = color4;
+  endcase
+  6'd25: case (col[5:0])
+    6'd0: code = color0;
+    6'd1: code = color0;
+    6'd2: code = color0;
+    6'd3: code = color0;
+    6'd4: code = color2;
+    6'd5: code = color2;
+    6'd6: code = color2;
+    6'd7: code = color2;
+    6'd8: code = color2;
+    6'd9: code = color2;
+    6'd10: code = color2;
+    6'd11: code = color2;
+    6'd12: code = color2;
+    6'd13: code = color3;
+    6'd14: code = color3;
+    6'd15: code = color3;
+    6'd16: code = color0;
+    6'd17: code = color2;
+    6'd18: code = color2;
+    6'd19: code = color2;
+    6'd20: code = color2;
+    6'd21: code = color2;
+    6'd22: code = color3;
+    6'd23: code = color3;
+    6'd24: code = color3;
+    6'd25: code = color3;
+    6'd26: code = color5;
+    6'd27: code = color5;
+    6'd28: code = color0;
+    6'd29: code = color0;
+    6'd30: code = color0;
+    6'd31: code = color0;
+    6'd32: code = color0;
+    6'd33: code = color0;
+    default: code = color4;
+  endcase
+  6'd26: case (col[5:0])
+    6'd0: code = color0;
+    6'd1: code = color0;
+    6'd2: code = color0;
+    6'd3: code = color0;
+    6'd4: code = color2;
+    6'd5: code = color2;
+    6'd6: code = color2;
+    6'd7: code = color3;
+    6'd8: code = color3;
+    6'd9: code = color3;
+    6'd10: code = color2;
+    6'd11: code = color2;
+    6'd12: code = color2;
+    6'd13: code = color2;
+    6'd14: code = color3;
+    6'd15: code = color3;
+    6'd16: code = color2;
+    6'd17: code = color2;
+    6'd18: code = color2;
+    6'd19: code = color2;
+    6'd20: code = color2;
+    6'd21: code = color3;
+    6'd22: code = color3;
+    6'd23: code = color3;
+    6'd24: code = color3;
+    6'd25: code = color3;
+    6'd26: code = color3;
+    6'd27: code = color5;
+    6'd28: code = color0;
+    6'd29: code = color0;
+    6'd30: code = color0;
+    6'd31: code = color0;
+    6'd32: code = color0;
+    6'd33: code = color0;
+    default: code = color4;
+  endcase
+  6'd27: case (col[5:0])
+    6'd0: code = color0;
+    6'd1: code = color0;
+    6'd2: code = color0;
+    6'd3: code = color0;
+    6'd4: code = color2;
+    6'd5: code = color2;
+    6'd6: code = color3;
+    6'd7: code = color3;
+    6'd8: code = color3;
+    6'd9: code = color3;
+    6'd10: code = color3;
+    6'd11: code = color2;
+    6'd12: code = color2;
+    6'd13: code = color2;
+    6'd14: code = color2;
+    6'd15: code = color2;
+    6'd16: code = color2;
+    6'd17: code = color2;
+    6'd18: code = color2;
+    6'd19: code = color2;
+    6'd20: code = color2;
+    6'd21: code = color3;
+    6'd22: code = color3;
+    6'd23: code = color3;
+    6'd24: code = color3;
+    6'd25: code = color3;
+    6'd26: code = color5;
+    6'd27: code = color5;
+    6'd28: code = color0;
+    6'd29: code = color0;
+    6'd30: code = color0;
+    6'd31: code = color0;
+    6'd32: code = color0;
+    6'd33: code = color0;
+    default: code = color4;
+  endcase
+  6'd28: case (col[5:0])
+    6'd0: code = color0;
+    6'd1: code = color0;
+    6'd2: code = color0;
+    6'd3: code = color0;
+    6'd4: code = color2;
+    6'd5: code = color2;
+    6'd6: code = color3;
+    6'd7: code = color3;
+    6'd8: code = color3;
+    6'd9: code = color3;
+    6'd10: code = color3;
+    6'd11: code = color2;
+    6'd12: code = color2;
+    6'd13: code = color2;
+    6'd14: code = color3;
+    6'd15: code = color2;
+    6'd16: code = color2;
+    6'd17: code = color5;
+    6'd18: code = color2;
+    6'd19: code = color2;
+    6'd20: code = color3;
+    6'd21: code = color3;
+    6'd22: code = color3;
+    6'd23: code = color3;
+    6'd24: code = color3;
+    6'd25: code = color3;
+    6'd26: code = color5;
+    6'd27: code = color5;
+    6'd28: code = color0;
+    6'd29: code = color0;
+    6'd30: code = color0;
+    6'd31: code = color0;
+    6'd32: code = color0;
+    6'd33: code = color0;
+    default: code = color4;
+  endcase
+  6'd29: case (col[5:0])
+    6'd0: code = color0;
+    6'd1: code = color0;
+    6'd2: code = color0;
+    6'd3: code = color0;
+    6'd4: code = color5;
+    6'd5: code = color5;
+    6'd6: code = color3;
+    6'd7: code = color3;
+    6'd8: code = color3;
+    6'd9: code = color3;
+    6'd10: code = color3;
+    6'd11: code = color2;
+    6'd12: code = color2;
+    6'd13: code = color3;
+    6'd14: code = color3;
+    6'd15: code = color3;
+    6'd16: code = color2;
+    6'd17: code = color2;
+    6'd18: code = color2;
+    6'd19: code = color2;
+    6'd20: code = color3;
+    6'd21: code = color3;
+    6'd22: code = color3;
+    6'd23: code = color3;
+    6'd24: code = color3;
+    6'd25: code = color2;
+    6'd26: code = color5;
+    6'd27: code = color0;
+    6'd28: code = color0;
+    6'd29: code = color0;
+    6'd30: code = color0;
+    6'd31: code = color0;
+    6'd32: code = color0;
+    6'd33: code = color0;
+    default: code = color4;
+  endcase
+  6'd30: case (col[5:0])
+    6'd0: code = color0;
+    6'd1: code = color0;
+    6'd2: code = color0;
+    6'd3: code = color0;
+    6'd4: code = color0;
+    6'd5: code = color5;
+    6'd6: code = color5;
+    6'd7: code = color3;
+    6'd8: code = color3;
+    6'd9: code = color3;
+    6'd10: code = color2;
+    6'd11: code = color2;
+    6'd12: code = color3;
+    6'd13: code = color3;
+    6'd14: code = color3;
+    6'd15: code = color3;
+    6'd16: code = color3;
+    6'd17: code = color2;
+    6'd18: code = color2;
+    6'd19: code = color2;
+    6'd20: code = color3;
+    6'd21: code = color3;
+    6'd22: code = color3;
+    6'd23: code = color3;
+    6'd24: code = color3;
+    6'd25: code = color5;
+    6'd26: code = color5;
+    6'd27: code = color0;
+    6'd28: code = color0;
+    6'd29: code = color0;
+    6'd30: code = color0;
+    6'd31: code = color0;
+    6'd32: code = color0;
+    6'd33: code = color0;
+    default: code = color4;
+  endcase
+  6'd31: case (col[5:0])
+    6'd0: code = color0;
+    6'd1: code = color0;
+    6'd2: code = color0;
+    6'd3: code = color0;
+    6'd4: code = color0;
+    6'd5: code = color0;
+    6'd6: code = color5;
+    6'd7: code = color2;
+    6'd8: code = color2;
+    6'd9: code = color2;
+    6'd10: code = color2;
+    6'd11: code = color2;
+    6'd12: code = color3;
+    6'd13: code = color3;
+    6'd14: code = color3;
+    6'd15: code = color3;
+    6'd16: code = color3;
+    6'd17: code = color3;
+    6'd18: code = color2;
+    6'd19: code = color2;
+    6'd20: code = color3;
+    6'd21: code = color3;
+    6'd22: code = color3;
+    6'd23: code = color2;
+    6'd24: code = color2;
+    6'd25: code = color5;
+    6'd26: code = color0;
+    6'd27: code = color0;
+    6'd28: code = color0;
+    6'd29: code = color0;
+    6'd30: code = color0;
+    6'd31: code = color0;
+    6'd32: code = color0;
+    6'd33: code = color0;
+    default: code = color4;
+  endcase
+  6'd32: case (col[5:0])
+    6'd0: code = color0;
+    6'd1: code = color0;
+    6'd2: code = color0;
+    6'd3: code = color0;
+    6'd4: code = color0;
+    6'd5: code = color0;
+    6'd6: code = color5;
+    6'd7: code = color5;
+    6'd8: code = color2;
+    6'd9: code = color2;
+    6'd10: code = color2;
+    6'd11: code = color2;
+    6'd12: code = color3;
+    6'd13: code = color3;
+    6'd14: code = color3;
+    6'd15: code = color3;
+    6'd16: code = color3;
+    6'd17: code = color3;
+    6'd18: code = color2;
+    6'd19: code = color2;
+    6'd20: code = color2;
+    6'd21: code = color2;
+    6'd22: code = color2;
+    6'd23: code = color2;
+    6'd24: code = color5;
+    6'd25: code = color5;
+    6'd26: code = color0;
+    6'd27: code = color0;
+    6'd28: code = color0;
+    6'd29: code = color0;
+    6'd30: code = color0;
+    6'd31: code = color0;
+    6'd32: code = color0;
+    6'd33: code = color0;
+    default: code = color4;
+  endcase
+  6'd33: case (col[5:0])
+    6'd0: code = color0;
+    6'd1: code = color0;
+    6'd2: code = color0;
+    6'd3: code = color0;
+    6'd4: code = color0;
+    6'd5: code = color0;
+    6'd6: code = color0;
+    6'd7: code = color5;
+    6'd8: code = color5;
+    6'd9: code = color2;
+    6'd10: code = color2;
+    6'd11: code = color2;
+    6'd12: code = color2;
+    6'd13: code = color3;
+    6'd14: code = color3;
+    6'd15: code = color3;
+    6'd16: code = color3;
+    6'd17: code = color3;
+    6'd18: code = color2;
+    6'd19: code = color2;
+    6'd20: code = color2;
+    6'd21: code = color2;
+    6'd22: code = color5;
+    6'd23: code = color5;
+    6'd24: code = color5;
+    6'd25: code = color0;
+    6'd26: code = color0;
+    6'd27: code = color0;
+    6'd28: code = color0;
+    6'd29: code = color0;
+    6'd30: code = color0;
+    6'd31: code = color0;
+    6'd32: code = color0;
+    6'd33: code = color0;
+    default: code = color4;
+  endcase
+  6'd34: case (col[5:0])
+    6'd0: code = color0;
+    6'd1: code = color0;
+    6'd2: code = color0;
+    6'd3: code = color0;
+    6'd4: code = color0;
+    6'd5: code = color0;
+    6'd6: code = color0;
+    6'd7: code = color0;
+    6'd8: code = color5;
+    6'd9: code = color5;
+    6'd10: code = color5;
+    6'd11: code = color5;
+    6'd12: code = color5;
+    6'd13: code = color5;
+    6'd14: code = color3;
+    6'd15: code = color3;
+    6'd16: code = color3;
+    6'd17: code = color5;
+    6'd18: code = color5;
+    6'd19: code = color5;
+    6'd20: code = color5;
+    6'd21: code = color5;
+    6'd22: code = color5;
+    6'd23: code = color0;
+    6'd24: code = color0;
+    6'd25: code = color0;
+    6'd26: code = color0;
+    6'd27: code = color0;
+    6'd28: code = color0;
+    6'd29: code = color0;
+    6'd30: code = color0;
+    6'd31: code = color0;
+    6'd32: code = color0;
+    6'd33: code = color0;
+    default: code = color4;
+  endcase
+  6'd35: case (col[5:0])
+    6'd0: code = color0;
+    6'd1: code = color0;
+    6'd2: code = color0;
+    6'd3: code = color0;
+    6'd4: code = color0;
+    6'd5: code = color0;
+    6'd6: code = color0;
+    6'd7: code = color0;
+    6'd8: code = color0;
+    6'd9: code = color0;
+    6'd10: code = color0;
+    6'd11: code = color0;
+    6'd12: code = color0;
+    6'd13: code = color0;
+    6'd14: code = color0;
+    6'd15: code = color0;
+    6'd16: code = color0;
+    6'd17: code = color0;
+    6'd18: code = color0;
+    6'd19: code = color0;
+    6'd20: code = color0;
+    6'd21: code = color0;
+    6'd22: code = color0;
+    6'd23: code = color0;
+    6'd24: code = color0;
+    6'd25: code = color0;
+    6'd26: code = color0;
+    6'd27: code = color0;
+    6'd28: code = color0;
+    6'd29: code = color0;
+    6'd30: code = color0;
+    6'd31: code = color0;
+    6'd32: code = color0;
+    6'd33: code = color0;
+    default: code = color4;
+  endcase
+  default: code = color4;
+  endcase
+end
+    end
+
+    //---------------------------------------------------------
+    // Output Toewijzing
+    //---------------------------------------------------------
+    // px_on is 1 als we binnen het vakje zitten én de pixel niet transparant (0) is
+    assign px_on   = in_bounds && (code != 3'd0);
+    assign px_code = in_bounds ? code : 3'd0;
 
 endmodule
