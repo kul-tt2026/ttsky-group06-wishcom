@@ -199,7 +199,7 @@ module renderer (
   reg [5:0] buttons_rgb;
   always @(*) case (button_code)
     3'd1: buttons_rgb = 6'b000000;
-    3'd2: buttons_rgb = 6 me100100;       // wood
+    3'd2: buttons_rgb = 6'b100100;       // wood
     3'd3: buttons_rgb = 6'b111000;       // gold
     default: buttons_rgb = 6'b100100;
   endcase
