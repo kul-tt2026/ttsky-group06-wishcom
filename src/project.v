@@ -130,7 +130,7 @@ module tt_um_dragonchi (
     .chest_state(chest_state), .chest_sel(chest_sel),
     .chest_outcome(chest_outcome), .dragon_mood_anim(dragon_mood_anim),
     .chest_frame(chest_frame), .flash(flash), .flame_frame(flame_frame),
-    .R(R), .G(G), .B(B), .overflow(overflow), .evolve_now(evolve_now),
+    .R(R), .G(G), .B(B), .overflow(overflow), .evolve_now(evolve_now)
   );
 
   

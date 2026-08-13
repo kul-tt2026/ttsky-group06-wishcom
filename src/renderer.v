@@ -189,7 +189,7 @@ module renderer (
   endcase
 
   reg [5:0] coin_rgb;
-  always @(*) case (chest_code)
+  always @(*) case (coin_code)
     2'd1: coin_rgb = 6'b000000;
     2'd2: coin_rgb = 6'b100100;       // wood
     2'd3: coin_rgb = 6'b111000;       // gold
@@ -197,7 +197,7 @@ module renderer (
   endcase
 
   reg [5:0] buttons_rgb;
-  always @(*) case (chest_code)
+  always @(*) case (button_code)
     2'd1: buttons_rgb = 6'b000000;
     2'd2: buttons_rgb = 6'b100100;       // wood
     2'd3: buttons_rgb = 6'b111000;       // gold
