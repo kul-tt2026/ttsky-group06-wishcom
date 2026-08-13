@@ -1081,8 +1081,8 @@ module dragon_l1_generator (
     6'd8: code = color1;
     6'd9: code = color7;
     6'd10: code = color7;
-    6'd11: code = color4;
-    6'd12: code = color4;
+    6'd11: code = color3;
+    6'd12: code = color3;
     6'd13: code = color2;
     6'd14: code = color2;
     6'd15: code = color2;
@@ -1117,9 +1117,9 @@ module dragon_l1_generator (
     6'd7: code = color1;
     6'd8: code = color1;
     6'd9: code = color1;
-    6'd10: code = color4;
-    6'd11: code = color4;
-    6'd12: code = color4;
+    6'd10: code = color3;
+    6'd11: code = color3;
+    6'd12: code = color3;
     6'd13: code = color2;
     6'd14: code = color2;
     6'd15: code = color2;
@@ -1130,8 +1130,8 @@ module dragon_l1_generator (
     6'd20: code = color0;
     6'd21: code = color1;
     6'd22: code = color3;
-    6'd23: code = color7;
-    6'd24: code = color7;
+    6'd23: code = color4;
+    6'd24: code = color4;
     6'd25: code = color3;
     6'd26: code = color3;
     6'd27: code = color1;
@@ -1154,8 +1154,8 @@ module dragon_l1_generator (
     6'd7: code = color6;
     6'd8: code = color6;
     6'd9: code = color6;
-    6'd10: code = color4;
-    6'd11: code = color4;
+    6'd10: code = color3;
+    6'd11: code = color3;
     6'd12: code = color1;
     6'd13: code = color1;
     6'd14: code = color2;
@@ -1167,9 +1167,9 @@ module dragon_l1_generator (
     6'd20: code = color1;
     6'd21: code = color1;
     6'd22: code = color3;
-    6'd23: code = color4;
-    6'd24: code = color4;
-    6'd25: code = color4;
+    6'd23: code = color3;
+    6'd24: code = color3;
+    6'd25: code = color3;
     6'd26: code = color3;
     6'd27: code = color1;
     6'd28: code = color1;
@@ -1191,7 +1191,7 @@ module dragon_l1_generator (
     6'd7: code = color1;
     6'd8: code = color1;
     6'd9: code = color1;
-    6'd10: code = color4;
+    6'd10: code = color3;
     6'd11: code = color1;
     6'd12: code = color4;
     6'd13: code = color4;

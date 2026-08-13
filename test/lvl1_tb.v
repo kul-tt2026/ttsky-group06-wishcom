@@ -57,10 +57,6 @@ module egg_tb;
 
         #1;
 
-        // Print ALLEEN als de kleurcode 4 (WIT) is!
-        if (px_on && px_code == 3'd4) begin
-            $display("HOERA! Wit pixel gevonden op (%0d,%0d) -> px_code = %0d", xi, yi, px_code);
-        end
         // ----------------------------------
 
         $fwrite(f, "%0d %0d %0d\n", rgb[5:4]*85, rgb[3:2]*85, rgb[1:0]*85);
