@@ -8,9 +8,9 @@ module dragon_draw(
     output wire [2:0] px_code      // 1 outline, 2 body, 3 belly, 4 horn, ...
 ); 
 
-  reg lvl1_on = 0;
-  reg lvl2_on = 0;
-  reg lvl3_on = 0;
+  reg lvl1_on;
+  reg lvl2_on;
+  reg lvl3_on;
   //op basis van state: ei, draak in ei, kleine draak, grote draak 
   //draak beweegt op en neer lichtjes 
   
