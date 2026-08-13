@@ -234,6 +234,7 @@ endmodule
 
 // endmodule
 `default_nettype none
+`default_nettype none
 
 module ei_generator (
     input  wire [9:0] x,
@@ -244,102 +245,92 @@ module ei_generator (
 );
 
     // Ongebruikte signalen direct afvangen
-    wire _unused = &{ mood_anim, 1'b0};
+    wire _unused = &{mood_anim, 1'b0};
 
     //---------------------------------------------------------
-    // Middelpunt
+    // Middelpunt (12-bit signed)
     //---------------------------------------------------------
-    wire signed [11:0] dx = $signed({2'b00,x}) - 12'sd320;
-    wire signed [11:0] dy = $signed({2'b00,y}) - 12'sd240;
+    wire signed [11:0] dx = $signed({2'b00, x}) - 12'sd320;
+    wire signed [11:0] dy = $signed({2'b00, y}) - 12'sd240;
 
     //---------------------------------------------------------
-    // Parameters
+    // Parameters (12-bit signed)
     //---------------------------------------------------------
-    localparam signed [63:0] B = 64'd145;
-    localparam signed [63:0] RAND = 64'd8;
-
-    //---------------------------------------------------------
-    // 64-bit & Kwadraten
-    //---------------------------------------------------------
-
-    wire signed [11:0] dx64 = dx;
-    wire signed [11:0] dy64 = dy;
-    wire signed [63:0] dx_sq = dx64 * dx64;
-    wire signed [63:0] dy_sq = dy64 * dy64;
-    wire signed [63:0] b_sq = B * B;
+    localparam signed [11:0] B    = 12'sd145;
+    localparam signed [11:0] RAND = 12'sd8;
 
     // Dynamische breedte (kwadratische eivorm)
-    wire signed [63:0] t = dy64 + 64'd166;
-    wire signed [63:0] a_dyn = 64'd90 + (t * t) / 2500;
-    wire signed [63:0] a_dyn_sq = a_dyn * a_dyn;
+    wire signed [11:0] t        = dy + 12'sd166;
+    wire signed [11:0] a_dyn    = 12'sd90 + $signed((t * t) / 12'sd2500);
 
-    //---------------------------------------------------------
-    // Buitenste ei
-    //---------------------------------------------------------
-    wire signed [63:0] a_out = a_dyn + RAND;
-    wire signed [63:0] b_out = B + RAND;
+    // Buitenste ei parameters
+    wire signed [11:0] a_out    = a_dyn + RAND;
+    wire signed [11:0] b_out    = B + RAND;
 
-    wire signed [63:0] a_out_sq = a_out * a_out;
-    wire signed [63:0] b_out_sq = b_out * b_out;
+    // Kwadraten voor ovaalberekeningen
+    wire signed [23:0] dx_sq    = dx * dx;
+    wire signed [23:0] dy_sq    = dy * dy;
+
+    wire signed [23:0] a_dyn_sq = a_dyn * a_dyn;
+    wire signed [23:0] b_sq     = B * B;
+
+    wire signed [23:0] a_out_sq = a_out * a_out;
+    wire signed [23:0] b_out_sq = b_out * b_out;
 
     //---------------------------------------------------------
     // Binnenboxen
     //---------------------------------------------------------
     wire box_in =
-        (dx64 >= -a_dyn) &&
-        (dx64 <=  a_dyn) &&
-        (dy64 >= -B) &&
-        (dy64 <=  B);
+        (dx >= -a_dyn) &&
+        (dx <=  a_dyn) &&
+        (dy >= -B)     &&
+        (dy <=  B);
 
     wire box_out =
-        (dx64 >= -a_out) &&
-        (dx64 <=  a_out) &&
-        (dy64 >= -b_out) &&
-        (dy64 <=  b_out);
+        (dx >= -a_out) &&
+        (dx <=  a_out) &&
+        (dy >= -b_out) &&
+        (dy <=  b_out);
 
     //---------------------------------------------------------
     // Ovalen
     //---------------------------------------------------------
     wire in_ei =
         box_in &&
-        ((dx_sq * b_sq + dy_sq * a_dyn_sq)
-            <= (a_dyn_sq * b_sq));
+        ((dx_sq * b_sq + dy_sq * a_dyn_sq) <= (a_dyn_sq * b_sq));
 
     wire in_ei_out =
         box_out &&
-        ((dx_sq * b_out_sq + dy_sq * a_out_sq)
-            <= (a_out_sq * b_out_sq));
+        ((dx_sq * b_out_sq + dy_sq * a_out_sq) <= (a_out_sq * b_out_sq));
 
     //---------------------------------------------------------
-    // Vlekjes binnen het ei
+    // Vlekjes binnen het ei (12-bit rekenkunde)
     //---------------------------------------------------------
-    wire signed [63:0] vlek1_dx = dx64 - 64'sd25;
-    wire signed [63:0] vlek1_dy = dy64 - (-64'sd60);
-    wire vlek1 = (vlek1_dx * vlek1_dx + vlek1_dy * vlek1_dy) <= (64'sd27 * 64'sd27);
+    wire signed [11:0] vlek1_dx = dx - 12'sd25;
+    wire signed [11:0] vlek1_dy = dy - (-12'sd60);
+    wire vlek1 = (vlek1_dx * vlek1_dx + vlek1_dy * vlek1_dy) <= (12'sd27 * 12'sd27);
 
-    wire signed [63:0] vlek2_dx = dx64 - 64'sd30;
-    wire signed [63:0] vlek2_dy = dy64 - 64'sd70;
-    wire vlek2 = (vlek2_dx * vlek2_dx + vlek2_dy * vlek2_dy) <= (64'sd35 * 64'sd35);
+    wire signed [11:0] vlek2_dx = dx - 12'sd30;
+    wire signed [11:0] vlek2_dy = dy - 12'sd70;
+    wire vlek2 = (vlek2_dx * vlek2_dx + vlek2_dy * vlek2_dy) <= (12'sd35 * 12'sd35);
 
-    wire signed [63:0] vlek3_dx = dx64 + 64'sd50;
-    wire signed [63:0] vlek3_dy = dy64 - 64'sd20;
-    wire vlek3 = (vlek3_dx * vlek3_dx + vlek3_dy * vlek3_dy) <= (64'sd30 * 64'sd30);
+    wire signed [11:0] vlek3_dx = dx + 12'sd50;
+    wire signed [11:0] vlek3_dy = dy - 12'sd20;
+    wire vlek3 = (vlek3_dx * vlek3_dx + vlek3_dy * vlek3_dy) <= (12'sd30 * 12'sd30);
 
     //---------------------------------------------------------
     // Rand & Output
     //---------------------------------------------------------
     wire border = in_ei_out && !in_ei;
 
-    assign px_on = 1'b1;
+    assign px_on = in_ei_out;
 
     assign px_code =
-        border                       ? 3'd0 : 
-        (in_ei && (vlek1 || vlek2 || vlek3)) ? 3'd2 : 
-        in_ei                        ? 3'd4 : 
-                                       3'd4;  
-
+        border                               ? 3'd1 : // Rand (Zwart)
+        (in_ei && (vlek1 || vlek2 || vlek3)) ? 3'd2 : // Vlekken (Donkergroen)
+        in_ei                                ? 3'd4 : // Ei vulling (Wit)
+                                               3'd0;  // Transparant
 endmodule
-
 `default_nettype none
 
 module dragon_l1_generator (
@@ -358,14 +349,15 @@ module dragon_l1_generator (
     // ---------------------------------------------------------
     // Kleuren-placeholders (Gecorrigeerd!)
     // ---------------------------------------------------------
-    localparam [2:0] color0 = 3'd0; // TRANSPARANT (Achtergrond, geen pixel)
-    localparam [2:0] color1 = 3'd1; // ZWART (Omtrek / Oogjes)
-    localparam [2:0] color2 = 3'd2; // Medium groen (Lijfje & Eivlekken)
-    localparam [2:0] color3 = 3'd3; // Fel groen (Buikje & Staart)
-    localparam [2:0] color4 = 3'd4; // WIT (Eierschaal & Oogglim)
-    localparam [2:0] color5 = 3'd5; // Medium grijs (Horentjes)
-    localparam [2:0] color6 = 3'd6; // Donkergrijs (Schaduw horentjes)
-    //---------------------------------------------------------
+    localparam [2:0] color0 = 3'd0; // Transparant
+    localparam [2:0] color1 = 3'd1; // Zwart
+    localparam [2:0] color2 = 3'd2; // Donkergroen (Vlekken)
+    localparam [2:0] color3 = 3'd3; // Felgroen (Lijfje)
+    localparam [2:0] color4 = 3'd4; // WIT (Eierschaal)
+    localparam [2:0] color5 = 3'd5; // Grijs
+    localparam [2:0] color6 = 3'd6; // Donkergrijs
+    localparam [2:0] color7 = 3'd7; // LICHTGROEN (Nekje & Buikje)
+        //---------------------------------------------------------
     // Positionering (Middelpunt van de sprite op 320, 240)
     // Draak is 34 px breed en 36 px hoog.
     // X-bereik: 320 - 17 = 303
@@ -498,7 +490,7 @@ module dragon_l1_generator (
     6'd9: code = color0;
     6'd10: code = color0;
     6'd11: code = color6;
-    6'd12: code = color4;
+    6'd12: code = color5;
     6'd13: code = color6;
     6'd14: code = color0;
     6'd15: code = color0;
@@ -534,14 +526,14 @@ module dragon_l1_generator (
     6'd8: code = color0;
     6'd9: code = color0;
     6'd10: code = color6;
-    6'd11: code = color4;
-    6'd12: code = color4;
+    6'd11: code = color5;
+    6'd12: code = color5;
     6'd13: code = color6;
     6'd14: code = color0;
     6'd15: code = color0;
     6'd16: code = color6;
     6'd17: code = color6;
-    6'd18: code = color4;
+    6'd18: code = color5;
     6'd19: code = color6;
     6'd20: code = color0;
     6'd21: code = color0;
@@ -572,13 +564,13 @@ module dragon_l1_generator (
     6'd9: code = color1;
     6'd10: code = color1;
     6'd11: code = color1;
-    6'd12: code = color4;
+    6'd12: code = color5;
     6'd13: code = color6;
     6'd14: code = color0;
     6'd15: code = color6;
     6'd16: code = color6;
-    6'd17: code = color4;
-    6'd18: code = color4;
+    6'd17: code = color5;
+    6'd18: code = color5;
     6'd19: code = color6;
     6'd20: code = color0;
     6'd21: code = color0;
@@ -613,8 +605,8 @@ module dragon_l1_generator (
     6'd13: code = color1;
     6'd14: code = color1;
     6'd15: code = color6;
-    6'd16: code = color4;
-    6'd17: code = color4;
+    6'd16: code = color5;
+    6'd17: code = color5;
     6'd18: code = color6;
     6'd19: code = color6;
     6'd20: code = color0;
@@ -650,7 +642,7 @@ module dragon_l1_generator (
     6'd13: code = color2;
     6'd14: code = color2;
     6'd15: code = color6;
-    6'd16: code = color4;
+    6'd16: code = color5;
     6'd17: code = color6;
     6'd18: code = color1;
     6'd19: code = color0;
@@ -992,7 +984,7 @@ module dragon_l1_generator (
     6'd22: code = color0;
     6'd23: code = color0;
     6'd24: code = color1;
-    6'd25: code = color2;
+    6'd25: code = color3;
     6'd26: code = color1;
     6'd27: code = color0;
     6'd28: code = color0;
@@ -1028,8 +1020,8 @@ module dragon_l1_generator (
     6'd21: code = color0;
     6'd22: code = color0;
     6'd23: code = color1;
-    6'd24: code = color2;
-    6'd25: code = color2;
+    6'd24: code = color3;
+    6'd25: code = color3;
     6'd26: code = color1;
     6'd27: code = color0;
     6'd28: code = color0;
@@ -1050,9 +1042,9 @@ module dragon_l1_generator (
     6'd6: code = color0;
     6'd7: code = color0;
     6'd8: code = color1;
-    6'd9: code = color3;
-    6'd10: code = color3;
-    6'd11: code = color3;
+    6'd9: code = color7;
+    6'd10: code = color7;
+    6'd11: code = color7;
     6'd12: code = color2;
     6'd13: code = color2;
     6'd14: code = color2;
@@ -1064,9 +1056,9 @@ module dragon_l1_generator (
     6'd20: code = color0;
     6'd21: code = color0;
     6'd22: code = color1;
-    6'd23: code = color2;
-    6'd24: code = color2;
-    6'd25: code = color2;
+    6'd23: code = color3;
+    6'd24: code = color3;
+    6'd25: code = color3;
     6'd26: code = color1;
     6'd27: code = color0;
     6'd28: code = color0;
@@ -1087,8 +1079,8 @@ module dragon_l1_generator (
     6'd6: code = color0;
     6'd7: code = color0;
     6'd8: code = color1;
-    6'd9: code = color3;
-    6'd10: code = color3;
+    6'd9: code = color7;
+    6'd10: code = color7;
     6'd11: code = color4;
     6'd12: code = color4;
     6'd13: code = color2;
@@ -1101,9 +1093,9 @@ module dragon_l1_generator (
     6'd20: code = color0;
     6'd21: code = color0;
     6'd22: code = color1;
-    6'd23: code = color2;
-    6'd24: code = color4;
-    6'd25: code = color2;
+    6'd23: code = color3;
+    6'd24: code = color7;
+    6'd25: code = color3;
     6'd26: code = color1;
     6'd27: code = color0;
     6'd28: code = color0;
@@ -1137,11 +1129,11 @@ module dragon_l1_generator (
     6'd19: code = color1;
     6'd20: code = color0;
     6'd21: code = color1;
-    6'd22: code = color2;
-    6'd23: code = color4;
-    6'd24: code = color4;
-    6'd25: code = color2;
-    6'd26: code = color2;
+    6'd22: code = color3;
+    6'd23: code = color7;
+    6'd24: code = color7;
+    6'd25: code = color3;
+    6'd26: code = color3;
     6'd27: code = color1;
     6'd28: code = color0;
     6'd29: code = color0;
@@ -1174,11 +1166,11 @@ module dragon_l1_generator (
     6'd19: code = color1;
     6'd20: code = color1;
     6'd21: code = color1;
-    6'd22: code = color2;
+    6'd22: code = color3;
     6'd23: code = color4;
     6'd24: code = color4;
     6'd25: code = color4;
-    6'd26: code = color2;
+    6'd26: code = color3;
     6'd27: code = color1;
     6'd28: code = color1;
     6'd29: code = color0;
@@ -1252,8 +1244,8 @@ module dragon_l1_generator (
     6'd23: code = color4;
     6'd24: code = color4;
     6'd25: code = color1;
-    6'd26: code = color4;
-    6'd27: code = color4;
+    6'd26: code = color5;
+    6'd27: code = color5;
     6'd28: code = color1;
     6'd29: code = color0;
     6'd30: code = color0;
@@ -1289,8 +1281,8 @@ module dragon_l1_generator (
     6'd23: code = color4;
     6'd24: code = color4;
     6'd25: code = color4;
-    6'd26: code = color4;
-    6'd27: code = color4;
+    6'd26: code = color5;
+    6'd27: code = color5;
     6'd28: code = color1;
     6'd29: code = color0;
     6'd30: code = color0;
@@ -1326,8 +1318,8 @@ module dragon_l1_generator (
     6'd23: code = color2;
     6'd24: code = color4;
     6'd25: code = color4;
-    6'd26: code = color4;
-    6'd27: code = color4;
+    6'd26: code = color5;
+    6'd27: code = color5;
     6'd28: code = color1;
     6'd29: code = color0;
     6'd30: code = color0;
@@ -1363,8 +1355,8 @@ module dragon_l1_generator (
     6'd23: code = color2;
     6'd24: code = color2;
     6'd25: code = color2;
-    6'd26: code = color4;
-    6'd27: code = color4;
+    6'd26: code = color5;
+    6'd27: code = color5;
     6'd28: code = color1;
     6'd29: code = color0;
     6'd30: code = color0;
@@ -1401,7 +1393,7 @@ module dragon_l1_generator (
     6'd24: code = color2;
     6'd25: code = color2;
     6'd26: code = color2;
-    6'd27: code = color4;
+    6'd27: code = color5;
     6'd28: code = color1;
     6'd29: code = color0;
     6'd30: code = color0;
@@ -1437,8 +1429,8 @@ module dragon_l1_generator (
     6'd23: code = color2;
     6'd24: code = color2;
     6'd25: code = color2;
-    6'd26: code = color4;
-    6'd27: code = color4;
+    6'd26: code = color5;
+    6'd27: code = color5;
     6'd28: code = color1;
     6'd29: code = color0;
     6'd30: code = color0;
@@ -1465,7 +1457,7 @@ module dragon_l1_generator (
     6'd14: code = color2;
     6'd15: code = color4;
     6'd16: code = color4;
-    6'd17: code = color4;
+    6'd17: code = color5;
     6'd18: code = color4;
     6'd19: code = color4;
     6'd20: code = color2;
@@ -1474,8 +1466,8 @@ module dragon_l1_generator (
     6'd23: code = color2;
     6'd24: code = color2;
     6'd25: code = color2;
-    6'd26: code = color4;
-    6'd27: code = color4;
+    6'd26: code = color5;
+    6'd27: code = color5;
     6'd28: code = color1;
     6'd29: code = color0;
     6'd30: code = color0;
@@ -1489,8 +1481,8 @@ module dragon_l1_generator (
     6'd1: code = color0;
     6'd2: code = color0;
     6'd3: code = color1;
-    6'd4: code = color4;
-    6'd5: code = color4;
+    6'd4: code = color5;
+    6'd5: code = color5;
     6'd6: code = color2;
     6'd7: code = color2;
     6'd8: code = color2;
@@ -1511,7 +1503,7 @@ module dragon_l1_generator (
     6'd23: code = color2;
     6'd24: code = color2;
     6'd25: code = color4;
-    6'd26: code = color4;
+    6'd26: code = color5;
     6'd27: code = color1;
     6'd28: code = color0;
     6'd29: code = color0;
@@ -1527,8 +1519,8 @@ module dragon_l1_generator (
     6'd2: code = color0;
     6'd3: code = color0;
     6'd4: code = color1;
-    6'd5: code = color4;
-    6'd6: code = color4;
+    6'd5: code = color5;
+    6'd6: code = color5;
     6'd7: code = color2;
     6'd8: code = color2;
     6'd9: code = color2;
@@ -1547,8 +1539,8 @@ module dragon_l1_generator (
     6'd22: code = color2;
     6'd23: code = color2;
     6'd24: code = color2;
-    6'd25: code = color4;
-    6'd26: code = color4;
+    6'd25: code = color5;
+    6'd26: code = color5;
     6'd27: code = color1;
     6'd28: code = color0;
     6'd29: code = color0;
@@ -1565,7 +1557,7 @@ module dragon_l1_generator (
     6'd3: code = color0;
     6'd4: code = color0;
     6'd5: code = color1;
-    6'd6: code = color4;
+    6'd6: code = color5;
     6'd7: code = color4;
     6'd8: code = color4;
     6'd9: code = color4;
@@ -1584,7 +1576,7 @@ module dragon_l1_generator (
     6'd22: code = color2;
     6'd23: code = color4;
     6'd24: code = color4;
-    6'd25: code = color4;
+    6'd25: code = color5;
     6'd26: code = color1;
     6'd27: code = color0;
     6'd28: code = color0;
@@ -1602,8 +1594,8 @@ module dragon_l1_generator (
     6'd3: code = color0;
     6'd4: code = color0;
     6'd5: code = color1;
-    6'd6: code = color4;
-    6'd7: code = color4;
+    6'd6: code = color5;
+    6'd7: code = color5;
     6'd8: code = color4;
     6'd9: code = color4;
     6'd10: code = color4;
@@ -1620,8 +1612,8 @@ module dragon_l1_generator (
     6'd21: code = color4;
     6'd22: code = color4;
     6'd23: code = color4;
-    6'd24: code = color4;
-    6'd25: code = color4;
+    6'd24: code = color5;
+    6'd25: code = color5;
     6'd26: code = color1;
     6'd27: code = color0;
     6'd28: code = color0;
@@ -1640,8 +1632,8 @@ module dragon_l1_generator (
     6'd4: code = color0;
     6'd5: code = color0;
     6'd6: code = color1;
-    6'd7: code = color4;
-    6'd8: code = color4;
+    6'd7: code = color5;
+    6'd8: code = color5;
     6'd9: code = color4;
     6'd10: code = color4;
     6'd11: code = color4;
@@ -1655,9 +1647,9 @@ module dragon_l1_generator (
     6'd19: code = color4;
     6'd20: code = color4;
     6'd21: code = color4;
-    6'd22: code = color4;
-    6'd23: code = color4;
-    6'd24: code = color4;
+    6'd22: code = color5;
+    6'd23: code = color5;
+    6'd24: code = color5;
     6'd25: code = color1;
     6'd26: code = color0;
     6'd27: code = color0;
@@ -1678,21 +1670,21 @@ module dragon_l1_generator (
     6'd5: code = color0;
     6'd6: code = color0;
     6'd7: code = color1;
-    6'd8: code = color4;
-    6'd9: code = color4;
-    6'd10: code = color4;
-    6'd11: code = color4;
-    6'd12: code = color4;
-    6'd13: code = color4;
+    6'd8: code = color5;
+    6'd9: code = color5;
+    6'd10: code = color5;
+    6'd11: code = color5;
+    6'd12: code = color5;
+    6'd13: code = color5;
     6'd14: code = color2;
     6'd15: code = color2;
     6'd16: code = color2;
-    6'd17: code = color4;
-    6'd18: code = color4;
-    6'd19: code = color4;
-    6'd20: code = color4;
-    6'd21: code = color4;
-    6'd22: code = color4;
+    6'd17: code = color5;
+    6'd18: code = color5;
+    6'd19: code = color5;
+    6'd20: code = color5;
+    6'd21: code = color5;
+    6'd22: code = color5;
     6'd23: code = color1;
     6'd24: code = color1;
     6'd25: code = color0;
@@ -1745,6 +1737,7 @@ module dragon_l1_generator (
   endcase
   default: code = color0;
 endcase
+
 
 end
     end

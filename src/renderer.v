@@ -168,17 +168,18 @@ module renderer (
   // Per-drawable palettes: code -> 6-bit {R,G,B}
   reg [5:0] dragon_rgb;
   always @(*) begin
-    case (dragon_code)
-      3'd0: dragon_rgb = 6'b00_00_00; // 0 = Transparant / Achtergrond
-      3'd1: dragon_rgb = 6'b00_00_00; // 1 = Zwart (Oogjes/Contour)
-      3'd2: dragon_rgb = 6'b11_11_11; // 2 = Donkergroen (Eivlekken / Draak)
-      3'd3: dragon_rgb = 6'b01_11_01; // 3 = Lichtgroen / Neon (Buikje)
-      3'd4: dragon_rgb = 6'b11_11_11; // 4 = WIT! (Eierschaal)
-      3'd5: dragon_rgb = 6'b10_10_10; // 5 = Lichtgrijs (Horentjes)
-      3'd6: dragon_rgb = 6'b01_01_01; // 6 = Donkergrijs
-      default: dragon_rgb = 6'b11_11_11; // Fallback naar WIT!
-    endcase
-  end
+  case (dragon_code)
+    3'd0: dragon_rgb = 6'b00_00_00; // Transparant
+    3'd1: dragon_rgb = 6'b00_00_00; // Zwart
+    3'd2: dragon_rgb = 6'b00_10_00; // Donkergroen (Eivlekken)
+    3'd3: dragon_rgb = 6'b01_11_01; // Fel groen
+    3'd4: dragon_rgb = 6'b11_11_11; // WIT (Eierschaal)
+    3'd5: dragon_rgb = 6'b10_10_10; // Grijs
+    3'd6: dragon_rgb = 6'b01_01_01; // Donkergrijs
+    3'd7: dragon_rgb = 6'b01_11_01; // LICHTGROEN (Nekje & Buikje)
+    default: dragon_rgb = 6'b11_11_11;
+  endcase
+end
 
   reg [5:0] chest_rgb;
   always @(*) case (chest_code)
