@@ -1,7 +1,7 @@
 `default_nettype none
 `timescale 1ns/1ps
 
-module egg_tb;
+module dragon_lvl1_tb;
 
   reg  [9:0] pix_x, pix_y;
   wire [9:0] px = pix_y;
