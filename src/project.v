@@ -108,6 +108,8 @@ module tt_um_dragonchi (
   wire [1:0] dragon_bob, chest_frame;
   wire [2:0] dragon_mood_anim;
   wire flash, flame_frame;
+  // Verwijder 'dragon_bob' of vang hem af:
+wire _unused_proj = &{dragon_bob, 1'b0};
   anim u_anim (
     .clk(clk), .rst_n(rst_n), .frame_tick(frame_tick),
     .mode(mode), .satisfaction(satisfaction), .chest_state(chest_state),

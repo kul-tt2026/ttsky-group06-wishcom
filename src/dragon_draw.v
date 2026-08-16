@@ -64,7 +64,7 @@ module dragon_draw(
                    lvl2_on ? lvl2_px_code :
                    3'd0; // Buiten deze niveaus is de kleur code 0
 
-  wire _unused = &{x, y, mood_anim, 1'b0};
+  wire _unused = &{x, y, mood_anim, 1'b0,lvl3_on};
 endmodule
 
 

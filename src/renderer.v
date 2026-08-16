@@ -37,7 +37,14 @@ module renderer (
     output reg  [1:0] G,
     output reg  [1:0] B
 );
-  localparam M_TITLE=2'd0, M_HOME=2'd1, M_CHEST=2'd2, M_GAMEOVER=2'd3;
+  // VORIGE (2-bit):
+// localparam M_TITLE=2'd0, M_HOME=2'd1, M_CHEST=2'd2, M_GAMEOVER=2'd3;
+
+// VERANDER NAAR (3-bit):
+localparam [2:0] M_TITLE    = 3'd0,
+                 M_HOME     = 3'd1,
+                 M_CHEST    = 3'd2,
+                 M_GAMEOVER = 3'd3;
 
   // ======================= 0. ROTATE ======================================
   // Fysiek scherm: 640x480 liggend.  Wij tekenen in PORTRET: 480 x 640.
