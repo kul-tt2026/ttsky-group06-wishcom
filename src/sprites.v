@@ -333,16 +333,16 @@ module ei_generator (
 endmodule
 `default_nettype none
 
-// module dragon_l1_generator (
-//     input  wire [9:0] x,          // Scherm coördinaat X (0..639)
-//     input  wire [9:0] y,          // Scherm coördinaat Y (0..479)
-//     input  wire [2:0] mood_anim,  // Animatie status (optioneel te gebruiken)
-//     output wire       px_on,      // 1 = er is een draak-pixel op deze coördinaat
-//     output wire [2:0] px_code     // Kleurcode (0=transparant, 1=outline, 2=groen, etc.)
-// );
+module dragon_l1_generator (
+    input  wire [9:0] x,          // Scherm coördinaat X (0..639)
+    input  wire [9:0] y,          // Scherm coördinaat Y (0..479)
+    input  wire [2:0] mood_anim,  // Animatie status (optioneel te gebruiken)
+    output wire       px_on,      // 1 = er is een draak-pixel op deze coördinaat
+    output wire [2:0] px_code     // Kleurcode (0=transparant, 1=outline, 2=groen, etc.)
+);
 
-//     // Ongebruikte signalen netjes afvangen
-//     wire _unused = &{mood_anim, 1'b0};
+    // Ongebruikte signalen netjes afvangen
+    wire _unused = &{mood_anim, 1'b0};
 //     // ---------------------------------------------------------
 //     // Kleuren-placeholders (pas de waarden HIER aan)
 //     // ---------------------------------------------------------
@@ -1749,4 +1749,4 @@ endmodule
 //     assign px_on   = in_bounds && (code != 3'd0);
 //     assign px_code = in_bounds ? code : 3'd0;
 
-// endmodule
+endmodule
