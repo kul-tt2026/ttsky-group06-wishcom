@@ -13,8 +13,8 @@
 module hud (
     input  wire [9:0] pix_x,        // ABSOLUTE screen coordinates
     input  wire [9:0] pix_y,
-    input  wire [1:0] hearts,
-    input  wire [7:0] coins,
+    input  wire [2:0] hearts,
+    input  wire [9:0] coins,
     input  wire [2:0] level,
     output wire       px_on,
     output wire [1:0] px_code       // 1 = heart red, 2 = text white

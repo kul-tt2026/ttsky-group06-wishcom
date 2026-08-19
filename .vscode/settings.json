@@ -1,13 +1,4 @@
 {
-    "verilog.linting.linter": "iverilog",
-    "verilog.linting.iverilog.arguments": "-f .vscode/iverilog_files.f",
-    "verilog.ctags.enabled": false,
-    "editor.showUnused": false,
-    "verilog.lint.enabled": false,
-    "verilog.validation": false,
-    "verilog.languageServer.enabled": false,
-    "verilog.disableLint": true,
-    "verilog.lintOnSave": false,
-    "verilog.lintOnType": false,
-    "problems.decorations.enabled": false
+  "verilog.linting.linter": "iverilog",
+  "verilog.linting.iverilog.arguments": "-g2012 -I src"
 }

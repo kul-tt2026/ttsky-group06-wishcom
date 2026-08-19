@@ -12,8 +12,8 @@ module renderer (
     input  wire [9:0] pix_y,
     input  wire       video_active,
 
-    input  wire [1:0] mode,          // 0 TITLE, 1 HOME, 2 CHEST, 3 GAMEOVER
-    input  wire [1:0] menu_sel,
+    input  wire [2:0] mode,          // 0 TITLE, 1 HOME, 2 CHEST, 3 GAMEOVER
+    input  wire [2:0] menu_sel,
     input  wire [2:0] hearts, // 3 bit
     input  wire [2:0] satisfaction, // 3 bit => 5 options
     input  wire [9:0] coins, //tot 1000: level 1 20, level 2 40, level 3 80, level 160, level 
@@ -25,21 +25,33 @@ module renderer (
     input  wire [1:0] chest_frame, // 0 closed, 1 opening, 2 open
     input  wire [1:0] chest_state,
     input  wire [1:0] chest_sel, // welke kist is selected (0,1,2)
-    input  wire [1:0] chest_outcome,
+    input  wire [2:0] chest_outcome,
 
-    input  wire [1:0] dragon_form, // weet niet of dit voldoende bits heeft 
-    input  wire [1:0] dragon_mood_anim,
+    input  wire [2:0] dragon_mood_anim,
     input  wire       flash,
     input  wire       flame_frame,
 
-    input  wire       you_win,
     input             overflow, // als hartjes vol of geld vol
 
     output reg  [1:0] R,
     output reg  [1:0] G,
     output reg  [1:0] B
 );
-  localparam M_TITLE=2'd0, M_HOME=2'd1, M_CHEST=2'd2, M_GAMEOVER=2'd3;
+  // VORIGE (2-bit):
+// localparam M_TITLE=2'd0, M_HOME=2'd1, M_CHEST=2'd2, M_GAMEOVER=2'd3;
+
+// VERANDER NAAR (3-bit):
+localparam [2:0] M_TITLE    = 3'd0,
+                 M_HOME     = 3'd1,
+                 M_CHEST    = 3'd2,
+                 M_GAMEOVER = 3'd3;
+
+  // ======================= 0. ROTATE ======================================
+  // Fysiek scherm: 640x480 liggend.  Wij tekenen in PORTRET: 480 x 640.
+  // De monitor staat 90 graden gedraaid.
+  wire [9:0] px = pix_y;              // 0..479  -> portret-breedte
+  wire [9:0] py = 10'd639 - pix_x;    // 0..639  -> portret-hoogte
+
 
   // ======================= 1. PLACE =======================================
   // Every position is a constant HERE, in one file.  Moving anything on
@@ -50,6 +62,7 @@ module renderer (
   localparam COINBAR_X  = 10'd24,  COINBAR_Y  = 10'd80;
   localparam CHEST0_X = 10'd80,  CHEST1_X = 10'd272, CHEST2_X = 10'd464;
   localparam CHEST_Y  = 10'd300; // moet x niet hetzelfde? 
+  localparam HEARTS_X = 10'd168, HEARTS_Y = 10'd16;
 
   // ======================= drawable instances =============================
   // DRAGON -----------------------------------------------------------------
@@ -61,9 +74,9 @@ module renderer (
 
 
   dragon_draw u_dragon (
-    .x(pix_x - DRAGON_X), .y(pix_y - DRAGON_Y),
-    .state(dragon_form), .mood_anim(dragon_mood_anim),
-    .px_on(dragon_on), .px_code(dragon_code)
+    .x(px - DRAGON_X), .y(py - DRAGON_Y), .mood_anim(dragon_mood_anim),
+    .px_on(dragon_on), .px_code(dragon_code),
+    .level(level)
   );
 
   // THREE CHESTS ---------------------------------
@@ -83,19 +96,19 @@ module renderer (
   wire [1:0] c0_code, c1_code, c2_code;
 
   chest_draw u_chest0 (
-    .x(pix_x - CHEST0_X), .y(pix_y - CHEST_Y),
+    .x(px - CHEST0_X), .y(py - CHEST_Y),
     .frame(chest_sel==2'd0 ? chest_frame : 2'd0),
     .highlighted(chest_sel==2'd0),
     .px_on(c0_on), .px_code(c0_code)
   );
   chest_draw u_chest1 (
-    .x(pix_x - CHEST1_X), .y(pix_y - CHEST_Y),
+    .x(px - CHEST1_X), .y(py - CHEST_Y),
     .frame(chest_sel==2'd1 ? chest_frame : 2'd0),
     .highlighted(chest_sel==2'd1),
     .px_on(c1_on), .px_code(c1_code)
   );
   chest_draw u_chest2 (
-    .x(pix_x - CHEST2_X), .y(pix_y - CHEST_Y),
+    .x(px - CHEST2_X), .y(py - CHEST_Y),
     .frame(chest_sel==2'd2 ? chest_frame : 2'd0),
     .highlighted(chest_sel==2'd2),
     .px_on(c2_on), .px_code(c2_code)
@@ -108,7 +121,7 @@ module renderer (
   wire sat_on;
   wire [2:0] sat_code;
   satisfactionbar u_satbar (
-    .x(pix_x - SATBAR_X), .y(pix_y - SATBAR_Y),
+    .x(px - SATBAR_X), .y(py - SATBAR_Y),
     .sat(satisfaction),
     .px_on(sat_on), .px_code(sat_code)
   );
@@ -117,7 +130,7 @@ module renderer (
   wire coin_on;
   wire [1:0] coin_code;
   coinbar u_coinbar (
-    .x(pix_x - COINBAR_X), .y(pix_y - COINBAR_Y),
+    .x(px - COINBAR_X), .y(py - COINBAR_Y),
     .coins(coins),
     .px_on(coin_on), .px_code(coin_code)
   );
@@ -128,7 +141,7 @@ module renderer (
   wire heartsinfo_on;
   wire [1:0] heartsinfo_code;
   hearts u_heartsinfo (
-    .pix_x(pix_x), .pix_y(pix_y),
+    .x(px - HEARTS_X), .y(py - HEARTS_Y),
     .hearts(hearts), .overflow(overflow),
     .px_on(heartsinfo_on), .px_code(heartsinfo_code)
   );
@@ -143,7 +156,7 @@ module renderer (
   wire [2:0] button_code;
 
   draw_buttons buttons_u (
-    .x(pix_x), .y(pix_y),
+    .x(px), .y(py),
     .evolve_now (evolve_now),
     .px_on(button_on), .px_code(button_code)
   );
@@ -161,12 +174,19 @@ module renderer (
   // ======================= 4. COLOUR ======================================
   // Per-drawable palettes: code -> 6-bit {R,G,B}
   reg [5:0] dragon_rgb;
-  always @(*) case (dragon_code)
-    3'd1: dragon_rgb = 6'b000000;      // outline
-    3'd2: dragon_rgb = 6'b011001;      // body green
-    3'd3: dragon_rgb = 6'b101110;      // belly
-    default: dragon_rgb = 6'b011001;
+  always @(*) begin
+  case (dragon_code)
+    3'd0: dragon_rgb = 6'b00_00_00; // Transparant
+    3'd1: dragon_rgb = 6'b00_00_00; // Zwart
+    3'd2: dragon_rgb = 6'b00_10_00; // Donkergroen (Eivlekken)
+    3'd3: dragon_rgb = 6'b01_11_01; // Fel groen
+    3'd4: dragon_rgb = 6'b11_11_11; // WIT (Eierschaal)
+    3'd5: dragon_rgb = 6'b10_10_10; // Grijs
+    3'd6: dragon_rgb = 6'b01_01_01; // Donkergrijs
+    3'd7: dragon_rgb = 6'b01_11_01; // LICHTGROEN (Nekje & Buikje)
+    default: dragon_rgb = 6'b11_11_11;
   endcase
+end
 
   reg [5:0] chest_rgb;
   always @(*) case (chest_code)
@@ -177,7 +197,7 @@ module renderer (
   endcase
 
   reg [5:0] coin_rgb;
-  always @(*) case (chest_code)
+  always @(*) case (coin_code)
     2'd1: coin_rgb = 6'b000000;
     2'd2: coin_rgb = 6'b100100;       // wood
     2'd3: coin_rgb = 6'b111000;       // gold
@@ -185,13 +205,12 @@ module renderer (
   endcase
 
   reg [5:0] buttons_rgb;
-  always @(*) case (chest_code)
-    2'd1: buttons_rgb = 6'b000000;
-    2'd2: buttons_rgb = 6'b100100;       // wood
-    2'd3: buttons_rgb = 6'b111000;       // gold
+  always @(*) case (button_code)
+    3'd1: buttons_rgb = 6'b000000;
+    3'd2: buttons_rgb = 6'b100100;       // wood
+    3'd3: buttons_rgb = 6'b111000;       // gold
     default: buttons_rgb = 6'b100100;
   endcase
-
   
 
 //coin_rgb
@@ -236,5 +255,5 @@ module renderer (
     {R, G, B} = rgb;
   end
 
-  wire _unused = &{menu_sel, chest_state, chest_outcome, flame_frame, level, combo_len, flash, you_win,1'b0};
+  wire _unused = &{menu_sel, chest_state, chest_outcome, flame_frame, level, combo_len, flash,1'b0};
 endmodule

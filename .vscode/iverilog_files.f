@@ -16,3 +16,4 @@ src/draw_buttons.v
 src/hearts.v
 src/satisfactionbar.v
 src/coinbar.v
+src/dual_lfsr.v

@@ -1,82 +1,140 @@
 `default_nettype none
 // ---------------------------------------------------------------------------
-// THE DRAGON'S STATS.  OWNER: PERSON A.
-//
-// The single most important rule of the new architecture:
-//   *** THIS is the only file that ever changes hearts, satisfaction,      ***
-//   *** coins or level.  Everyone else sends one-clock REQUEST pulses.     ***
-//
-// Why: both games affect the same stats.  If both wrote them directly you'd
-// get merge conflicts daily and same-frame overwrite bugs.  Here, all the
-// rules (caps, floors, the satisfaction->hearts coupling, evolve pricing)
-// live in one testable place.
+// THE DRAGON'S STATS. 
+// The only file that ever changes hearts, satisfaction, coins or level.
 // ---------------------------------------------------------------------------
 module dragon_state (
     input  wire       clk,
     input  wire       rst_n,
     input  wire       frame_tick,
-    input  wire       restart,            // from home.v: new game
+    input  wire       restart,
 
-    // requests from balance.v
-    input  wire       req_heart_gain,
+    input  wire       req_heart_gain,        // from balance
     input  wire       req_heart_lose,
     input  wire       req_sat_up,
     input  wire       req_sat_down,
 
-    // requests from chest_game.v
-    input  wire       req_coins_add,
-    input  wire       req_level_up_paid,
+    input  wire       req_coins_add,         // from chest_game
+    input  wire [9:0] coins_amount,
     input  wire       req_heart_lose_chest,
 
-    // request from home.v
-    input  wire       req_evolve,
+    input  wire       req_evolve,            // from home
 
-    // the stats -- read-only for everyone else
-    output reg  [2:0] hearts,             // 3..0
-    output reg  [2:0] satisfaction,       // 0 miserable .. 3 happy
+    output reg  [2:0] hearts,                // 0..5
+    output reg  [2:0] satisfaction,          // 0 miserable .. 5 happy
     output reg  [9:0] coins,
-    output reg  [2:0] level,              // 0..7
-    output reg        game_over
+    output reg  [2:0] level,                 // 0..7
+    output reg        game_over,
+    output reg        you_win,
+    output reg        overflow,              // "already at max" flash
+    output wire       evolve_now            // renderer: light up the option
 );
-  // evolve price: doubles-ish per level.  TODO Person A: tune with playtests.
-  wire [7:0] evolve_price = 8'd20 << level[1:0];   // 20,40,80,160, then cap
+  localparam MAX_HEARTS = 3'd5;
+  localparam MAX_SAT    = 3'd4;
+  localparam MAX_LEVEL  = 3'd7;
+  localparam COIN_CAP = 10'd999;
+  localparam [2:0] FORM_A = 3'd3;
+  localparam [2:0] FORM_B = 3'd7;
+
+  // ---- evolve price per level -------------------------------------------
+  // A case, not a shift: `20 << level[1:0]` wraps at level 4 back to 20.
+  // The last step (6 -> 7) costs 255, which is the whole purse.
+  reg [9:0] evolve_price;
+  always @(*) case (level)
+    3'd0: evolve_price = 10'd40;
+    3'd1: evolve_price = 10'd90;
+    3'd2: evolve_price = 10'd220;
+    3'd3: evolve_price = 10'd180;
+    3'd4: evolve_price = 10'd250;
+    3'd5: evolve_price = 10'd340;
+    3'd6: evolve_price = 10'd400;
+    3'd7: evolve_price = 10'd999;   // final evolution
+    default: evolve_price = 10'd999;   // already at max level
+  endcase
+
+  assign evolve_now = (coins >= evolve_price);
+
+  // satisfaction at rock bottom: another drop costs a heart instead
+  wire sat_floor_hit = req_sat_down && (satisfaction == 3'd0);
+  wire lose_any = req_heart_lose | req_heart_lose_chest | sat_floor_hit;
+  wire do_evolve = req_evolve && (coins >= evolve_price);
+  wire heal_up = do_evolve && (level == FORM_A - 1 || level == FORM_B - 1);
+  reg [6:0] overflow_timer;
+  wire [10:0] coins_sum = {1'b0, coins} + {1'b0, coins_amount};
 
   always @(posedge clk) begin
     if (!rst_n || restart) begin
-      hearts       <= 3'd3;
-      satisfaction <= 3'd2;               // start neutral
-      coins        <= 10'd0;
-      level        <= 3'd0;
-      game_over    <= 1'b0;
-    end else if (frame_tick && !game_over) begin
+      hearts         <= MAX_HEARTS;
+      satisfaction   <= 3'd2;
+      coins          <= 10'd0;
+      level          <= 3'd0;
+      game_over      <= 1'b0;
+      you_win        <= 1'b0;
+      overflow       <= 1'b0;
+      overflow_timer <= 7'd0;
+    end else if (frame_tick && !game_over && !you_win) begin
 
-      // ---- hearts ----------------------------------------------------
-      // TODO Person A: combine the three lose-sources and the gain source.
-      // Rules to implement:
-      //   * gain: +1, capped at 3
-      //   * lose (any source): -1; when hearts would hit 0 -> game_over
-      //   * req_sat_down while ALREADY at miserable: costs a heart
-      //     instead of dropping satisfaction further
+      // ---- overflow flash timer ----------------------------------------
+      if (overflow_timer != 0) begin
+        overflow_timer <= overflow_timer - 7'd1;
+        if (overflow_timer == 7'd1) overflow <= 1'b0;
+      end
 
-      // ---- satisfaction ----------------------------------------------
-      // TODO Person A:
-      //   * req_sat_up:   +1 capped at happy(3)
-      //   * req_sat_down: -1 floored at miserable(0)  (heart rule above)
+      // ---- hearts: ONE chain, so simultaneous requests resolve on purpose
+      if (heal_up) begin
+        hearts <= MAX_HEARTS;
+      end else if (lose_any) begin
+          if (hearts <= 3'd1) begin
+            hearts    <= 3'd0;
+            game_over <= 1'b1;
+          end else
+            hearts <= hearts - 3'd1;
+        end else if (req_heart_gain) begin
+          if (hearts != MAX_HEARTS)
+            hearts <= hearts + 3'd1;
+          else begin
+            overflow       <= 1'b1;
+            overflow_timer <= 7'd120;
+        end
+      end
 
-      // ---- coins & level ---------------------------------------------
-      // TODO Person A:
-      //   * req_coins_add:       coins <= coins + 10 (saturate at 255)
-      //   * req_level_up_paid:   level <= level + 1 (cap 7) -- chest freebie
-      //   * req_evolve:          if coins >= evolve_price:
-      //                              coins <= coins - evolve_price;
-      //                              level <= level + 1 (cap 7)
-      //                          else: ignore (home.v greys the option out
-      //                          by reading coins itself)
+      // ---- satisfaction -------------------------------------------------
+      if (req_sat_up) begin
+        if (satisfaction != MAX_SAT)
+          satisfaction <= satisfaction + 3'd1;
+        else begin
+          overflow       <= 1'b1;
+          overflow_timer <= 7'd120;
+        end
+      end else if (req_sat_down && satisfaction != 3'd0) begin
+        satisfaction <= satisfaction - 3'd1;
+      end
+      // (at 0, sat_floor_hit already took a heart above)
 
+      // ---- coins ---------------------------------------------------------
+      
+      
+      if (do_evolve) begin
+        coins <= coins - evolve_price;
+      end else if (req_coins_add) begin
+        if (coins_sum >= {1'b0, COIN_CAP}) begin
+          coins          <= COIN_CAP;
+          overflow       <= 1'b1;
+          overflow_timer <= 7'd120;
+        end else begin
+          coins <= coins_sum[9:0];
+        end
+      end
+    
+      // ---- level ---------------------------------------------------------
+      if (do_evolve) begin
+        if (level == MAX_LEVEL) begin
+          you_win <= 1'b1;
+        end else begin
+          level <= level + 3'd1;
+        end
+      end
     end
-  end
 
-  wire _unused = &{req_heart_gain, req_heart_lose, req_sat_up, req_sat_down,
-                   req_coins_add, req_level_up_paid, req_heart_lose_chest,
-                   req_evolve, evolve_price, 1'b0};
+  end
 endmodule
