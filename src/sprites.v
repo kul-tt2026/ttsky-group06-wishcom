@@ -342,7 +342,7 @@ module dragon_l1_generator (
 );
 
     // Ongebruikte signalen netjes afvangen
-    wire _unused = &{mood_anim, 1'b0};
+    wire _unused = &{mood_anim, x,y,px_on,px_code, 1'b0};
 //     // ---------------------------------------------------------
 //     // Kleuren-placeholders (pas de waarden HIER aan)
 //     // ---------------------------------------------------------
