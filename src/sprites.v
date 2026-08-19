@@ -335,41 +335,55 @@ endmodule
 `default_nettype none
 
 module dragon_l1_generator (
-    input  wire [9:0] x,          // Scherm coördinaat X (0..639)
-    input  wire [9:0] y,          // Scherm coördinaat Y (0..479)
-    input  wire [2:0] mood_anim,  // Animatie status
-    output wire       px_on,      // 1 = actieve pixel
-    output wire [2:0] px_code     // Kleurcode
+    input  wire        clk,
+    input  wire        rst_n,
+    input  wire [9:0]  x,
+    input  wire [9:0]  y,
+    input  wire [2:0]  mood_anim,
+    output reg         px_on,
+    output reg  [2:0]  px_code
 );
 
     wire _unused = &{mood_anim, 1'b0};
 
-    // 8x Schaling (272x288 px op scherm)
-    wire signed [11:0] raw_x = $signed({2'b00, x});
-    wire signed [11:0] raw_y = $signed({2'b00, y});
+    // Sprite startpositie op het scherm
+    localparam [9:0] SPRITE_X = 10'd184;
+    localparam [9:0] SPRITE_Y = 10'd96;
+    // 64 pixels * 4x schaling = 256 breedte/hoogte
+    localparam [9:0] SPRITE_W = 10'd256;
+    localparam [9:0] SPRITE_H = 10'd256;
 
-    wire signed [11:0] rel_x = raw_x >>> 3;
-    wire signed [11:0] rel_y = raw_y >>> 3;
+    // Veilige bounds check (zonder underflow risico)
+    wire in_bounds = (x >= SPRITE_X) && (x < (SPRITE_X + SPRITE_W)) &&
+                     (y >= SPRITE_Y) && (y < (SPRITE_Y + SPRITE_H));
 
-    wire in_bounds = (raw_x >= 0 && raw_x < 272) && (raw_y >= 0 && raw_y < 288);
+    // Relatieve pixelpositie binnen 64x64 (delen door 4 via >> 2)
+    wire [5:0] rel_x = in_bounds ? (x - SPRITE_X) >> 2 : 6'd0;
+    wire [5:0] rel_y = in_bounds ? (y - SPRITE_Y) >> 2 : 6'd0;
 
-    wire [5:0] row = in_bounds ? rel_y[5:0] : 6'd0;
-    wire [5:0] col = in_bounds ? rel_x[5:0] : 6'd0;
+    // 0 ns vertraging adres: 12 bits
+    wire [11:0] addr = {rel_y, rel_x};
 
-    // ROM Geheugen: 1224 entries van 3 bits (34 breed x 36 hoog)
-    reg [2:0] rom [0:1223];
-
+    // 4096 entries (64 x 64 pixels) van 3 bits
+    reg [2:0] rom [0:4095];
     initial begin
         $readmemh("dragon_l1.hex", rom);
     end
 
-    // 1D Adres berekening: (row * 34) + col
-    // Vermenigvuldiging met constante 34 = (row << 5) + (row << 1)
-    wire [10:0] addr = (row * 6'd34) + col;
-
-    wire [2:0] code = in_bounds ? rom[addr] : 3'd0;
-
-    assign px_on   = in_bounds && (code != 3'd0);
-    assign px_code = in_bounds ? code : 3'd0;
+    // Geregistreerde (pipelined) output
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            px_on   <= 1'b0;
+            px_code <= 3'd0;
+        end else begin
+            if (in_bounds && (rom[addr] != 3'd0)) begin
+                px_on   <= 1'b1;
+                px_code <= rom[addr];
+            end else begin
+                px_on   <= 1'b0;
+                px_code <= 3'd0;
+            end
+        end
+    end
 
 endmodule

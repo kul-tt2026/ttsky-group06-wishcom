@@ -35,27 +35,29 @@ def get_color_code(pixel):
                 best_match = code
     return best_match
 
-def convert_png_to_hex(image_path, output_hex_path):
+def convert_png_to_hex_64x64(image_path, output_hex_path):
     img = Image.open(image_path).convert("RGBA")
-    width, height = img.size
-    print(f"Afbeelding geladen: {width}x{height} pixels")
+    w, h = img.size
 
+    # Maak een leeg 64x64 canvas (alles transparant = code 0)
+    grid = [[0 for _ in range(64)] for _ in range(64)]
+
+    # Plak de sprite linksboven (of met offset) in het 64x64 raster
+    for y in range(min(h, 64)):
+        for x in range(min(w, 64)):
+            pixel = img.getpixel((x, y))
+            grid[y][x] = get_color_code(pixel)
+
+    # Schrijf weg naar hex
     with open(output_hex_path, "w") as f:
-        for y in range(height):
-            row_hex = []
-            for x in range(width):
-                pixel = img.getpixel((x, y))
-                code = get_color_code(pixel)
-                # Formatteer als hexadecimaal getal
-                row_hex.append(f"{code:x}")
-            # Schrijf per rij gescheiden door spaties
+        for y in range(64):
+            row_hex = [f"{code:x}" for code in grid[y]]
             f.write(" ".join(row_hex) + "\n")
 
-    print(f"Succesvol opgeslagen naar: {output_hex_path}")
-
+    print(f"64x64 HEX gegenereerd: {output_hex_path} (4096 pixels)")
 if __name__ == "__main__":
     if len(sys.argv) < 3:
         print("Gebruik: python3 png2hex.py <invoer.png> <uitvoer.hex>")
         sys.exit(1)
     
-    convert_png_to_hex(sys.argv[1], sys.argv[2])
+    convert_png_to_hex_64x64(sys.argv[1], sys.argv[2])
