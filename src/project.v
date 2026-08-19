@@ -14,14 +14,25 @@ module tt_um_dragonchi (
     input  wire       rst_n
 );
   // ---- screen timing + 60 Hz heartbeat ----
+  // wire hsync, vsync, video_active;
+  // wire [9:0] pix_x, pix_y;
+  // hvsync_generator u_hvsync (
+  //   .clk(clk), .reset(~rst_n),
+  //   .hsync(hsync), .vsync(vsync), .display_on(video_active),
+  //   .hpos(pix_x), .vpos(pix_y)
+  // );
+  reg vsync_d;
+
+  // ---- screen painter (render group) ----
+
+  // VGA singals:
   wire hsync, vsync, video_active;
   wire [1:0] R, G, B;
   wire [9:0] pix_x, pix_y;
-  reg vsync_d;
 
-  always @(posedge clk or negedge rst_n) begin
-    if (!rst_n) vsync_d <= 1'b1;
-    else        vsync_d <= vsync;
+  
+  always @(posedge clk) begin
+    if (!rst_n) vsync_d <= 1'b1; else vsync_d <= vsync;
   end
   wire frame_tick = vsync_d & ~vsync;
 
@@ -97,6 +108,8 @@ module tt_um_dragonchi (
   wire [1:0] dragon_bob, chest_frame;
   wire [2:0] dragon_mood_anim;
   wire flash, flame_frame;
+  // Verwijder 'dragon_bob' of vang hem af:
+wire _unused_proj = &{dragon_bob, 1'b0};
   anim u_anim (
     .clk(clk), .rst_n(rst_n), .frame_tick(frame_tick),
     .mode(mode), .satisfaction(satisfaction), .chest_state(chest_state),
@@ -104,14 +117,13 @@ module tt_um_dragonchi (
     .chest_frame(chest_frame), .flash(flash), .flame_frame(flame_frame)
   );
 
-  // ---- VGA Sync Generator ----
+  // ---- TinyVGA Pmod.  Do not touch. ----
+  assign uo_out = {hsync, B[0], G[0], R[0], vsync, B[1], G[1], R[1]};
   hvsync_generator u_hvsync (
     .clk(clk), .reset(~rst_n),
     .hsync(hsync), .vsync(vsync), .display_on(video_active),
     .hpos(pix_x), .vpos(pix_y)
   );
-
-  // ---- Renderer ----
   renderer u_renderer (
     .pix_x(pix_x), .pix_y(pix_y), .video_active(video_active),
     .mode(mode), .menu_sel(menu_sel),
@@ -123,24 +135,13 @@ module tt_um_dragonchi (
     .R(R), .G(G), .B(B), .overflow(overflow), .evolve_now(evolve_now)
   );
 
-  // ---- TinyVGA Pmod: Geregistreerde uitgangstrap voor timing closure ----
-  reg [7:0] uo_out_reg;
+  
 
-  always @(posedge clk or negedge rst_n) begin
-    if (!rst_n) begin
-      uo_out_reg <= 8'b0;
-    end else begin
-      uo_out_reg <= {hsync, B[0], G[0], R[0], vsync, B[1], G[1], R[1]};
-    end
-  end
-
-  assign uo_out = uo_out_reg;
+  
 
   // audio later: assign uio_out[0] = spkr; uio_oe[0] = 1;
   assign uio_out = 8'b0;
   assign uio_oe  = 8'b0;
 
-  // Ongebruikte ingangen en signalen afvangen voor linter
-  wire _unused = &{ena, uio_in, btn_level, chest_outcome, dragon_bob, 1'b0};
-
+  wire _unused = &{ena, uio_in, btn_level, chest_outcome, 1'b0};
 endmodule
