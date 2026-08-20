@@ -13,10 +13,10 @@ echo "✓ Opslaan voltooid: figures/egg_render.png"
 echo ""
 
 echo "=== 1/2: Egg render genereren... ==="
-iverilog -g2012 -o sim_egg dragon_lvl1_tb.v ../src/dragon_draw.v ../src/sprites.v
+iverilog -g2012 -o sim_egg dragon_lvl2_tb.v ../src/dragon_draw.v ../src/sprites.v
 vvp sim_egg
-python3 -c "from PIL import Image; Image.open('frame.ppm').save('figures/lvl1_render.png')"
-echo "✓ Opslaan voltooid: figures/lvl1_render.png"
+python3 -c "from PIL import Image; Image.open('frame.ppm').save('figures/lvl2_render.png')"
+echo "✓ Opslaan voltooid: figures/lvl2_render.png"
 
 echo ""
 echo "=== 2/2: Module render genereren... ==="
@@ -29,4 +29,12 @@ echo "✓ Opslaan voltooid: figures/module_render.png"
 rm -f sim_egg sim_render frame.ppm
 
 echo ""
+echo "=== 2/2: Module render genereren... ==="
+iverilog -g2012 -o sim_egg dragon_lvl3_tb.v ../src/dragon_draw.v ../src/sprites.v
+vvp sim_egg
+python3 -c "from PIL import Image; Image.open('frame.ppm').save('figures/lvl3_render.png')"
+echo "✓ Opslaan voltooid: figures/lvl3_render.png"
+
+# Opruimen van tijdelijke bestanden
+rm -f sim_egg sim_render frame.ppm
 echo "Klaar! Alle afbeeldingen staan in de map figures/."

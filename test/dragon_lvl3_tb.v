@@ -1,7 +1,7 @@
 `default_nettype none
 `timescale 1ns/1ps
 
-module dragon_lvl1_tb;
+module dragon_lvl3_tb;
 
   reg        clk;
   reg        rst_n;
@@ -19,7 +19,7 @@ module dragon_lvl1_tb;
 
   // Instantie van dragon_draw (of direct dragon_l1_generator)
   // Instantieer direct de l1 generator
-  dragon_l1_generator u_dragon_lvl1 (
+  dragon_l3_generator u_dragon_lvl3 (
     .clk       (clk),
     .rst_n     (rst_n),
     .x         (px),
@@ -53,7 +53,7 @@ module dragon_lvl1_tb;
     rst_n     = 0;
     pix_x     = 0;
     pix_y     = 0;
-    level     = 3'd3; 
+    level     = 3'd7; 
     mood_anim = 3'd0; 
 
     #100;

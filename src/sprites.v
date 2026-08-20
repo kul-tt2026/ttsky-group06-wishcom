@@ -133,108 +133,6 @@ module digit_rom (
     endcase
   end
 endmodule
-// module ei_generator (
-//     input  wire [9:0] x,
-//     input  wire [9:0] y,
-//     input  wire [2:0] level,
-//     input  wire [1:0] mood_anim,
-//     input  wire [1:0] bob,
-//     output wire       px_on,
-//     output wire [2:0] px_code
-// );
-
-//     //---------------------------------------------------------
-//     // Middelpunt
-//     //---------------------------------------------------------
-//     wire signed [11:0] dx = $signed({2'b00, x}) - 12'sd320;
-//     wire signed [11:0] dy = $signed({2'b00, y}) - 12'sd240;
-
-//     //---------------------------------------------------------
-//     // Hoogte en rand
-//     //---------------------------------------------------------
-//     localparam [11:0] B    = 12'd166;
-//     localparam [11:0] RAND = 12'd6;
-
-//     //---------------------------------------------------------
-//     // 64-bit
-//     //---------------------------------------------------------
-//     wire signed [63:0] dx_ext = dx;
-//     wire signed [63:0] dy_ext = dy;
-//     wire signed [63:0] b_ext  = B;
-
-//     //---------------------------------------------------------
-//     // Kwadraten
-//     //---------------------------------------------------------
-//     wire signed [63:0] dx_sq = dx_ext * dx_ext;
-//     wire signed [63:0] dy_sq = dy_ext * dy_ext;
-
-//     wire signed [63:0] b_sq = b_ext * b_ext;
-
-//     //---------------------------------------------------------
-//     // Dynamische breedte
-//     //
-//     // boven ≈ 90 px
-//     // midden ≈ 111 px
-//     // onder ≈ 132 px
-//     //---------------------------------------------------------
-//     wire signed [63:0] a_dyn =
-//         64'd90 + (dy_ext + 64'd166) / 8;
-
-//     wire signed [63:0] a_dyn_out = a_dyn + RAND;
-
-//     wire signed [63:0] a_dyn_sq     = a_dyn * a_dyn;
-//     wire signed [63:0] a_dyn_out_sq = a_dyn_out * a_dyn_out;
-
-//     //---------------------------------------------------------
-//     // Binnenbox
-//     //---------------------------------------------------------
-//     wire binnen_in =
-//         (dx_ext >= -a_dyn) &&
-//         (dx_ext <=  a_dyn) &&
-//         (dy_ext >= -b_ext) &&
-//         (dy_ext <=  b_ext);
-
-//     wire binnen_out =
-//         (dx_ext >= -a_dyn_out) &&
-//         (dx_ext <=  a_dyn_out) &&
-//         (dy_ext >= -(b_ext+RAND)) &&
-//         (dy_ext <=  (b_ext+RAND));
-
-//     //---------------------------------------------------------
-//     // Eivorm
-//     //---------------------------------------------------------
-//     wire in_ei =
-//         binnen_in &&
-//         ((dx_sq * b_sq + dy_sq * a_dyn_sq)
-//             <= (a_dyn_sq * b_sq));
-
-//     wire signed [63:0] b_out = b_ext + RAND;
-//     wire signed [63:0] b_out_sq = b_out * b_out;
-
-//     wire in_ei_out =
-//         binnen_out &&
-//         ((dx_sq * b_out_sq + dy_sq * a_dyn_out_sq)
-//             <= (a_dyn_out_sq * b_out_sq));
-
-//     //---------------------------------------------------------
-//     // Output
-//     //---------------------------------------------------------
-//     assign px_on = 1'b1;
-
-//     // 2 = groen
-//     // 0 = zwart
-//     // 1 = wit
-
-//     assign px_code =
-//         in_ei      ? 3'd2 :
-//         in_ei_out  ? 3'd0 :
-//                      3'd1;
-
-//     wire _unused = &{level, mood_anim, bob, 1'b0};
-
-// endmodule
-`default_nettype none
-`default_nettype none
 
 module ei_generator (
     input  wire [9:0] x,
@@ -334,7 +232,7 @@ endmodule
 
 `default_nettype none
 
-module dragon_l1_generator (
+module dragon_l2_generator (
     input  wire        clk,
     input  wire        rst_n,
     input  wire [9:0]  x,
@@ -365,7 +263,59 @@ module dragon_l1_generator (
 
     reg [2:0] rom [0:1023];
     initial begin
-        $readmemh("dragon_l1.hex", rom);
+        $readmemh("dragon_l2.hex", rom);
+    end
+    // Geregistreerde (pipelined) output
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            px_on   <= 1'b0;
+            px_code <= 3'd0;
+        end else begin
+            if (in_bounds && (rom[addr] != 3'd0)) begin
+                px_on   <= 1'b1;
+                px_code <= rom[addr];
+            end else begin
+                px_on   <= 1'b0;
+                px_code <= 3'd0;
+            end
+        end
+    end
+
+endmodule
+
+
+module dragon_l3_generator (
+    input  wire        clk,
+    input  wire        rst_n,
+    input  wire [9:0]  x,
+    input  wire [9:0]  y,
+    input  wire [2:0]  mood_anim,
+    output reg         px_on,
+    output reg  [2:0]  px_code
+);
+
+    wire _unused = &{mood_anim, 1'b0};
+
+    // Sprite startpositie op het scherm
+    // Sprite blijft 256x256 op het scherm door 8x te schalen (ipv 4x)
+    localparam [9:0] SPRITE_X = 10'd184;
+    localparam [9:0] SPRITE_Y = 10'd96;
+    localparam [9:0] SPRITE_W = 10'd256;
+    localparam [9:0] SPRITE_H = 10'd256;
+
+    wire in_bounds = (x >= SPRITE_X) && (x < (SPRITE_X + SPRITE_W)) &&
+                     (y >= SPRITE_Y) && (y < (SPRITE_Y + SPRITE_H));
+
+    // Delen door 8 (>> 3) i.p.v. door 4 -> 32x32 coördinaten
+    wire [4:0] rel_x = in_bounds ? (x - SPRITE_X) >> 3 : 5'd0;
+    wire [4:0] rel_y = in_bounds ? (y - SPRITE_Y) >> 3 : 5'd0;
+
+    // 10-bit adres (1024 entries) i.p.v. 12-bit (4096 entries)
+    wire [9:0] addr = {rel_y, rel_x};
+
+    reg [2:0] rom [0:1023];
+    initial begin
+        $readmemh("dragon_l3.hex", rom);
     end
     // Geregistreerde (pipelined) output
     always @(posedge clk or negedge rst_n) begin
