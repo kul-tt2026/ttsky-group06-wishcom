@@ -87,29 +87,29 @@ module balance (
 
   // 2. Directe controle op ontbrekende actie in next_hist[0:5]
   reg [2:0] next_count_00, next_count_01, next_count_10, next_count_11;
-  always @(*) begin
-    next_count_00 = ((actions_count >= 3'd0 && next_h0 == A_MINIGAME) ? 3'd1 : 3'd0) +
+always @(*) begin
+    next_count_00 = ((next_h0 == A_MINIGAME) ? 3'd1 : 3'd0) +
                     ((actions_count >= 3'd1 && next_h1 == A_MINIGAME) ? 3'd1 : 3'd0) +
                     ((actions_count >= 3'd2 && next_h2 == A_MINIGAME) ? 3'd1 : 3'd0) +
                     ((actions_count >= 3'd3 && next_h3 == A_MINIGAME) ? 3'd1 : 3'd0) +
                     ((actions_count >= 3'd4 && next_h4 == A_MINIGAME) ? 3'd1 : 3'd0) +
                     ((actions_count >= 3'd5 && next_h5 == A_MINIGAME) ? 3'd1 : 3'd0);
 
-    next_count_01 = ((actions_count >= 3'd0 && next_h0 == A_FEED) ? 3'd1 : 3'd0) +
+    next_count_01 = ((next_h0 == A_FEED) ? 3'd1 : 3'd0) +
                     ((actions_count >= 3'd1 && next_h1 == A_FEED) ? 3'd1 : 3'd0) +
                     ((actions_count >= 3'd2 && next_h2 == A_FEED) ? 3'd1 : 3'd0) +
                     ((actions_count >= 3'd3 && next_h3 == A_FEED) ? 3'd1 : 3'd0) +
                     ((actions_count >= 3'd4 && next_h4 == A_FEED) ? 3'd1 : 3'd0) +
                     ((actions_count >= 3'd5 && next_h5 == A_FEED) ? 3'd1 : 3'd0);
 
-    next_count_10 = ((actions_count >= 3'd0 && next_h0 == A_DRINK) ? 3'd1 : 3'd0) +
+    next_count_10 = ((next_h0 == A_DRINK) ? 3'd1 : 3'd0) +
                     ((actions_count >= 3'd1 && next_h1 == A_DRINK) ? 3'd1 : 3'd0) +
                     ((actions_count >= 3'd2 && next_h2 == A_DRINK) ? 3'd1 : 3'd0) +
                     ((actions_count >= 3'd3 && next_h3 == A_DRINK) ? 3'd1 : 3'd0) +
                     ((actions_count >= 3'd4 && next_h4 == A_DRINK) ? 3'd1 : 3'd0) +
                     ((actions_count >= 3'd5 && next_h5 == A_DRINK) ? 3'd1 : 3'd0);
 
-    next_count_11 = ((actions_count >= 3'd0 && next_h0 == A_SLEEP) ? 3'd1 : 3'd0) +
+    next_count_11 = ((next_h0 == A_SLEEP) ? 3'd1 : 3'd0) +
                     ((actions_count >= 3'd1 && next_h1 == A_SLEEP) ? 3'd1 : 3'd0) +
                     ((actions_count >= 3'd2 && next_h2 == A_SLEEP) ? 3'd1 : 3'd0) +
                     ((actions_count >= 3'd3 && next_h3 == A_SLEEP) ? 3'd1 : 3'd0) +

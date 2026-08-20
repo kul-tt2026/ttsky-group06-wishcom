@@ -110,8 +110,8 @@ module tt_um_dragonchi (
   wire flash, flame_frame;
   anim u_anim (
     .clk(clk), .rst_n(rst_n), .frame_tick(frame_tick),
-    .mode(mode), .satisfaction(satisfaction), .chest_state(chest_state),
-    .dragon_bob(dragon_bob), .dragon_mood_anim(dragon_mood_anim),
+    .mode(mode[1:0]), .satisfaction(satisfaction[1:0]), .chest_state(chest_state),
+    .dragon_bob(dragon_bob), .dragon_mood_anim(dragon_mood_anim[1:0]),
     .chest_frame(chest_frame), .flash(flash), .flame_frame(flame_frame)
   );
 

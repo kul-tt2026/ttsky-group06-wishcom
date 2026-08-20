@@ -57,7 +57,7 @@ module renderer (
   wire [2:0]  dragon_code;
   dragon_draw u_dragon (
     .x(pix_x - DRAGON_X), .y(pix_y - DRAGON_Y),
-    .level(level), .mood_anim(dragon_mood_anim), .bob(dragon_bob),
+    .level(level), .mood_anim(dragon_mood_anim[1:0]), .bob(dragon_bob),
     .px_on(dragon_on), .px_code(dragon_code)
   );
 
@@ -90,7 +90,7 @@ module renderer (
   wire [1:0] sat_code, combo_code;
   bars u_satbar (
     .x(pix_x - SATBAR_X), .y(pix_y - SATBAR_Y),
-    .fill(satisfaction),
+    .fill(satisfaction[1:0]),
     .px_on(sat_on), .px_code(sat_code)
   );
   bars u_combobar (
@@ -104,7 +104,7 @@ module renderer (
   wire [1:0] hud_code;
   hud u_hud (
     .pix_x(pix_x), .pix_y(pix_y),
-    .hearts(hearts), .coins(coins), .level(level),
+    .hearts(hearts[1:0]), .coins(coins[1:0]), .level(level),
     .px_on(hud_on), .px_code(hud_code)
   );
 
@@ -167,5 +167,5 @@ module renderer (
     {R, G, B} = rgb;
   end
 
-  wire _unused = &{menu_sel, chest_state, chest_outcome, overflow, evolve_now, flame_frame, show_you_win, 1'b0};
+  wire _unused = &{menu_sel, chest_state, chest_outcome, overflow, evolve_now, flame_frame, show_you_win, hearts[2], satisfaction[2], coins[9:8], dragon_mood_anim[2], 1'b0};
 endmodule
