@@ -1,4 +1,67 @@
-// Interne statusregisters (expliciet plat geslagen)
+`default_nettype none
+// ---------------------------------------------------------------------------
+// THE BALANCE GAME.  OWNER: PERSON B.
+//
+// Watches the care actions (feed / drink / sleep) on the home screen and
+// judges them:
+//   * the SAME action three times in a row  -> over-care:
+//         req_sat_down pulse  AND  req_heart_lose pulse
+//   * FOUR different actions consecutively  -> balanced care:
+//         req_heart_gain pulse (and the streak resets)
+//   * a well-spaced action                  -> req_sat_up (small reward)
+//
+// DESIGN DECISIONS STILL OPEN (settle with the team before coding):
+//   1. Only three care actions exist but the combo needs four DIFFERENT
+//      ones.  Either (a) entering the minigame counts as the 4th action
+//      type, or (b) add a 4th care action (pet?), or (c) combo length = 3.
+//      The skeleton assumes (a): home.v could route a "played" pulse here.
+//   2. Does feed,feed,sleep,feed count as strike 2 or strike 1?  Skeleton
+//      assumes consecutive-only: any different action resets same_count.
+//
+// This module is fully testable in simulation: pulse the act_* inputs,
+// check the req_* outputs.  Write that test before wiring anything up.
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// THE BALANCE GAME.
+// ---------------------------------------------------------------------------
+module balance (
+    input  wire       clk,
+    input  wire       rst_n,
+    input  wire       frame_tick,     // 60Hz tick for game loop timing
+    input  wire       restart,
+
+    input  wire       act_feed,        // pulses from home.v
+    input  wire       act_drink,
+    input  wire       act_sleep,
+    input  wire       act_minigame,    // 4e actie: minigame gespeeld
+    input  wire [2:0] satisfaction,    
+
+    output reg        req_heart_gain,  // -> dragon_state
+    output reg        req_heart_lose,
+    output reg        req_sat_up,
+    output reg        req_sat_down,
+
+    output reg  [1:0] combo_len        // -> renderer (progress bar 0..3)
+);
+
+  // Exact 4 acties
+  localparam A_MINIGAME = 2'd0, 
+             A_FEED     = 2'd1, 
+             A_DRINK    = 2'd2, 
+             A_SLEEP    = 2'd3;
+
+  wire        any_act_in  = act_feed | act_drink | act_sleep | act_minigame;
+  wire [1:0]  this_act_in = act_feed     ? A_FEED     :
+                            act_drink    ? A_DRINK    :
+                            act_sleep    ? A_SLEEP    :
+                            act_minigame ? A_MINIGAME : A_MINIGAME;
+
+  // Latch registers om snelle knoppulsen op te vangen tussen frame_ticks in
+  reg        act_latched;
+  reg  [1:0] latched_action;
+
+  // Interne statusregisters
+  // Interne statusregisters (expliciet plat geslagen)
   reg [1:0] hist_0, hist_1, hist_2, hist_3, hist_4, hist_5;
   reg [2:0] actions_count;
 
