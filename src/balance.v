@@ -147,19 +147,19 @@ module balance (
     end
   end
 
-  // --- STAP 1: Acties direct vangen op de snelle klok ---
+// --- STAP 1: Acties direct vangen op de snelle klok ---
   always @(posedge clk) begin
     if (!rst_n || restart) begin
       act_latched    <= 1'b0;
       latched_action <= A_MINIGAME;
-    end else begin
-      if (any_act_in) begin
-        act_latched    <= 1'b1;
-        latched_action <= this_act_in;
-      end else if (frame_tick) begin
-        act_latched    <= 1'b0;
-        latched_action <= A_MINIGAME;
-      end
+    end else if (frame_tick) begin
+      // Op frame_tick is de eventuele latched actie (of huidige actie) verwerkt!
+      act_latched    <= 1'b0;
+      latched_action <= A_MINIGAME;
+    end else if (any_act_in) begin
+      // Alleen bewaren als het TUSSEN twee frame_ticks in gebeurt
+      act_latched    <= 1'b1;
+      latched_action <= this_act_in;
     end
   end
 
