@@ -134,103 +134,156 @@ module digit_rom (
   end
 endmodule
 
-module ei_generator (
-    input  wire [9:0] x,
-    input  wire [9:0] y,
-    input  wire [2:0] mood_anim,
-    output wire       px_on,
-    output wire [2:0] px_code
-);
+// module ei_generator (
+//     input  wire [9:0] x,
+//     input  wire [9:0] y,
+//     input  wire [2:0] mood_anim,
+//     output wire       px_on,
+//     output wire [2:0] px_code
+// );
 
-    // Ongebruikte signalen direct afvangen
-    wire _unused = &{mood_anim, 1'b0};
+//     // Ongebruikte signalen direct afvangen
+//     wire _unused = &{mood_anim, 1'b0};
 
-    //---------------------------------------------------------
-    // Middelpunt (12-bit signed)
-    //---------------------------------------------------------
-    wire signed [11:0] dx = $signed({2'b00, x}) - 12'sd320;
-    wire signed [11:0] dy = $signed({2'b00, y}) - 12'sd240;
+//     //---------------------------------------------------------
+//     // Middelpunt (12-bit signed)
+//     //---------------------------------------------------------
+//     wire signed [11:0] dx = $signed({2'b00, x}) - 12'sd320;
+//     wire signed [11:0] dy = $signed({2'b00, y}) - 12'sd240;
 
-    //---------------------------------------------------------
-    // Parameters (12-bit signed)
-    //---------------------------------------------------------
-    localparam signed [11:0] B    = 12'sd145;
-    localparam signed [11:0] RAND = 12'sd8;
+//     //---------------------------------------------------------
+//     // Parameters (12-bit signed)
+//     //---------------------------------------------------------
+//     localparam signed [11:0] B    = 12'sd145;
+//     localparam signed [11:0] RAND = 12'sd8;
 
-    // Dynamische breedte (kwadratische eivorm)
-    wire signed [11:0] t        = dy + 12'sd166;
-    wire signed [11:0] a_dyn    = 12'sd90 + $signed((t * t) / 12'sd2500);
+//     // Dynamische breedte (kwadratische eivorm)
+//     wire signed [11:0] t        = dy + 12'sd166;
+//     wire signed [11:0] a_dyn    = 12'sd90 + $signed((t * t) / 12'sd2500);
 
-    // Buitenste ei parameters
-    wire signed [11:0] a_out    = a_dyn + RAND;
-    wire signed [11:0] b_out    = B + RAND;
+//     // Buitenste ei parameters
+//     wire signed [11:0] a_out    = a_dyn + RAND;
+//     wire signed [11:0] b_out    = B + RAND;
 
-    // Kwadraten voor ovaalberekeningen
-    wire signed [23:0] dx_sq    = dx * dx;
-    wire signed [23:0] dy_sq    = dy * dy;
+//     // Kwadraten voor ovaalberekeningen
+//     wire signed [23:0] dx_sq    = dx * dx;
+//     wire signed [23:0] dy_sq    = dy * dy;
 
-    wire signed [23:0] a_dyn_sq = a_dyn * a_dyn;
-    wire signed [23:0] b_sq     = B * B;
+//     wire signed [23:0] a_dyn_sq = a_dyn * a_dyn;
+//     wire signed [23:0] b_sq     = B * B;
 
-    wire signed [23:0] a_out_sq = a_out * a_out;
-    wire signed [23:0] b_out_sq = b_out * b_out;
+//     wire signed [23:0] a_out_sq = a_out * a_out;
+//     wire signed [23:0] b_out_sq = b_out * b_out;
 
-    //---------------------------------------------------------
-    // Binnenboxen
-    //---------------------------------------------------------
-    wire box_in =
-        (dx >= -a_dyn) &&
-        (dx <=  a_dyn) &&
-        (dy >= -B)     &&
-        (dy <=  B);
+//     //---------------------------------------------------------
+//     // Binnenboxen
+//     //---------------------------------------------------------
+//     wire box_in =
+//         (dx >= -a_dyn) &&
+//         (dx <=  a_dyn) &&
+//         (dy >= -B)     &&
+//         (dy <=  B);
 
-    wire box_out =
-        (dx >= -a_out) &&
-        (dx <=  a_out) &&
-        (dy >= -b_out) &&
-        (dy <=  b_out);
+//     wire box_out =
+//         (dx >= -a_out) &&
+//         (dx <=  a_out) &&
+//         (dy >= -b_out) &&
+//         (dy <=  b_out);
 
-    //---------------------------------------------------------
-    // Ovalen
-    //---------------------------------------------------------
-    wire in_ei =
-        box_in &&
-        ((dx_sq * b_sq + dy_sq * a_dyn_sq) <= (a_dyn_sq * b_sq));
+//     //---------------------------------------------------------
+//     // Ovalen
+//     //---------------------------------------------------------
+//     wire in_ei =
+//         box_in &&
+//         ((dx_sq * b_sq + dy_sq * a_dyn_sq) <= (a_dyn_sq * b_sq));
 
-    wire in_ei_out =
-        box_out &&
-        ((dx_sq * b_out_sq + dy_sq * a_out_sq) <= (a_out_sq * b_out_sq));
+//     wire in_ei_out =
+//         box_out &&
+//         ((dx_sq * b_out_sq + dy_sq * a_out_sq) <= (a_out_sq * b_out_sq));
 
-    //---------------------------------------------------------
-    // Vlekjes binnen het ei (12-bit rekenkunde)
-    //---------------------------------------------------------
-    wire signed [11:0] vlek1_dx = dx - 12'sd25;
-    wire signed [11:0] vlek1_dy = dy - (-12'sd60);
-    wire vlek1 = (vlek1_dx * vlek1_dx + vlek1_dy * vlek1_dy) <= (12'sd27 * 12'sd27);
+//     //---------------------------------------------------------
+//     // Vlekjes binnen het ei (12-bit rekenkunde)
+//     //---------------------------------------------------------
+//     wire signed [11:0] vlek1_dx = dx - 12'sd25;
+//     wire signed [11:0] vlek1_dy = dy - (-12'sd60);
+//     wire vlek1 = (vlek1_dx * vlek1_dx + vlek1_dy * vlek1_dy) <= (12'sd27 * 12'sd27);
 
-    wire signed [11:0] vlek2_dx = dx - 12'sd30;
-    wire signed [11:0] vlek2_dy = dy - 12'sd70;
-    wire vlek2 = (vlek2_dx * vlek2_dx + vlek2_dy * vlek2_dy) <= (12'sd35 * 12'sd35);
+//     wire signed [11:0] vlek2_dx = dx - 12'sd30;
+//     wire signed [11:0] vlek2_dy = dy - 12'sd70;
+//     wire vlek2 = (vlek2_dx * vlek2_dx + vlek2_dy * vlek2_dy) <= (12'sd35 * 12'sd35);
 
-    wire signed [11:0] vlek3_dx = dx + 12'sd50;
-    wire signed [11:0] vlek3_dy = dy - 12'sd20;
-    wire vlek3 = (vlek3_dx * vlek3_dx + vlek3_dy * vlek3_dy) <= (12'sd30 * 12'sd30);
+//     wire signed [11:0] vlek3_dx = dx + 12'sd50;
+//     wire signed [11:0] vlek3_dy = dy - 12'sd20;
+//     wire vlek3 = (vlek3_dx * vlek3_dx + vlek3_dy * vlek3_dy) <= (12'sd30 * 12'sd30);
 
-    //---------------------------------------------------------
-    // Rand & Output
-    //---------------------------------------------------------
-    wire border = in_ei_out && !in_ei;
+//     //---------------------------------------------------------
+//     // Rand & Output
+//     //---------------------------------------------------------
+//     wire border = in_ei_out && !in_ei;
 
-    assign px_on = in_ei_out;
+//     assign px_on = in_ei_out;
 
-    assign px_code =
-        border                               ? 3'd1 : // Rand (Zwart)
-        (in_ei && (vlek1 || vlek2 || vlek3)) ? 3'd2 : // Vlekken (Donkergroen)
-        in_ei                                ? 3'd4 : // Ei vulling (Wit)
-                                               3'd0;  // Transparant
-endmodule
+//     assign px_code =
+//         border                               ? 3'd1 : // Rand (Zwart)
+//         (in_ei && (vlek1 || vlek2 || vlek3)) ? 3'd2 : // Vlekken (Donkergroen)
+//         in_ei                                ? 3'd4 : // Ei vulling (Wit)
+//                                                3'd0;  // Transparant
+// endmodule
 
 `default_nettype none
+
+
+module dragon_l1_generator (
+    input  wire        clk,
+    input  wire        rst_n,
+    input  wire [9:0]  x,
+    input  wire [9:0]  y,
+    input  wire [2:0]  mood_anim,
+    output reg         px_on,
+    output reg  [2:0]  px_code
+);
+
+    wire _unused = &{mood_anim, 1'b0};
+
+    // Sprite startpositie op het scherm
+    // Sprite blijft 256x256 op het scherm door 8x te schalen (ipv 4x)
+    localparam [9:0] SPRITE_X = 10'd184;
+    localparam [9:0] SPRITE_Y = 10'd96;
+    localparam [9:0] SPRITE_W = 10'd256;
+    localparam [9:0] SPRITE_H = 10'd256;
+
+    wire in_bounds = (x >= SPRITE_X) && (x < (SPRITE_X + SPRITE_W)) &&
+                     (y >= SPRITE_Y) && (y < (SPRITE_Y + SPRITE_H));
+
+    // Delen door 8 (>> 3) i.p.v. door 4 -> 32x32 coördinaten
+    wire [4:0] rel_x = in_bounds ? (x - SPRITE_X) >> 3 : 5'd0;
+    wire [4:0] rel_y = in_bounds ? (y - SPRITE_Y) >> 3 : 5'd0;
+
+    // 10-bit adres (1024 entries) i.p.v. 12-bit (4096 entries)
+    wire [9:0] addr = {rel_y, rel_x};
+
+    reg [2:0] rom [0:1023];
+    initial begin
+        $readmemh("dragon_l1.hex", rom);
+    end
+    // Geregistreerde (pipelined) output
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            px_on   <= 1'b0;
+            px_code <= 3'd0;
+        end else begin
+            if (in_bounds && (rom[addr] != 3'd0)) begin
+                px_on   <= 1'b1;
+                px_code <= rom[addr];
+            end else begin
+                px_on   <= 1'b0;
+                px_code <= 3'd0;
+            end
+        end
+    end
+
+endmodule
+
 
 module dragon_l2_generator (
     input  wire        clk,
