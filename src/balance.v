@@ -21,6 +21,9 @@
 // This module is fully testable in simulation: pulse the act_* inputs,
 // check the req_* outputs.  Write that test before wiring anything up.
 // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// THE BALANCE GAME.
+// ---------------------------------------------------------------------------
 module balance (
     input  wire       clk,
     input  wire       rst_n,
@@ -31,17 +34,17 @@ module balance (
     input  wire       act_drink,
     input  wire       act_sleep,
     input  wire       act_minigame,    // 4e actie: minigame gespeeld
+    input  wire [2:0] satisfaction,    
 
     output reg        req_heart_gain,  // -> dragon_state
     output reg        req_heart_lose,
     output reg        req_sat_up,
     output reg        req_sat_down,
 
-    output reg [2:0]  satisfaction,
     output reg  [1:0] combo_len        // -> renderer (progress bar 0..3)
 );
 
-  // Exact 4 acties (geen dummy NONE)
+  // Exact 4 acties
   localparam A_MINIGAME = 2'd0, 
              A_FEED     = 2'd1, 
              A_DRINK    = 2'd2, 
@@ -60,37 +63,65 @@ module balance (
   // Interne statusregisters
   reg [1:0] history [0:5];        // Schuifregister voor de laatste 6 acties
   reg [2:0] actions_count;        // Totaal aantal acties uitgevoerd (max 6)
-  integer i;
 
-  // 1. Controle op 4 verschillende acties in de laatste 4 stappen (history[0:3])
-  wire unique_last_4 = (history[0] != history[1]) && (history[0] != history[2]) && 
-                       (history[0] != history[3]) && (history[1] != history[2]) && 
-                       (history[1] != history[3]) && (history[2] != history[3]);
+  // Bepaal welke actie NU uitgevoerd wordt op deze frame_tick
+  wire       has_act     = act_latched | any_act_in;
+  wire [1:0] current_act = act_latched ? latched_action : this_act_in;
 
-  // 2. Tellers om te controleren of alle 4 de acties voorkomen in history[0:5]
-  reg [2:0] count_00, count_01, count_10, count_11;
+  // Next-state reconstructie voor de laatste 6 acties (als has_act == 1)
+  wire [1:0] next_hist [0:5];
+  assign next_hist[0] = current_act;
+  assign next_hist[1] = history[0];
+  assign next_hist[2] = history[1];
+  assign next_hist[3] = history[2];
+  assign next_hist[4] = history[3];
+  assign next_hist[5] = history[4];
+
+  // 1. Directe controle op 4 unieke acties in next_hist[0:3]
+  wire next_unique_4 = (next_hist[0] != next_hist[1]) && 
+                       (next_hist[0] != next_hist[2]) && 
+                       (next_hist[0] != next_hist[3]) && 
+                       (next_hist[1] != next_hist[2]) && 
+                       (next_hist[1] != next_hist[3]) && 
+                       (next_hist[2] != next_hist[3]);
+
+  // 2. Directe controle op ontbrekende actie in next_hist[0:5]
+  reg [2:0] next_count_00, next_count_01, next_count_10, next_count_11;
   always @(*) begin
-    count_00 = 3'd0;
-    count_01 = 3'd0; 
-    count_10 = 3'd0; 
-    count_11 = 3'd0;
-    for (i = 0; i < 6; i = i + 1) begin
-      if (i < actions_count) begin
-        case (history[i])
-          A_MINIGAME: count_00 = count_00 + 1'b1;
-          A_FEED:     count_01 = count_01 + 1'b1;
-          A_DRINK:    count_10 = count_10 + 1'b1;
-          A_SLEEP:    count_11 = count_11 + 1'b1;
-        endcase
-      end
-    end
+    // actions_count telt vóór de flank. Met de huidige actie erbij zijn er (actions_count + 1) acties gedaan.
+    next_count_00 = ((actions_count >= 3'd0 && next_hist[0] == A_MINIGAME) ? 3'd1 : 3'd0) +
+                    ((actions_count >= 3'd1 && next_hist[1] == A_MINIGAME) ? 3'd1 : 3'd0) +
+                    ((actions_count >= 3'd2 && next_hist[2] == A_MINIGAME) ? 3'd1 : 3'd0) +
+                    ((actions_count >= 3'd3 && next_hist[3] == A_MINIGAME) ? 3'd1 : 3'd0) +
+                    ((actions_count >= 3'd4 && next_hist[4] == A_MINIGAME) ? 3'd1 : 3'd0) +
+                    ((actions_count >= 3'd5 && next_hist[5] == A_MINIGAME) ? 3'd1 : 3'd0);
+
+    next_count_01 = ((actions_count >= 3'd0 && next_hist[0] == A_FEED) ? 3'd1 : 3'd0) +
+                    ((actions_count >= 3'd1 && next_hist[1] == A_FEED) ? 3'd1 : 3'd0) +
+                    ((actions_count >= 3'd2 && next_hist[2] == A_FEED) ? 3'd1 : 3'd0) +
+                    ((actions_count >= 3'd3 && next_hist[3] == A_FEED) ? 3'd1 : 3'd0) +
+                    ((actions_count >= 3'd4 && next_hist[4] == A_FEED) ? 3'd1 : 3'd0) +
+                    ((actions_count >= 3'd5 && next_hist[5] == A_FEED) ? 3'd1 : 3'd0);
+
+    next_count_10 = ((actions_count >= 3'd0 && next_hist[0] == A_DRINK) ? 3'd1 : 3'd0) +
+                    ((actions_count >= 3'd1 && next_hist[1] == A_DRINK) ? 3'd1 : 3'd0) +
+                    ((actions_count >= 3'd2 && next_hist[2] == A_DRINK) ? 3'd1 : 3'd0) +
+                    ((actions_count >= 3'd3 && next_hist[3] == A_DRINK) ? 3'd1 : 3'd0) +
+                    ((actions_count >= 3'd4 && next_hist[4] == A_DRINK) ? 3'd1 : 3'd0) +
+                    ((actions_count >= 3'd5 && next_hist[5] == A_DRINK) ? 3'd1 : 3'd0);
+
+    next_count_11 = ((actions_count >= 3'd0 && next_hist[0] == A_SLEEP) ? 3'd1 : 3'd0) +
+                    ((actions_count >= 3'd1 && next_hist[1] == A_SLEEP) ? 3'd1 : 3'd0) +
+                    ((actions_count >= 3'd2 && next_hist[2] == A_SLEEP) ? 3'd1 : 3'd0) +
+                    ((actions_count >= 3'd3 && next_hist[3] == A_SLEEP) ? 3'd1 : 3'd0) +
+                    ((actions_count >= 3'd4 && next_hist[4] == A_SLEEP) ? 3'd1 : 3'd0) +
+                    ((actions_count >= 3'd5 && next_hist[5] == A_SLEEP) ? 3'd1 : 3'd0);
   end
 
-  // Minstens 1 van de 4 acties ontbreekt in de laatste 6 stappen
-  wire missing_an_action = (count_00 == 3'd0) || (count_01 == 3'd0) || 
-                           (count_10 == 3'd0) || (count_11 == 3'd0);
+  wire next_missing_an_action = (next_count_00 == 3'd0) || (next_count_01 == 3'd0) || 
+                                (next_count_10 == 3'd0) || (next_count_11 == 3'd0);
 
-  // 3. Bitmasker berekening voor unieke acties in de laatste 3 stappen
+  // 3. Bitmasker berekening voor unieke acties in de laatste 3 stappen (voor combo_len weergave)
   wire [3:0] seen_recent = (4'b1 << history[0]) | 
                            (4'b1 << history[1]) | 
                            (4'b1 << history[2]);
@@ -99,18 +130,22 @@ module balance (
                             {2'b0, seen_recent[2]} + 
                             {2'b0, seen_recent[3]};
 
-  // Update combo_len voor de renderer (progress bar 0..3)
+  wire current_unique_4 = (history[0] != history[1]) && (history[0] != history[2]) && 
+                          (history[0] != history[3]) && (history[1] != history[2]) && 
+                          (history[1] != history[3]) && (history[2] != history[3]);
+
+  // Update combo_len voor de renderer
   always @(*) begin
-  if (unique_last_4) begin
-    combo_len = 2'd3;           // Situatie 1: Combo compleet (4 unieke) -> Balk is vol (3/3)
-  end else begin
-    case (num_unique_3)
-      3'd2:    combo_len = 2'd1; // Situatie 2: 2 unieke acties gezien  -> Balk op 1/3
-      3'd3:    combo_len = 2'd2; // Situatie 3: 3 unieke acties gezien  -> Balk op 2/3
-      default: combo_len = 2'd0; // Situatie 4: 0 of 1 unieke actie    -> Balk op 0/3
-    endcase
+    if (actions_count >= 3'd4 && current_unique_4) begin
+      combo_len = 2'd3;           // Combo compleet (4 unieke)
+    end else begin
+      case (num_unique_3)
+        3'd2:    combo_len = 2'd1;
+        3'd3:    combo_len = 2'd2;
+        default: combo_len = 2'd0;
+      endcase
+    end
   end
-end
 
   // --- STAP 1: Acties direct vangen op de snelle klok ---
   always @(posedge clk) begin
@@ -129,66 +164,60 @@ end
   end
 
   // --- STAP 2: Spellogica verwerken op de vertraagde frame_tick ---
+  integer idx;
   always @(posedge clk) begin
     if (!rst_n || restart) begin
-      for (i = 0; i < 6; i = i + 1) begin
-        history[i] <= 2'b00;
+      for (idx = 0; idx < 6; idx = idx + 1) begin
+        history[idx] <= 2'b00;
       end
       actions_count  <= 3'd0;
-      satisfaction     <= 3'd3;     // Start op neutraal humeur (3)
       req_heart_gain <= 1'b0;
       req_heart_lose <= 1'b0;
       req_sat_up     <= 1'b0;
       req_sat_down   <= 1'b0;
     end else if (frame_tick) begin
-      // Pulse reset (pulsen duren exact 1 frame tick)
+      // Pulse reset
       req_heart_gain <= 1'b0;
       req_heart_lose <= 1'b0;
       req_sat_up     <= 1'b0;
       req_sat_down   <= 1'b0;
 
-      if (act_latched || any_act_in) begin
-        
+      if (has_act) begin
         // Schuifregister bijwerken
-        for (i = 5; i > 0; i = i - 1) begin
-          history[i] <= history[i-1];
+        for (idx = 5; idx > 0; idx = idx - 1) begin
+          history[idx] <= history[idx-1];
         end
-        history[0] <= act_latched ? latched_action : this_act_in;
+        history[0] <= current_act;
 
-        // Tel totaal aantal uitgevoerde acties op
         if (actions_count < 3'd6) begin
           actions_count <= actions_count + 1'b1;
         end
 
-        // --- EVALUATIE LOGICA HUMEUR & PULSEN ---
+        // --- EVALUATIE LOGICA HUMEUR & PULSEN (Direct op actie 4 en actie 6) ---
 
-        // A) Stijgen: Minstens 4 acties gedaan EN alle 4 uniek in history[0:3]
-        if ((actions_count >= 3'd3) && unique_last_4) begin
+        // A) Stijgen: Er zijn al 3 acties gedaan EN de huidige 4e maakt 4 unieke
+        if ((actions_count >= 3'd3) && next_unique_4) begin
           req_sat_up <= 1'b1;
-          if (satisfaction < 3'd5) begin
-            satisfaction <= satisfaction + 1'b1;
-          end
         end 
-        // B) Dalen: Minstens 6 acties gedaan EN 1 van de 4 acties ontbreekt in history[0:5]
-        else if ((actions_count >= 3'd5) && missing_an_action) begin
+        // B) Dalen: Er zijn al minstens 5 acties gedaan EN de huidige 6e mist een actie
+        else if ((actions_count >= 3'd5) && next_missing_an_action) begin
           req_sat_down <= 1'b1;
-          if (satisfaction > 3'd1) begin
-            satisfaction <= satisfaction - 1'b1;
-          end
         end
 
         // --- IMPACT OP LEVENS (HARTJES) ---
         
-        // Stijging naar 4 of 5 -> req_heart_gain pulse
-        if ((actions_count >= 3'd3) && unique_last_4 && (satisfaction == 3'd3 || satisfaction == 3'd4 || satisfaction == 3'd5)) begin
+        // Stijging naar 3, 4 of capped op 4 -> req_heart_gain pulse
+        if ((actions_count >= 3'd3) && next_unique_4 && 
+            (satisfaction == 3'd2 || satisfaction == 3'd3 || satisfaction == 3'd4)) begin
           req_heart_gain <= 1'b1;
         end
-        // Daling naar 2 of 1 -> req_heart_lose pulse
-        else if ((actions_count >= 3'd5) && missing_an_action && (satisfaction == 3'd3 || satisfaction == 3'd2 || satisfaction == 3'd1)) begin
+        // Daling naar 1, 0 of capped op 0 -> req_heart_lose pulse
+        else if ((actions_count >= 3'd5) && next_missing_an_action && 
+                 (satisfaction == 3'd2 || satisfaction == 3'd1 || satisfaction == 3'd0)) begin
           req_heart_lose <= 1'b1;
         end
 
-      end // if (act_latched || any_act_in)
+      end // if (has_act)
     end // else if (frame_tick)
   end
 
