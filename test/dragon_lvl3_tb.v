@@ -33,16 +33,16 @@ module dragon_lvl3_tb;
   reg [5:0] rgb;
   always @(*) begin
     case (px_code)
-      3'd0: rgb = 6'b00_00_00; // Transparant / Zwart
-      3'd1: rgb = 6'b00_00_00; // Zwart (Outline)
-      3'd5: rgb = 6'b00_10_00; // Donkergroen (Vlekken)
-      3'd3: rgb = 6'b01_11_01; // Felgroen (Lijfje)
-      3'd4: rgb = 6'b11_11_11; // Wit (Eierschaal)
-      3'd2: rgb = 6'b10_10_10; // Grijs
-      3'd6: rgb = 6'b01_01_01; // Donkergrijs
-      3'd7: rgb = 6'b01_11_01; // Lichtgroen (Buikje)
-      default: rgb = 6'b00_00_00;
-    endcase
+    3'd0: rgb = 6'b00_00_00; // Transparant / Achtergrond
+    3'd1: rgb = 6'b00_00_00; // Zwart (Outlines)
+    3'd2: rgb = 6'b10_10_10; // Grijs (Hoorns licht)
+    3'd3: rgb = 6'b00_11_00; // Fel groen (Lichaam draak)
+    3'd4: rgb = 6'b11_11_11; // Wit (Eierschaal / Oogreflectie)
+    3'd5: rgb = 6'b00_10_00; // Donkergroen (Eivlekken / Schaduw)
+    3'd6: rgb = 6'b01_01_01; // Donkergrijs (Hoorns schaduw)
+    3'd7: rgb = 6'b10_11_01; // Lichtgroen / Geelgroen (Nekje & Buikje)
+    default: rgb = 6'b00_00_00;
+endcase
   end
 
   integer f, xi, yi;

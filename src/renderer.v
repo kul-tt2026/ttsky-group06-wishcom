@@ -176,16 +176,16 @@ localparam [2:0] M_TITLE    = 3'd0,
   reg [5:0] dragon_rgb;
   always @(*) begin
   case (dragon_code)
-    3'd0: dragon_rgb = 6'b00_00_00; // Transparant
-    3'd1: dragon_rgb = 6'b00_00_00; // Zwart
-    3'd5: dragon_rgb = 6'b00_10_00; // Donkergroen (Eivlekken)
-    3'd3: dragon_rgb = 6'b01_11_01; // Fel groen
-    3'd4: dragon_rgb = 6'b11_11_11; // WIT (Eierschaal)
-    3'd2: dragon_rgb = 6'b10_10_10; // Grijs
-    3'd6: dragon_rgb = 6'b01_01_01; // Donkergrijs
-    3'd7: dragon_rgb = 6'b01_11_01; // LICHTGROEN (Nekje & Buikje)
-    default: dragon_rgb = 6'b11_11_11;
-  endcase
+    3'd0: dragon_rgb = 6'b00_00_00; // Transparant / Achtergrond
+    3'd1: dragon_rgb = 6'b00_00_00; // Zwart (Outlines)
+    3'd2: dragon_rgb = 6'b10_10_10; // Grijs (Hoorns licht)
+    3'd3: dragon_rgb = 6'b00_11_00; // Fel groen (Lichaam draak)
+    3'd4: dragon_rgb = 6'b11_11_11; // Wit (Eierschaal / Oogreflectie)
+    3'd5: dragon_rgb = 6'b00_10_00; // Donkergroen (Eivlekken / Schaduw)
+    3'd6: dragon_rgb = 6'b01_01_01; // Donkergrijs (Hoorns schaduw)
+    3'd7: dragon_rgb = 6'b10_11_01; // Lichtgroen / Geelgroen (Nekje & Buikje)
+    default: dragon_rgb = 6'b00_00_00;
+endcase
 end
 
   reg [5:0] chest_rgb;

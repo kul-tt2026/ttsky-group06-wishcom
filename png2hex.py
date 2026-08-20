@@ -42,4 +42,4 @@ with open("dragon_l1.hex", "w") as f:
             code = get_color_code(px)
             f.write(f"{code:x}\n")
 
-print("dragon_l1.hex gegenereerd met 1024 regels!")
+print("dragon_l3.hex gegenereerd met 1024 regels!")
