@@ -15,27 +15,30 @@ module renderer (
     input  wire [9:0] pix_y,
     input  wire       video_active,
 
-    input  wire [1:0] mode,          // 0 TITLE, 1 HOME, 2 CHEST, 3 GAMEOVER
-    input  wire [1:0] menu_sel,
-    input  wire [1:0] hearts,
-    input  wire [1:0] satisfaction,
-    input  wire [7:0] coins,
+    input  wire [2:0] mode,          // 0 TITLE, 1 HOME, 2 CHEST, 3 GAMEOVER 4 YOU WIN
+    input  wire [2:0] menu_sel,
+    input  wire [2:0] hearts,
+    input  wire [2:0] satisfaction,
+    input  wire [9:0] coins,
     input  wire [2:0] level,
     input  wire [1:0] combo_len,
     input  wire [1:0] chest_state,
     input  wire [1:0] chest_sel,
-    input  wire [1:0] chest_outcome,
+    input  wire [2:0] chest_outcome,
     input  wire [1:0] dragon_bob,
-    input  wire [1:0] dragon_mood_anim,
+    input  wire [2:0] dragon_mood_anim,
     input  wire [1:0] chest_frame,
     input  wire       flash,
     input  wire       flame_frame,
+    input  wire       overflow,
+    input  wire       evolve_now,
+
 
     output reg  [1:0] R,
     output reg  [1:0] G,
     output reg  [1:0] B
 );
-  localparam M_TITLE=2'd0, M_HOME=2'd1, M_CHEST=2'd2, M_GAMEOVER=2'd3;
+  localparam [2:0] M_TITLE=3'd0, M_HOME=3'd1, M_CHEST=3'd2, M_GAMEOVER=3'd3, M_YOU_WIN=3'd4;
 
   // ======================= 1. PLACE =======================================
   // Every position is a constant HERE, in one file.  Moving anything on
@@ -92,7 +95,7 @@ module renderer (
   );
   bars u_combobar (
     .x(pix_x - COMBO_X), .y(pix_y - COMBO_Y),
-    .fill(combo_len),
+    .fill({1'b0, combo_len}),
     .px_on(combo_on), .px_code(combo_code)
   );
 
@@ -115,8 +118,9 @@ module renderer (
   wire show_bars   = (mode == M_HOME);
   wire show_menu   = (mode == M_HOME);
   wire show_chests = (mode == M_CHEST);
+  wire show_you_win = (mode == M_YOU_WIN);
   // hud: visible in both HOME and CHEST
-  wire show_hud    = (mode == M_HOME) || (mode == M_CHEST);
+  wire show_hud    = (mode == M_HOME) || (mode == M_CHEST) || (mode == M_YOU_WIN);
 
   // ======================= 4. COLOUR ======================================
   // Per-drawable palettes: code -> 6-bit {R,G,B}.  TODO: real colours once
@@ -145,12 +149,14 @@ module renderer (
   // Front to back: hud > bars > dragon > chests > background.
   localparam [5:0] BG_HOME  = 6'b000001;
   localparam [5:0] BG_CHEST = 6'b010001;
+  
 
   reg [5:0] rgb;
   always @(*) begin
     if (!video_active)           rgb = 6'b000000;      // MUST stay black
     else if (mode == M_TITLE)    rgb = 6'b000110;      // TODO: title text
     else if (mode == M_GAMEOVER) rgb = 6'b010000;      // TODO: game over text
+    else if (mode == M_YOU_WIN)  rgb = 6'b111100;      // TODO: you win text (bijv. felgeel/goud)
     else if (show_hud    && hud_on)    rgb = hud_rgb;
     else if (show_bars   && sat_on)    rgb = bar_rgb_sat;
     else if (show_bars   && combo_on)  rgb = bar_rgb_combo;
@@ -161,5 +167,5 @@ module renderer (
     {R, G, B} = rgb;
   end
 
-  wire _unused = &{menu_sel, chest_state, chest_outcome, flame_frame, 1'b0};
+  wire _unused = &{menu_sel, chest_state, chest_outcome, overflow, evolve_now, flame_frame, show_you_win, 1'b0};
 endmodule
