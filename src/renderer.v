@@ -95,7 +95,7 @@ module renderer (
   );
   bars u_combobar (
     .x(pix_x - COMBO_X), .y(pix_y - COMBO_Y),
-    .fill({1'b0, combo_len}),
+    .fill({combo_len}),
     .px_on(combo_on), .px_code(combo_code)
   );
 
@@ -104,7 +104,7 @@ module renderer (
   wire [1:0] hud_code;
   hud u_hud (
     .pix_x(pix_x), .pix_y(pix_y),
-    .hearts(hearts[1:0]), .coins(coins[1:0]), .level(level),
+    .hearts(hearts[1:0]), .coins(coins[7:0]), .level(level),
     .px_on(hud_on), .px_code(hud_code)
   );
 
@@ -167,5 +167,5 @@ module renderer (
     {R, G, B} = rgb;
   end
 
-  wire _unused = &{menu_sel, chest_state, chest_outcome, overflow, evolve_now, flame_frame, show_you_win, hearts[2], satisfaction[2], coins[9:8], dragon_mood_anim[2], 1'b0};
+  wire _unused = &{menu_sel, chest_state, chest_outcome, overflow, evolve_now, flame_frame, show_you_win, hearts[2], satisfaction[2], coins[9:8], dragon_mood_anim[2], coins[9:8], 1'b0};
 endmodule

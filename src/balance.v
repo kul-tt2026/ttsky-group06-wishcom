@@ -210,4 +210,5 @@ always @(*) begin
       end
     end
   end
+wire _unused_balance = &{hist_5, 1'b0};
 endmodule
