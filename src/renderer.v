@@ -178,10 +178,10 @@ localparam [2:0] M_TITLE    = 3'd0,
   case (dragon_code)
     3'd0: dragon_rgb = 6'b00_00_00; // Transparant
     3'd1: dragon_rgb = 6'b00_00_00; // Zwart
-    3'd2: dragon_rgb = 6'b00_10_00; // Donkergroen (Eivlekken)
+    3'd5: dragon_rgb = 6'b00_10_00; // Donkergroen (Eivlekken)
     3'd3: dragon_rgb = 6'b01_11_01; // Fel groen
     3'd4: dragon_rgb = 6'b11_11_11; // WIT (Eierschaal)
-    3'd5: dragon_rgb = 6'b10_10_10; // Grijs
+    3'd2: dragon_rgb = 6'b10_10_10; // Grijs
     3'd6: dragon_rgb = 6'b01_01_01; // Donkergrijs
     3'd7: dragon_rgb = 6'b01_11_01; // LICHTGROEN (Nekje & Buikje)
     default: dragon_rgb = 6'b11_11_11;

@@ -1,63 +1,45 @@
-#!/usr/bin/env python3
-import sys
 from PIL import Image
 
-# Mapping van RGB(A) tuples naar jouw 3-bit kleurcodes (0..7)
-# Pas de RGB-waarden aan op basis van jouw sprite palette:
-COLOR_MAP = {
-    (0, 0, 0, 0): 0,        # Transparant (alpha = 0)
-    (0, 0, 0): 1,          # Zwart (Outline)
-    (0, 100, 0): 2,        # Donkergroen (Vlekken)
-    (0, 255, 0): 3,        # Felgroen (Lijf)
-    (255, 255, 255): 4,    # Wit (Eierschaal)
-    (128, 128, 128): 5,    # Grijs
-    (64, 64, 64): 6,       # Donkergrijs
-    (144, 238, 144): 7,    # Lichtgroen (Buik)
+# 1. Open je 32x32 afbeelding
+img = Image.open("src/media/lvl1.png").convert("RGBA")
+img = img.resize((32, 32), Image.Resampling.NEAREST)  # Forceer exact 32x32
+
+# 2. Definieer je 8-kleuren mapping (index 0 t/m 7)
+# Pas eventueel aan naar jouw kleurenpalet
+PALETTE = {
+    0: (0, 0, 0, 0),  # 0: Transparant
+    1: (0, 0, 0, 255),  # 1: Zwart / Outline
+    2: (0, 128, 0, 255),  # 2: Donkergroen
+    3: (85, 255, 85, 255),  # 3: Felgroen
+    4: (255, 255, 255, 255),  # 4: Wit
+    5: (170, 170, 170, 255),  # 5: Grijs
+    6: (85, 85, 85, 255),  # 6: Donkergrijs
+    7: (170, 255, 170, 255),  # 7: Lichtgroen
 }
 
+
 def get_color_code(pixel):
-    # Als de pixel RGBA is en transparant is:
-    if len(pixel) == 4 and pixel[3] == 0:
+    if pixel[3] < 128:  # Transparante pixel
         return 0
-    
-    rgb = pixel[:3]
-    if rgb in COLOR_MAP:
-        return COLOR_MAP[rgb]
-    
-    # Zoek de dichtstbijzijnde kleur als er lichte kleurafwijkingen zijn
-    best_match = 0
+    # Zoek dichtstbijzijnde kleur in palet
     min_dist = float("inf")
-    for map_rgb, code in COLOR_MAP.items():
-        if len(map_rgb) == 3:
-            dist = sum((a - b) ** 2 for a, b in zip(rgb, map_rgb))
-            if dist < min_dist:
-                min_dist = dist
-                best_match = code
-    return best_match
+    best_idx = 0
+    for idx, col in PALETTE.items():
+        if idx == 0:
+            continue
+        dist = sum((a - b) ** 2 for a, b in zip(pixel[:3], col[:3]))
+        if dist < min_dist:
+            min_dist = dist
+            best_idx = idx
+    return best_idx
 
-def convert_png_to_hex_64x64(image_path, output_hex_path):
-    img = Image.open(image_path).convert("RGBA")
-    w, h = img.size
 
-    # Maak een leeg 64x64 canvas (alles transparant = code 0)
-    grid = [[0 for _ in range(64)] for _ in range(64)]
+# 3. Schrijf exact 1024 regels naar dragon_l1.hex
+with open("dragon_l1.hex", "w") as f:
+    for y in range(32):
+        for x in range(32):
+            px = img.getpixel((x, y))
+            code = get_color_code(px)
+            f.write(f"{code:x}\n")
 
-    # Plak de sprite linksboven (of met offset) in het 64x64 raster
-    for y in range(min(h, 64)):
-        for x in range(min(w, 64)):
-            pixel = img.getpixel((x, y))
-            grid[y][x] = get_color_code(pixel)
-
-    # Schrijf weg naar hex
-    with open(output_hex_path, "w") as f:
-        for y in range(64):
-            row_hex = [f"{code:x}" for code in grid[y]]
-            f.write(" ".join(row_hex) + "\n")
-
-    print(f"64x64 HEX gegenereerd: {output_hex_path} (4096 pixels)")
-if __name__ == "__main__":
-    if len(sys.argv) < 3:
-        print("Gebruik: python3 png2hex.py <invoer.png> <uitvoer.hex>")
-        sys.exit(1)
-    
-    convert_png_to_hex_64x64(sys.argv[1], sys.argv[2])
+print("dragon_l1.hex gegenereerd met 1024 regels!")

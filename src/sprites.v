@@ -347,29 +347,26 @@ module dragon_l1_generator (
     wire _unused = &{mood_anim, 1'b0};
 
     // Sprite startpositie op het scherm
+    // Sprite blijft 256x256 op het scherm door 8x te schalen (ipv 4x)
     localparam [9:0] SPRITE_X = 10'd184;
     localparam [9:0] SPRITE_Y = 10'd96;
-    // 64 pixels * 4x schaling = 256 breedte/hoogte
     localparam [9:0] SPRITE_W = 10'd256;
     localparam [9:0] SPRITE_H = 10'd256;
 
-    // Veilige bounds check (zonder underflow risico)
     wire in_bounds = (x >= SPRITE_X) && (x < (SPRITE_X + SPRITE_W)) &&
                      (y >= SPRITE_Y) && (y < (SPRITE_Y + SPRITE_H));
 
-    // Relatieve pixelpositie binnen 64x64 (delen door 4 via >> 2)
-    wire [5:0] rel_x = in_bounds ? (x - SPRITE_X) >> 2 : 6'd0;
-    wire [5:0] rel_y = in_bounds ? (y - SPRITE_Y) >> 2 : 6'd0;
+    // Delen door 8 (>> 3) i.p.v. door 4 -> 32x32 coördinaten
+    wire [4:0] rel_x = in_bounds ? (x - SPRITE_X) >> 3 : 5'd0;
+    wire [4:0] rel_y = in_bounds ? (y - SPRITE_Y) >> 3 : 5'd0;
 
-    // 0 ns vertraging adres: 12 bits
-    wire [11:0] addr = {rel_y, rel_x};
+    // 10-bit adres (1024 entries) i.p.v. 12-bit (4096 entries)
+    wire [9:0] addr = {rel_y, rel_x};
 
-    // 4096 entries (64 x 64 pixels) van 3 bits
-    reg [2:0] rom [0:4095];
+    reg [2:0] rom [0:1023];
     initial begin
         $readmemh("dragon_l1.hex", rom);
     end
-
     // Geregistreerde (pipelined) output
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
