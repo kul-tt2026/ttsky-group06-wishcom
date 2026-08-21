@@ -8,6 +8,7 @@
 //
 // ---------------------------------------------------------------------------
 module renderer (
+    input  wire       clk,
     input  wire [9:0] pix_x,
     input  wire [9:0] pix_y,
     input  wire       video_active,
@@ -76,7 +77,7 @@ localparam [2:0] M_TITLE    = 3'd0,
   dragon_draw u_dragon (
     .x(px - DRAGON_X), .y(py - DRAGON_Y), .mood_anim(dragon_mood_anim),
     .px_on(dragon_on), .px_code(dragon_code),
-    .level(level)
+    .level(level),  .clk(clk)
   );
 
   // THREE CHESTS ---------------------------------
