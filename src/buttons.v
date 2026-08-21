@@ -15,14 +15,19 @@ module buttons (
   wire tick = (tick_cnt == 15'h7FFF);
   reg [7:0] sync0, sync1;
 
-  always @(posedge clk) begin
+  // Veranderd: 'or negedge rst_n' toegevoegd voor asynchrone reset
+  always @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
-      tick_cnt<=0; sync0<=0; sync1<=0; level<=0; pressed<=0;
+      tick_cnt <= 15'd0; 
+      sync0    <= 8'd0; 
+      sync1    <= 8'd0; 
+      level    <= 8'd0; 
+      pressed  <= 8'd0;
     end else begin
       tick_cnt <= tick_cnt + 15'd1;
-      sync0 <= raw;
-      sync1 <= sync0;
-      pressed <= 8'd0;
+      sync0    <= raw;
+      sync1    <= sync0;
+      pressed  <= 8'd0;
       if (tick) begin
         level   <= sync1;
         pressed <= sync1 & ~level;

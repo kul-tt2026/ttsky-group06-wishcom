@@ -256,8 +256,8 @@ module dragon_l1_generator (
                      (y >= SPRITE_Y) && (y < (SPRITE_Y + SPRITE_H));
 
     // Delen door 8 (>> 3) i.p.v. door 4 -> 32x32 coördinaten
-    wire [4:0] rel_x = in_bounds ? (x - SPRITE_X) >> 3 : 5'd0;
-    wire [4:0] rel_y = in_bounds ? (y - SPRITE_Y) >> 3 : 5'd0;
+    wire [4:0] rel_x = in_bounds ? 5'((x - SPRITE_X) >> 3) : 5'd0;
+    wire [4:0] rel_y = in_bounds ? 5'((y - SPRITE_Y) >> 3) : 5'd0;
 
     // 10-bit adres (1024 entries) i.p.v. 12-bit (4096 entries)
     wire [9:0] addr = {rel_y, rel_x};
@@ -308,8 +308,8 @@ module dragon_l2_generator (
                      (y >= SPRITE_Y) && (y < (SPRITE_Y + SPRITE_H));
 
     // Delen door 8 (>> 3) i.p.v. door 4 -> 32x32 coördinaten
-    wire [4:0] rel_x = in_bounds ? (x - SPRITE_X) >> 3 : 5'd0;
-    wire [4:0] rel_y = in_bounds ? (y - SPRITE_Y) >> 3 : 5'd0;
+    wire [4:0] rel_x = in_bounds ? 5'((x - SPRITE_X) >> 3) : 5'd0;
+    wire [4:0] rel_y = in_bounds ? 5'((y - SPRITE_Y) >> 3) : 5'd0;
 
     // 10-bit adres (1024 entries) i.p.v. 12-bit (4096 entries)
     wire [9:0] addr = {rel_y, rel_x};
@@ -845,8 +845,8 @@ module dragon_l3_generator (
                      (y >= SPRITE_Y) && (y < (SPRITE_Y + SPRITE_H));
 
     // Delen door 8 (>> 3) i.p.v. door 4 -> 32x32 coördinaten
-    wire [4:0] rel_x = in_bounds ? (x - SPRITE_X) >> 3 : 5'd0;
-    wire [4:0] rel_y = in_bounds ? (y - SPRITE_Y) >> 3 : 5'd0;
+    wire [4:0] rel_x = in_bounds ? 5'((x - SPRITE_X) >> 3) : 5'd0;
+    wire [4:0] rel_y = in_bounds ? 5'((y - SPRITE_Y) >> 3) : 5'd0;
 
     // 10-bit adres (1024 entries) i.p.v. 12-bit (4096 entries)
     wire [9:0] addr = {rel_y, rel_x};
