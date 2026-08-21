@@ -46,7 +46,7 @@ module home (
   // any button at all -- used on the title / end screens
   wire any_btn = |btn_pressed;
 
-  always @(posedge clk) begin
+  always @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
       mode         <= M_TITLE;
       menu_sel     <= 3'd0;

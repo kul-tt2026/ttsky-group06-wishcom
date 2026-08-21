@@ -45,8 +45,11 @@ module coinbar (
  
   wire in_inner = (x >= FRAME) && (x < BAR_W - FRAME) &&
                   (y >= FRAME) && (y < BAR_H - FRAME);
- 
-  wire [7:0] ry  = y - FRAME;          // 0-based binnen de rand
+
+
+// In coinbar.v regel 49:
+  wire [9:0] diff_y = y - FRAME;
+  wire [6:0] ry     = diff_y[6:0];   // Lost zowel WIDTHTRUNC als UNUSEDSIGNAL op
   wire [2:0] idx = ry[6:4];            // ry / PITCH -> vakje 0 (boven) .. 7 (onder)
   wire [3:0] sy  = ry[3:0];            // positie binnen dit vakje
  

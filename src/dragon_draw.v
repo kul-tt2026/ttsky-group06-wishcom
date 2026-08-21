@@ -11,8 +11,8 @@ module dragon_draw (
 );
 
     // Draden voor de submodule outputs
-    wire       lvl1_px_on,  lvl2_px_on,  lvl3_px_on;
-    wire [2:0] lvl1_px_code, lvl2_px_code, lvl3_px_code;
+    wire       lvl1_px_on,  lvl2_px_on,  lvl3_px_on,  lvl4_px_on;
+    wire [2:0] lvl1_px_code, lvl2_px_code, lvl3_px_code, lvl4_px_code;
 
     // Ei generator (puur combinatorisch, geen clk/rst_n nodig)
     dragon_l1_generator u_dragon_lvl1 (
@@ -47,15 +47,25 @@ module dragon_draw (
         .px_code   (lvl3_px_code)
     );
 
+    dragon_l4_generator u_dragon_lvl4 (
+        .clk       (clk),
+        .rst_n     (rst_n),
+        .x         (x),
+        .y         (y),
+        .mood_anim (mood_anim),
+        .px_on     (lvl4_px_on),
+        .px_code   (lvl4_px_code)
+    );
+
     // Multiplexer op basis van level
     assign px_on = (level == 3'd1 || level == 3'd2) ? lvl1_px_on :
                    (level >= 3'd3 && level <= 3'd6) ? lvl2_px_on :
                    (level == 3'd7)                  ? lvl3_px_on :
-                   1'b0;
+                   lvl4_px_on;
 
     assign px_code = (level == 3'd1 || level == 3'd2) ? lvl1_px_code :
                      (level >= 3'd3 && level <= 3'd6) ? lvl2_px_code :
                      (level == 3'd7)                  ? lvl3_px_code :
-                     3'd0;
+                     lvl4_px_code;
 
 endmodule

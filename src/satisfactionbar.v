@@ -40,7 +40,9 @@ module satisfactionbar (
   wire in_inner = (x >= FRAME) && (x < BAR_W - FRAME) &&
                   (y >= FRAME) && (y < BAR_H - FRAME);
  
-  wire [7:0] rx  = x - FRAME;          // 0-based inside the frame
+  // In satisfactionbar.v regel 43:
+  wire [9:0] diff_x = x - FRAME;
+  wire [7:0] rx     = diff_x[7:0];
   wire [2:0] idx = rx[7:5];            // which segment: rx / PITCH, as a slice
   wire [4:0] sx  = rx[4:0];            // position within this segment's pitch
  
