@@ -39,7 +39,7 @@ module tt_um_dragonchi (
   // ---- controller: all 8 inputs ----
   wire [7:0] btn_level, btn_pressed;
   buttons u_buttons (
-    .clk(clk), .rst_n(rst_n), .raw(ui_in),
+    .clk(clk), .rst_n(rst_n), .frame_tick(frame_tick), .raw(ui_in),
     .level(btn_level), .pressed(btn_pressed)
   );
 
