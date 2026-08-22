@@ -242,6 +242,9 @@ module dragon_l1_generator (
     output reg         px_on,
     output reg  [2:0]  px_code
 );
+    assign px_on   = 1'b0;
+    assign px_code = 3'd0;
+    wire _unused = &{x, y, mood_anim, 1'b0};
 
     // wire _unused = &{mood_anim, 1'b0};
 
@@ -294,6 +297,9 @@ module dragon_l2_generator (
     output reg         px_on,
     output reg  [2:0]  px_code
 );
+    assign px_on   = 1'b0;
+    assign px_code = 3'd0;
+    wire _unused = &{x, y, mood_anim, 1'b0};
 
     // wire _unused = &{mood_anim, 1'b0};
 
@@ -831,6 +837,9 @@ module dragon_l3_generator (
     output reg         px_on,
     output reg  [2:0]  px_code
 );
+    assign px_on   = 1'b0;
+    assign px_code = 3'd0;
+    wire _unused = &{x, y, mood_anim, 1'b0};
 
     // wire _unused = &{mood_anim, 1'b0};
 
@@ -884,6 +893,9 @@ module dragon_l4_generator (
     output reg         px_on,
     output reg  [2:0]  px_code
 );
+    assign px_on   = 1'b0;
+    assign px_code = 3'd0;
+    wire _unused = &{x, y, mood_anim, 1'b0};
 
     // wire _unused = &{mood_anim, 1'b0};
 
