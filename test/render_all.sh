@@ -33,4 +33,13 @@ echo "✓ Opslaan voltooid: figures/lvl3_render.png"
 
 # Opruimen van tijdelijke bestanden
 rm -f sim_egg sim_render frame.ppm
+
+echo ""
+iverilog -g2012 -o sim_egg dragon_lvl4_tb.v ../src/dragon_draw.v ../src/sprites.v
+vvp sim_egg
+python3 -c "from PIL import Image; Image.open('frame.ppm').save('figures/lvl4_render.png')"
+echo "✓ Opslaan voltooid: figures/lvl4_render.png"
+
+# Opruimen van tijdelijke bestanden
+rm -f sim_egg sim_render frame.ppm
 echo "Klaar! Alle afbeeldingen staan in de map figures/."

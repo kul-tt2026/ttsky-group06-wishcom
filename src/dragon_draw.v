@@ -58,14 +58,14 @@ module dragon_draw (
     );
 
     // Multiplexer op basis van level
-    assign px_on = (level == 3'd1 || level == 3'd2) ? lvl1_px_on :
-                   (level >= 3'd3 && level <= 3'd6) ? lvl2_px_on :
-                   (level == 3'd7)                  ? lvl3_px_on :
+    assign px_on = (level == 3'd1 || level == 3'd2) ? lvl2_px_on :
+                   (level >= 3'd3 && level <= 3'd6) ? lvl3_px_on :
+                   (level == 3'd7)                  ? lvl4_px_on :
                    lvl4_px_on;
 
-    assign px_code = (level == 3'd1 || level == 3'd2) ? lvl1_px_code :
-                     (level >= 3'd3 && level <= 3'd6) ? lvl2_px_code :
-                     (level == 3'd7)                  ? lvl3_px_code :
+    assign px_code = (level == 3'd1 || level == 3'd2) ? lvl2_px_code :
+                     (level >= 3'd3 && level <= 3'd6) ? lvl3_px_code :
+                     (level == 3'd7)                  ? lvl4_px_code :
                      lvl4_px_code;
 
 endmodule

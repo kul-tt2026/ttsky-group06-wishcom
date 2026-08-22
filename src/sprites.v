@@ -879,6 +879,8 @@ endmodule
 
 
 
+`default_nettype none
+
 module dragon_l4_generator (
     input  wire        clk,
     input  wire        rst_n,
@@ -891,28 +893,30 @@ module dragon_l4_generator (
 
     wire _unused = &{mood_anim, 1'b0};
 
-    // Sprite startpositie op het scherm
-    // Sprite blijft 256x256 op het scherm door 8x te schalen (ipv 4x)
-    localparam [9:0] SPRITE_X = 10'd184;
-    localparam [9:0] SPRITE_Y = 10'd96;
-    localparam [9:0] SPRITE_W = 10'd256;
-    localparam [9:0] SPRITE_H = 10'd256;
+    // 48 pixels * 8x schaling = 384x384 pixels op het scherm
+    // Gecentreerd op 640x480: X = 128, Y = 48
+    localparam [9:0] SPRITE_X = 10'd128;
+    localparam [9:0] SPRITE_Y = 10'd48;
+    localparam [9:0] SPRITE_W = 10'd384;
+    localparam [9:0] SPRITE_H = 10'd384;
 
     wire in_bounds = (x >= SPRITE_X) && (x < (SPRITE_X + SPRITE_W)) &&
                      (y >= SPRITE_Y) && (y < (SPRITE_Y + SPRITE_H));
 
-    // Delen door 8 (>> 3) i.p.v. door 4 -> 32x32 coördinaten
-    wire [4:0] rel_x = in_bounds ? 5'((x - SPRITE_X) >> 3) : 5'd0;
-    wire [4:0] rel_y = in_bounds ? 5'((y - SPRITE_Y) >> 3) : 5'd0;
+    // 6-bit relatieve coördinaten voor bereik 0..47 (delen door 8 via >> 3)
+    wire [5:0] rel_x = in_bounds ? 6'((x - SPRITE_X) >> 3) : 6'd0;
+    wire [5:0] rel_y = in_bounds ? 6'((y - SPRITE_Y) >> 3) : 6'd0;
 
-    // 10-bit adres (1024 entries) i.p.v. 12-bit (4096 entries)
-    wire [9:0] addr = {rel_y, rel_x};
+    // 12-bit adres: rel_y * 48 + rel_x = (rel_y << 5) + (rel_y << 4) + rel_x
+    wire [11:0] addr = ({6'd0, rel_y} << 5) + ({6'd0, rel_y} << 4) + {6'd0, rel_x};
 
-    reg [2:0] rom [0:1023];
+    // 2.304 entries (48 * 48)
+    reg [2:0] rom [0:2303];
     initial begin
-        $readmemh("dragon_l3.hex", rom);
+        $readmemh("dragon_l4.hex", rom);
     end
-    // Geregistreerde (pipelined) output
+
+    // Geregistreerde output
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             px_on   <= 1'b0;
