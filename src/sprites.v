@@ -813,9 +813,9 @@ module dragon_l2_generator (
             px_on   <= 1'b0;
             px_code <= 3'd0;
         end else begin
-            if (in_bounds && (rom_code != 3'd0)) begin
+            if (in_bounds && (rom[addr] != 3'd0)) begin
                 px_on   <= 1'b1;
-                px_code <= rom_code;
+                px_code <= rom[addr];
             end else begin
                 px_on   <= 1'b0;
                 px_code <= 3'd0;
