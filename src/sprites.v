@@ -895,17 +895,21 @@ module dragon_l4_generator (
 
     // 48 pixels * 8x schaling = 384x384 pixels op het scherm
     // Gecentreerd op 640x480: X = 128, Y = 48
-    localparam [9:0] SPRITE_X = 10'd128;
-    localparam [9:0] SPRITE_Y = 10'd48;
-    localparam [9:0] SPRITE_W = 10'd384;
-    localparam [9:0] SPRITE_H = 10'd384;
+   // 48 * 3.5 = 168x168 pixels op het scherm
+    // Gecentreerd op 640x480: X = (640-168)/2 = 236, Y = (480-168)/2 = 156
+    // 48 * 4 = 192 pixels breed en hoog
+    // Gecentreerd op 640x480: X = (640-192)/2 = 224, Y = (480-192)/2 = 144
+    localparam [9:0] SPRITE_X = 10'd176;
+    localparam [9:0] SPRITE_Y = 10'd96;
+    localparam [9:0] SPRITE_W = 10'd288;
+    localparam [9:0] SPRITE_H = 10'd288;
 
     wire in_bounds = (x >= SPRITE_X) && (x < (SPRITE_X + SPRITE_W)) &&
                      (y >= SPRITE_Y) && (y < (SPRITE_Y + SPRITE_H));
 
-    // 6-bit relatieve coördinaten voor bereik 0..47 (delen door 8 via >> 3)
-    wire [5:0] rel_x = in_bounds ? 6'((x - SPRITE_X) >> 3) : 6'd0;
-    wire [5:0] rel_y = in_bounds ? 6'((y - SPRITE_Y) >> 3) : 6'd0;
+    // Delen door 6
+    wire [5:0] rel_x = in_bounds ? 6'((x - SPRITE_X) / 6) : 6'd0;
+    wire [5:0] rel_y = in_bounds ? 6'((y - SPRITE_Y) / 6) : 6'd0;
 
     // 12-bit adres: rel_y * 48 + rel_x = (rel_y << 5) + (rel_y << 4) + rel_x
     wire [11:0] addr = ({6'd0, rel_y} << 5) + ({6'd0, rel_y} << 4) + {6'd0, rel_x};
