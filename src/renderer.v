@@ -24,7 +24,7 @@ module renderer (
     input  wire       evolve_now, // of je genoeg geld hebt om te evolven 
     input  wire [1:0] combo_len, // ongebruikt
 
-    // input  wire [1:0] chest_frame, // animatie (voorlopig nog niets)
+    input  wire [1:0] chest_frame, // animatie (voorlopig nog niets)
     input  wire [1:0] chest_state, // 0 closed, 1 opening, 2 open, 3 menu 
     input  wire [1:0] chest_sel, // welke kist is selected (0,1,2), cursor + welke uiteindelijk is gekozen 
     input  wire [2:0] chest_outcome, // bevat alleen gekozen kist (moet nog worden aangepast dat alle 3)

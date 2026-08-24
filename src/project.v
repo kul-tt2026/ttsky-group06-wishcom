@@ -14,27 +14,44 @@ module tt_um_dragonchi (
     input  wire       rst_n
 );
   // ---- screen timing + 60 Hz heartbeat ----
+  // wire hsync, vsync, video_active;
+  // wire [9:0] pix_x, pix_y;
+  // hvsync_generator u_hvsync (
+  //   .clk(clk), .reset(~rst_n),
+  //   .hsync(hsync), .vsync(vsync), .display_on(video_active),
+  //   .hpos(pix_x), .vpos(pix_y)
+  // );
+  reg vsync_d;
+
+  // ---- screen painter (render group) ----
+
+  // VGA singals:
   wire hsync, vsync, video_active;
   wire [1:0] R, G, B;
   wire [9:0] pix_x, pix_y;
-  reg vsync_d;
 
-  always @(posedge clk or negedge rst_n) begin
-    if (!rst_n) vsync_d <= 1'b1;
-    else        vsync_d <= vsync;
+  
+  always @(posedge clk) begin
+    if (!rst_n) vsync_d <= 1'b1; else vsync_d <= vsync;
   end
   wire frame_tick = vsync_d & ~vsync;
 
   // ---- controller: all 8 inputs ----
   wire [7:0] btn_level, btn_pressed;
   buttons u_buttons (
-    .clk(clk), .rst_n(rst_n), .raw(ui_in),
+    .clk(clk), .rst_n(rst_n), .frame_tick(frame_tick), .raw(ui_in),
     .level(btn_level), .pressed(btn_pressed)
   );
+
+// ---- the dragon's stats: wire decleration (Person A) ----
+  wire [2:0] hearts, satisfaction;
+  wire [2:0] level;
+  wire [9:0] coins_amount;
 
   // ---- home screen / mode control (Person A) ----
   wire [2:0] mode;
   wire [2:0] menu_sel;
+  wire [1:0] egg_frame;
   wire you_win, overflow, evolve_now;
   wire act_feed, act_drink, act_sleep, act_minigame, req_evolve, restart;
   wire game_over, minigame_done;
@@ -45,7 +62,8 @@ module tt_um_dragonchi (
     .game_over(game_over), .minigame_done(minigame_done), .coins(coins),
     .mode(mode), .menu_sel(menu_sel),
     .act_feed(act_feed), .act_drink(act_drink), .act_sleep(act_sleep),
-    .req_evolve(req_evolve), .restart(restart), .you_win(you_win), .act_minigame(act_minigame)
+    .req_evolve(req_evolve), .restart(restart), .you_win(you_win), .act_minigame(act_minigame),
+    .egg_frame(egg_frame)
   );
 
   // ---- balance game (Person B) ----
@@ -66,7 +84,7 @@ module tt_um_dragonchi (
   wire req_coins_add, req_heart_lose_chest;
   chest_game u_chest_game (
     .clk(clk), .rst_n(rst_n), .frame_tick(frame_tick),
-    .active(mode == 3'd2),
+    .active(mode == 3'd3),
     .btn_pressed(btn_pressed),
     .pot_payout(coins_amount),
     .chest_state(chest_state), .chest_sel(chest_sel),
@@ -77,9 +95,7 @@ module tt_um_dragonchi (
   );
 
   // ---- the dragon's stats: the one owner (Person A) ----
-  wire [2:0] hearts, satisfaction;
-  wire [2:0] level;
-  wire [9:0] coins_amount;
+  // wires defined above
   dragon_state u_state (
     .clk(clk), .rst_n(rst_n), .frame_tick(frame_tick), .restart(restart),
     .req_heart_gain(req_heart_gain), .req_heart_lose(req_heart_lose),
@@ -104,43 +120,35 @@ module tt_um_dragonchi (
     .chest_frame(chest_frame), .flash(flash), .flame_frame(flame_frame)
   );
 
-  // ---- VGA Sync Generator ----
+  // ---- TinyVGA Pmod.  Do not touch. ----
+  assign uo_out = {hsync, B[0], G[0], R[0], vsync, B[1], G[1], R[1]};
   hvsync_generator u_hvsync (
     .clk(clk), .reset(~rst_n),
     .hsync(hsync), .vsync(vsync), .display_on(video_active),
     .hpos(pix_x), .vpos(pix_y)
   );
 
-  // ---- Renderer ----
+
   renderer u_renderer (
     .pix_x(pix_x), .pix_y(pix_y), .video_active(video_active),
     .mode(mode), .menu_sel(menu_sel),
     .hearts(hearts), .satisfaction(satisfaction),
     .coins(coins), .level(level), .combo_len(combo_len),
     .chest_state(chest_state), .chest_sel(chest_sel),
-    .chest_outcome(chest_outcome), .dragon_mood_anim(dragon_mood_anim),
+    .chest_outcome(chest_outcome),
+    .dragon_bob(dragon_bob), .dragon_mood_anim(dragon_mood_anim),
     .chest_frame(chest_frame), .flash(flash), .flame_frame(flame_frame),
-    .R(R), .G(G), .B(B), .overflow(overflow), .evolve_now(evolve_now), .clk(clk), .rst_n(rst_n)
+    .R(R), .G(G), .B(B), .overflow(overflow), .evolve_now(evolve_now),
+    .egg_frame(egg_frame)
   );
 
-  // ---- TinyVGA Pmod: Geregistreerde uitgangstrap voor timing closure ----
-  reg [7:0] uo_out_reg;
+  
 
-  always @(posedge clk or negedge rst_n) begin
-    if (!rst_n) begin
-      uo_out_reg <= 8'b0;
-    end else begin
-      uo_out_reg <= {hsync, B[0], G[0], R[0], vsync, B[1], G[1], R[1]};
-    end
-  end
-
-  assign uo_out = uo_out_reg;
+  
 
   // audio later: assign uio_out[0] = spkr; uio_oe[0] = 1;
   assign uio_out = 8'b0;
   assign uio_oe  = 8'b0;
 
-  // Ongebruikte ingangen en signalen afvangen voor linter
-  wire _unused = &{ena, uio_in, btn_level, chest_outcome, dragon_bob, 1'b0};
-
+  wire _unused = &{ena, uio_in, btn_level, chest_outcome, 1'b0};
 endmodule
