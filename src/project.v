@@ -140,8 +140,7 @@ module tt_um_dragonchi (
     .hearts(hearts), .satisfaction(satisfaction),
     .coins(coins), .level(level), .combo_len(combo_len),
     .chest_state(chest_state), .chest_sel(chest_sel),
-    .chest_outcome(chest_outcome),
-    .dragon_bob(dragon_bob), .dragon_mood_anim(dragon_mood_anim),
+    .chest_outcome(chest_outcome), .dragon_mood_anim(dragon_mood_anim),
     .chest_frame(chest_frame), .flash(flash), .flame_frame(flame_frame),
     .R(R), .G(G), .B(B), .overflow(overflow), .evolve_now(evolve_now),
     .egg_frame(egg_frame), .chest_contents(chest_contents), .pot(pot), .round(round)
@@ -155,5 +154,5 @@ module tt_um_dragonchi (
   assign uio_out = 8'b0;
   assign uio_oe  = 8'b0;
 
-  wire _unused = &{ena, uio_in, btn_level, chest_outcome, 1'b0};
+  wire _unused = &{ena, uio_in, btn_level, chest_outcome, dragon_bob, dragon_mood_anim, 1'b0};
 endmodule

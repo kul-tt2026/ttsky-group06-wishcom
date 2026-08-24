@@ -23,9 +23,12 @@ module chest_game (
     input  wire       active,             // mode == M_CHEST (from home.v)
     input  wire [7:0] btn_pressed,
 
-    output reg  [1:0] chest_state,        // 0 picking, 1 opening, 2 result, 3 menu (nog niet geimplementeerd)
+    output reg  [1:0] chest_state,        // 0 picking, 1 opening, 2 result
     output reg  [1:0] chest_sel,          // cursor 0..2
-    output reg  [2:0] chest_outcome,      // BOM, andere BOM, coin, 2x, CURSED
+    output reg  [2:0] chest_outcome,   // BOM, andere BOM, coin, 2x, CURSED
+    output reg  [8:0] chest_contents,
+    output reg  [9:0] pot,
+    output reg  [3:0] round,
 
     output reg        req_coins_add,      // -> dragon_state
     output reg  [9:0] pot_payout,         // Amount of coins to add to total
@@ -62,12 +65,14 @@ module chest_game (
   // we hebben maar 6 waarden nodig dus als >= 6 zet dan op 0 of 1, niet modulo want das blijkbaar duur in hardware
   wire [2:0] safe_random = (random_3bit >= 3'd6) ? (random_3bit - 3'd6) : random_3bit;
 
-  reg [2:0] contents [0:2];
   reg [7:0] timer;  // hoelang de animatie duurt
   reg       dealt;  // have the chests been shuffled yet?
 
-  reg [9:0]  pot;
-  reg [3:0]  round;
+   wire [2:0] sel_content = (chest_sel == 2'd0) ? chest_contents[2:0] :
+                           (chest_sel == 2'd1) ? chest_contents[5:3] :
+                                                 chest_contents[8:6];
+
+
 
   // -------------------------------------------------------------------------
   // DE ROUND TABLE (Combinatorial)
@@ -88,14 +93,13 @@ module chest_game (
       endcase
   end
 
-  integer i;
-  always @(posedge clk) begin
+ always @(posedge clk) begin
     if (!rst_n) begin // init
       chest_state<=C_PICK; chest_sel<=0; chest_outcome<=O_COIN;
       timer<=0; dealt<=0; minigame_done<=0;
       pot <= 0; round <= 0; pot_payout <= 0;
       req_coins_add<=0; req_heart_lose_chest<=0;
-      for (i=0;i<3;i=i+1) contents[i]<=3'd0;
+      chest_contents <=9'd0;
     end
 
     else if (!active) begin
@@ -112,21 +116,20 @@ module chest_game (
       if (active) case (chest_state)
         C_PICK: begin
           //  * if (!dealt): use lfsr[2:0] to pick one of the SIX orderings
-          //    of {O_BOM,O_COIN,O_LOSE} into contents[0..2]; dealt<=1
+          //    of {O_BOM,O_COIN,O_LOSE} into chest_contents; dealt<=1
           //  * UP/DOWN (btn 1/3) move chest_sel within 0..2
-          //  * SELECT (btn 6): chest_outcome<=contents[chest_sel];
+          //  * SELECT (btn 6): chest_outcome<=sel_content;
           //    timer<=45; chest_state<=C_OPEN
           //  * START (btn 7): minigame_done<=1 (leave without opening)
           if (!dealt) begin
               dealt <= 1;
               case (safe_random)
-                  3'd0: begin contents[0]<=itemA; contents[1]<=itemB; contents[2]<=itemC; end
-                  3'd1: begin contents[0]<=itemA; contents[1]<=itemC; contents[2]<=itemB; end
-                  3'd2: begin contents[0]<=itemB; contents[1]<=itemA; contents[2]<=itemC; end
-                  3'd3: begin contents[0]<=itemB; contents[1]<=itemC; contents[2]<=itemA; end
-                  3'd4: begin contents[0]<=itemC; contents[1]<=itemA; contents[2]<=itemB; end
-                  3'd5: begin contents[0]<=itemC; contents[1]<=itemB; contents[2]<=itemA; end
-                  default: begin contents[0]<=itemA; contents[1]<=itemB; contents[2]<=itemC; end
+                  3'd0: chest_contents <= {itemC, itemB, itemA};
+                  3'd1: chest_contents <= {itemB, itemC, itemA};
+                  3'd2: chest_contents <= {itemC, itemA, itemB};
+                  3'd3: chest_contents <= {itemA, itemC, itemB};
+                  3'd4: chest_contents <= {itemB, itemA, itemC};
+                  default: chest_contents <= {itemA, itemB, itemC};
               endcase
           end
 
@@ -136,7 +139,7 @@ module chest_game (
 
           // SELECT (btn 6)
           if (btn_pressed[6]) begin
-              chest_outcome <= contents[chest_sel];
+              chest_outcome <= sel_content;
               timer <= 45;  // 45 frames wachten eer we naar open gaan voor eventuele animatie
               chest_state <= C_OPEN;  // kist is open, volgende case
           end
@@ -216,5 +219,5 @@ module chest_game (
     end
   end
 
-  wire _unused = &{btn_pressed, contents[0], contents[1], contents[2], 1'b0}; // Dit lijntje code is een manier om tegen de compiler te zeggen: "Kijk, ik weet dat deze signalen bestaan, ik heb ze zogenaamd gelezen, dus stop met klagen!"
+  wire _unused = &{btn_pressed, 1'b0}; // Dit lijntje code is een manier om tegen de compiler te zeggen: "Kijk, ik weet dat deze signalen bestaan, ik heb ze zogenaamd gelezen, dus stop met klagen!"
 endmodule
