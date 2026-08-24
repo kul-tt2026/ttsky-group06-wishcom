@@ -197,7 +197,7 @@ localparam [2:0] M_TITLE    = 3'd0,
   wire show_satbar   = (mode == M_HOME);
   wire show_buttons   = (mode == M_HOME);
 
-  wire show_chests = (mode == M_CHEST);
+  //wire show_chests = (mode == M_CHEST);
 
   wire show_coin_hearts    = (mode == M_HOME) || (mode == M_CHEST); // altijd getoond 
 
