@@ -108,13 +108,6 @@ module chest_game (
         // (We zetten alles direct veilig terug)
     end
 
-
-    else if (!active) begin
-        chest_state <= C_PICK; dealt <= 0; pot <= 0; round <= 0;
-        req_coins_add <= 0; req_heart_lose_chest <= 0; minigame_done <= 0;
-        // (We zetten alles direct veilig terug)
-    end
-
     else if (frame_tick) begin
       req_coins_add<=0; req_heart_lose_chest<=0;
       minigame_done<=0;
