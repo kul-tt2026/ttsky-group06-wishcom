@@ -23,7 +23,7 @@ module chest_game (
     input  wire       active,             // mode == M_CHEST (from home.v)
     input  wire [7:0] btn_pressed,
 
-    output reg  [1:0] chest_state,        // 0 picking, 1 opening, 2 result
+    output reg  [1:0] chest_state,        // 0 picking, 1 opening, 2 result, 3 menu (nog niet geimplementeerd)
     output reg  [1:0] chest_sel,          // cursor 0..2
     output reg  [2:0] chest_outcome,      // BOM, andere BOM, coin, 2x, CURSED
 
@@ -97,6 +97,13 @@ module chest_game (
       req_coins_add<=0; req_heart_lose_chest<=0;
       for (i=0;i<3;i=i+1) contents[i]<=3'd0;
     end
+
+    else if (!active) begin
+        chest_state <= C_PICK; dealt <= 0; pot <= 0; round <= 0;
+        req_coins_add <= 0; req_heart_lose_chest <= 0; minigame_done <= 0;
+        // (We zetten alles direct veilig terug)
+    end
+
     else if (frame_tick) begin
       req_coins_add<=0; req_heart_lose_chest<=0;
       minigame_done<=0;
@@ -153,10 +160,9 @@ module chest_game (
         end
 
         C_RESULT: begin
-          // TODO Person C: when timer==0:
+          //  when timer==0:
           //  * fire the matching req_* pulse for chest_outcome
           //  * dealt<=0; chest_state<=C_PICK; minigame_done<=1
-          //    (decide with the team: one chest per visit, or several?)
           if (timer == 0) begin
             case (chest_outcome)
                 O_BOMB: begin
@@ -169,7 +175,7 @@ module chest_game (
                     minigame_done <= 1;
                 end
                 O_CURSED: begin
-                    pot_payout <= (pot + {2'b0, reward} > 11'd999) ? 10'd999 : (pot + {2'b0, reward});
+                    pot_payout <= pot; //(pot + {2'b0, reward} > 11'd999) ? 10'd999 : (pot + {2'b0, reward});
                     req_coins_add <= 1;
                     req_heart_lose_chest <= 1;
                     minigame_done <= 1;
@@ -180,7 +186,7 @@ module chest_game (
                     chest_state <= C_MENU;
                 end
                 O_2X: begin
-                    pot <= (pot << 1 > 11'd999) ? 10'd999 : (pot << 1);  // aka *2
+                    pot <= ({1'b0, pot} << 1 > 11'd999) ? 10'd999 : (pot << 1);  // aka *2
                     round <= (round == 4'd15) ? 4'd15 : (round + 1);
                     chest_state <= C_MENU;
                     end
@@ -188,19 +194,19 @@ module chest_game (
             endcase
           end
         end
-      C_MENU: begin
-        if (btn_pressed[6]) begin
-          dealt <= 0;
-          chest_state <= C_PICK;
-        end
-        else if (btn_pressed[7]) begin
-          if (pot > 0) begin
-                  req_coins_add <= 1;
-                  pot_payout <= pot;
+        C_MENU: begin
+          if (btn_pressed[6]) begin
+            dealt <= 0;
+            chest_state <= C_PICK;
           end
-          minigame_done <= 1;
+          else if (btn_pressed[7]) begin
+            if (pot > 0) begin
+                    req_coins_add <= 1;
+                    pot_payout <= pot;
+            end
+            minigame_done <= 1;
+          end
         end
-      end
 
       default: chest_state<=C_PICK;
       endcase

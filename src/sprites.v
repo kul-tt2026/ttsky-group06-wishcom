@@ -60,7 +60,7 @@ module chest_rom (
   wire _unused = &{frame, 1'b0};
 endmodule
 
-module flame_rom (
+module flame_rom ( // mag dit weg? 
     input  wire       frame,
     input  wire [3:0] row,
     input  wire [3:0] col,
@@ -82,25 +82,6 @@ module flame_rom (
   end
 endmodule
 
-module heart_rom (
-    input  wire [3:0] row,
-    input  wire [3:0] col,
-    output reg        on         // 1-bit: hearts are a single colour
-);
-  always @(*) begin
-    on = 1'b0;
-    if (col<4'd12) case (row)
-      4'd1,4'd2 : on = (col>=1&&col<=4)||(col>=7&&col<=10);
-      4'd3,4'd4,4'd5 : on = (col>=0&&col<=11);
-      4'd6 : on = (col>=1&&col<=10);
-      4'd7 : on = (col>=2&&col<=9);
-      4'd8 : on = (col>=3&&col<=8);
-      4'd9 : on = (col>=4&&col<=7);
-      4'd10: on = (col==5||col==6);
-      default: on = 1'b0;
-    endcase
-  end
-endmodule
 
 module digit_rom (
     input  wire [3:0] digit,     // 0..9

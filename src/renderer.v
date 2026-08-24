@@ -14,7 +14,7 @@ module renderer (
     input  wire [9:0] pix_y,
     input  wire       video_active,
 
-    input  wire [2:0] mode,          // 0 TITLE, 1 HOME, 2 CHEST, 3 GAMEOVER
+    input  wire [2:0] mode,          // 0 EGG, 1 HOME, 2 CHEST, 3 GAMEOVER
     input  wire [2:0] menu_sel,
     input  wire [2:0] hearts, // 3 bit
     input  wire [2:0] satisfaction, // 3 bit => 5 options
@@ -24,10 +24,10 @@ module renderer (
     input  wire       evolve_now, // of je genoeg geld hebt om te evolven 
     input  wire [1:0] combo_len, // ongebruikt
 
-    input  wire [1:0] chest_frame, // 0 closed, 1 opening, 2 open
-    input  wire [1:0] chest_state,
-    input  wire [1:0] chest_sel, // welke kist is selected (0,1,2)
-    input  wire [2:0] chest_outcome,
+    // input  wire [1:0] chest_frame, // animatie (voorlopig nog niets)
+    input  wire [1:0] chest_state, // 0 closed, 1 opening, 2 open, 3 menu 
+    input  wire [1:0] chest_sel, // welke kist is selected (0,1,2), cursor + welke uiteindelijk is gekozen 
+    input  wire [2:0] chest_outcome, // bevat alleen gekozen kist (moet nog worden aangepast dat alle 3)
 
     input  wire [2:0] dragon_mood_anim,
     input  wire       flash,
@@ -39,14 +39,12 @@ module renderer (
     output reg  [1:0] G,
     output reg  [1:0] B
 );
-  // VORIGE (2-bit):
-// localparam M_TITLE=2'd0, M_HOME=2'd1, M_CHEST=2'd2, M_GAMEOVER=2'd3;
-
 // VERANDER NAAR (3-bit):
 localparam [2:0] M_TITLE    = 3'd0,
-                 M_HOME     = 3'd1,
-                 M_CHEST    = 3'd2,
-                 M_GAMEOVER = 3'd3;
+                 M_EGG      = 3'd1
+                 M_HOME     = 3'd2,
+                 M_CHEST    = 3'd3,
+                 M_GAMEOVER = 3'd4;
 
   // ======================= 0. ROTATE ======================================
   // Fysiek scherm: 640x480 liggend.  Wij tekenen in PORTRET: 480 x 640.
@@ -99,23 +97,20 @@ localparam [2:0] M_TITLE    = 3'd0,
   // - rest tonen: alle 3 chests open
   // 
   wire       c0_on, c1_on, c2_on;
-  wire [1:0] c0_code, c1_code, c2_code;
+  wire [2:0] c0_code, c1_code, c2_code;
 
   chest_draw u_chest0 (
     .x(px - CHEST0_X), .y(py - CHEST_Y),
-    .frame(chest_sel==2'd0 ? chest_frame : 2'd0),
     .highlighted(chest_sel==2'd0),
     .px_on(c0_on), .px_code(c0_code)
   );
   chest_draw u_chest1 (
     .x(px - CHEST1_X), .y(py - CHEST_Y),
-    .frame(chest_sel==2'd1 ? chest_frame : 2'd0),
     .highlighted(chest_sel==2'd1),
     .px_on(c1_on), .px_code(c1_code)
   );
   chest_draw u_chest2 (
     .x(px - CHEST2_X), .y(py - CHEST_Y),
-    .frame(chest_sel==2'd2 ? chest_frame : 2'd0),
     .highlighted(chest_sel==2'd2),
     .px_on(c2_on), .px_code(c2_code)
   );
@@ -143,7 +138,6 @@ localparam [2:0] M_TITLE    = 3'd0,
   // vraag: hier nog aantal bijschrijven + overflow
 
   // HEARTS  + OVERFLOW (absolute coordinates??) -------------------------
-  // --- vraag: wat bedoelen ze met absolute coordinaten? en waarom hierwel absolute coordinaten? 
   wire heartsinfo_on;
   wire [1:0] heartsinfo_code;
   hearts u_heartsinfo (
@@ -169,6 +163,7 @@ localparam [2:0] M_TITLE    = 3'd0,
 
   // ======================= 2. SHOW ========================================
   // welke dingen moeten getoond worden bij welke gamemode
+  // hier nog egg implementeren 
   wire show_dragon = (mode == M_HOME);
   wire show_satbar   = (mode == M_HOME);
   wire show_buttons   = (mode == M_HOME);
