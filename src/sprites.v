@@ -300,7 +300,7 @@ module dragon_l2_generator (
     wire _unused = &{mood_anim, 1'b0};
 
     // 32 * 6 = 192x192 pixels op het scherm
-    localparam [9:0] SPRITE_X = 10'd224;
+    localparam [9:0] SPRITE_X = 10'd170;
     localparam [9:0] SPRITE_Y = 10'd144;
     localparam [9:0] SPRITE_W = 10'd192;
     localparam [9:0] SPRITE_H = 10'd192;
@@ -353,7 +353,7 @@ module dragon_l3_generator (
     wire _unused = &{mood_anim, 1'b0};
 
     // 32 * 6 = 192x192 pixels op het scherm
-    localparam [9:0] SPRITE_X = 10'd224;
+    localparam [9:0] SPRITE_X = 10'd190;
     localparam [9:0] SPRITE_Y = 10'd144;
     localparam [9:0] SPRITE_W = 10'd192;
     localparam [9:0] SPRITE_H = 10'd192;
@@ -413,17 +413,17 @@ module dragon_l4_generator (
     // Gecentreerd op 640x480: X = (640-168)/2 = 236, Y = (480-168)/2 = 156
     // 48 * 4 = 192 pixels breed en hoog
     // Gecentreerd op 640x480: X = (640-192)/2 = 224, Y = (480-192)/2 = 144
-    localparam [9:0] SPRITE_X = 10'd176;
-    localparam [9:0] SPRITE_Y = 10'd96;
-    localparam [9:0] SPRITE_W = 10'd288;
-    localparam [9:0] SPRITE_H = 10'd288;
+    localparam [9:0] SPRITE_X = 10'd165;
+    localparam [9:0] SPRITE_Y = 10'd120;
+    localparam [9:0] SPRITE_W = 10'd240;
+    localparam [9:0] SPRITE_H = 10'd240;
 
     wire in_bounds = (x >= SPRITE_X) && (x < (SPRITE_X + SPRITE_W)) &&
                      (y >= SPRITE_Y) && (y < (SPRITE_Y + SPRITE_H));
 
-    // Delen door 6
-    wire [5:0] rel_x = in_bounds ? 6'((x - SPRITE_X) / 6) : 6'd0;
-    wire [5:0] rel_y = in_bounds ? 6'((y - SPRITE_Y) / 6) : 6'd0;
+    // Delen door 5 i.p.v. 6
+    wire [5:0] rel_x = in_bounds ? 6'((x - SPRITE_X) / 5) : 6'd0;
+    wire [5:0] rel_y = in_bounds ? 6'((y - SPRITE_Y) / 5) : 6'd0;
 
     // 12-bit adres: rel_y * 48 + rel_x = (rel_y << 5) + (rel_y << 4) + rel_x
     wire [11:0] addr = ({6'd0, rel_y} << 5) + ({6'd0, rel_y} << 4) + {6'd0, rel_x};

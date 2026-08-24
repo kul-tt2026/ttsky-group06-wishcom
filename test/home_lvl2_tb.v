@@ -108,8 +108,8 @@ module home_tb;
     minigame_done    = 0;
 
     // Dummy waarden voor HUD/status
-    coins            = 10'd40;
-    level            = 3'd1;        // Level 4 (voor je nieuwe 48x48 sprite)
+    coins            = 10'd401;
+    level            = 3'd3;        // Level 4 (voor je nieuwe 48x48 sprite)
     hearts           = 3'd3;
     satisfaction     = 3'd2;
     evolve_now       = 1'b0;

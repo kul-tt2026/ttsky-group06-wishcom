@@ -204,10 +204,11 @@ end
 
   reg [5:0] coin_rgb;
   always @(*) case (coin_code)
-    2'd1: coin_rgb = 6'b000000;
-    2'd2: coin_rgb = 6'b100100;       // wood
-    2'd3: coin_rgb = 6'b111000;       // gold
-    default: coin_rgb = 6'b100100;
+    2'd0: coin_rgb = 6'b00_00_00;       // Rand / Outlines (Zwart)
+    2'd1: coin_rgb = 6'b01_01_01;       // Leeg segment (Donkergrijs)
+    2'd2: coin_rgb = 6'b11_11_00;       // Vol segment + cijfers (#FFDB00 fel goudgeel)
+    2'd3: coin_rgb = 6'b11_11_11;       // Optioneel: Wit
+    default: coin_rgb = 6'b00_00_00;
   endcase
 
   reg [5:0] buttons_rgb;
