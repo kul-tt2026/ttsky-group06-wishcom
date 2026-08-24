@@ -39,9 +39,14 @@ module tt_um_dragonchi (
   // ---- controller: all 8 inputs ----
   wire [7:0] btn_level, btn_pressed;
   buttons u_buttons (
-    .clk(clk), .rst_n(rst_n), .raw(ui_in),
+    .clk(clk), .rst_n(rst_n), .frame_tick(frame_tick), .raw(ui_in),
     .level(btn_level), .pressed(btn_pressed)
   );
+
+// ---- the dragon's stats: wire decleration (Person A) ----
+  wire [2:0] hearts, satisfaction;
+  wire [2:0] level;
+  wire [9:0] coins_amount;
 
   // ---- home screen / mode control (Person A) ----
   wire [2:0] mode;
@@ -95,9 +100,7 @@ module tt_um_dragonchi (
   );
 
   // ---- the dragon's stats: the one owner (Person A) ----
-  wire [2:0] hearts, satisfaction;
-  wire [2:0] level;
-  wire [9:0] coins_amount;
+  // wires defined above
   dragon_state u_state (
     .clk(clk), .rst_n(rst_n), .frame_tick(frame_tick), .restart(restart),
     .req_heart_gain(req_heart_gain), .req_heart_lose(req_heart_lose),
