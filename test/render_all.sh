@@ -4,9 +4,26 @@ set -e
 # Zorg ervoor dat de map test/figures bestaat
 mkdir -p figures
 echo ""
-iverilog -g2012 -o sim_egg home_tb.v ../src/dragon_draw.v ../src/sprites.v ../src/home.v ../src/renderer.v ../src/chest_draw.v ../src/satisfactionbar.v ../src/coinbar.v ../src/hearts.v ../src/draw_buttons.v
+iverilog -g2012 -o sim_egg home_lvl1_tb.v ../src/dragon_draw.v ../src/sprites.v ../src/home.v ../src/renderer.v ../src/chest_draw.v ../src/satisfactionbar.v ../src/coinbar.v ../src/hearts.v ../src/draw_buttons.v
 vvp sim_egg
-python3 -c "from PIL import Image; Image.open('frame.ppm').save('figures/home_render.png')"
+python3 -c "from PIL import Image; Image.open('frame.ppm').save('figures/home_lvl1_render.png')"
+echo "✓ Opslaan voltooid: figures/home_render.png"
+
+# Zorg ervoor dat de map test/figures bestaat
+mkdir -p figures
+echo ""
+iverilog -g2012 -o sim_egg home_lvl2_tb.v ../src/dragon_draw.v ../src/sprites.v ../src/home.v ../src/renderer.v ../src/chest_draw.v ../src/satisfactionbar.v ../src/coinbar.v ../src/hearts.v ../src/draw_buttons.v
+vvp sim_egg
+python3 -c "from PIL import Image; Image.open('frame.ppm').save('figures/home_lvl2_render.png')"
+echo "✓ Opslaan voltooid: figures/home_render.png"
+
+
+# Zorg ervoor dat de map test/figures bestaat
+mkdir -p figures
+echo ""
+iverilog -g2012 -o sim_egg home_lvl3_tb.v ../src/dragon_draw.v ../src/sprites.v ../src/home.v ../src/renderer.v ../src/chest_draw.v ../src/satisfactionbar.v ../src/coinbar.v ../src/hearts.v ../src/draw_buttons.v
+vvp sim_egg
+python3 -c "from PIL import Image; Image.open('frame.ppm').save('figures/home_lvl3_render.png')"
 echo "✓ Opslaan voltooid: figures/home_render.png"
 
 # Opruimen van tijdelijke bestanden

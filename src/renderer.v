@@ -61,7 +61,7 @@ localparam [2:0] M_TITLE    = 3'd0,
   localparam [9:0] SATBAR_X  = 10'd294, SATBAR_Y  = 10'd48;  // 162 x 24
   localparam [9:0] COINBAR_X = 10'd24,  COINBAR_Y = 10'd80;  //  24 x 132
 
-  localparam DRAGON_X = 10'd240, DRAGON_Y = 10'd100;
+  localparam DRAGON_X = 10'd0, DRAGON_Y = 10'd0;
   // localparam SATBAR_X = 10'd24,  SATBAR_Y = 10'd56;
   // localparam COINBAR_X  = 10'd24,  COINBAR_Y  = 10'd80;
   localparam CHEST0_X = 10'd80,  CHEST1_X = 10'd272, CHEST2_X = 10'd464;
