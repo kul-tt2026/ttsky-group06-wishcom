@@ -117,12 +117,13 @@ module tt_um_dragonchi (
   // ---- animation heartbeat (Person B) ----
   wire [1:0] dragon_bob, chest_frame;
   wire [2:0] dragon_mood_anim;
-  wire flash, flame_frame;
+  wire flash, flame_frame, evolve_blink;
   anim u_anim (
     .clk(clk), .rst_n(rst_n), .frame_tick(frame_tick),
     .mode(mode), .satisfaction(satisfaction), .chest_state(chest_state),
     .dragon_bob(dragon_bob), .dragon_mood_anim(dragon_mood_anim),
-    .chest_frame(chest_frame), .flash(flash), .flame_frame(flame_frame)
+    .chest_frame(chest_frame), .flash(flash), .flame_frame(flame_frame),
+    .evolve_blink(evolve_blink)
   );
 
   // ---- TinyVGA Pmod.  Do not touch. ----
@@ -143,7 +144,8 @@ module tt_um_dragonchi (
     .chest_outcome(chest_outcome), .dragon_mood_anim(dragon_mood_anim),
     .chest_frame(chest_frame), .flash(flash), .flame_frame(flame_frame),
     .R(R), .G(G), .B(B), .overflow(overflow), .evolve_now(evolve_now),
-    .egg_frame(egg_frame), .chest_contents(chest_contents), .pot(pot), .round(round)
+    .egg_frame(egg_frame), .chest_contents(chest_contents), .pot(pot), .round(round),
+    .evolve_blink(evolve_blink)
   );
 
   

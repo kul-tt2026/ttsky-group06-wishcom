@@ -7,7 +7,7 @@
 // van (docs/gen3.py).  Alle schuine randen: helling 2:1.  Witruimtes ~8 px.
 //
 // px_code: 0 transparant | 1 outline zwart | 2 donkerpaars
-//          3 lichtpaars (evolve-vulling, alleen als evolve_now hoog)
+//         
 //          4 wit (tekst + pijl)
 // evolve_now laag -> middenknop kleurt donkerpaars mee (gedimd), geen
 // aparte kleur nodig.
@@ -18,7 +18,6 @@
 module draw_buttons (
     input  wire [9:0] x,
     input  wire [9:0] y,
-    input  wire       evolve_now,
     output wire       px_on,
     output wire [2:0] px_code
 );
@@ -327,7 +326,6 @@ module draw_buttons (
                    any_text       ? 3'd4 :
                    any_out        ? 3'd1 :
                    any_fill_dark  ? 3'd2 :
-                   ell_i          ? (evolve_now ? 3'd3 : 3'd2) :
-                                    3'd0;
+                   ell_i          ? 3'd3 : 3'd0;
   assign px_on = (px_code != 3'd0);
 endmodule

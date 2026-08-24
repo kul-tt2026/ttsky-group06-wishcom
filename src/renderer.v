@@ -32,6 +32,7 @@ module renderer (
     input  wire [2:0] dragon_mood_anim,
     input  wire       flash,
     input  wire       flame_frame,
+    input  wire       evolve_blink,
 
     input             overflow, // als hartjes vol of geld vol
     input  wire [8:0] chest_contents,  // {kist2, kist1, kist0}, 3 bits elk
@@ -122,18 +123,18 @@ localparam [2:0] M_TITLE    = 3'd0,
   chest_draw u_chest1 (
     .x(px - CHEST1_X), .y(py - CHEST_Y),
     .highlighted(chest_sel==2'd1),
-    .frame(chest_sel == 2'd0 ? cframe_sel : cframe_oth),
+    .frame(chest_sel == 2'd1 ? cframe_sel : cframe_oth),
     .px_on(c1_on), .px_code(c1_code)
   );
   chest_draw u_chest2 (
     .x(px - CHEST2_X), .y(py - CHEST_Y),
     .highlighted(chest_sel==2'd2),
-    .frame(chest_sel == 2'd0 ? cframe_sel : cframe_oth),
+    .frame(chest_sel == 2'd2 ? cframe_sel : cframe_oth),
     .px_on(c2_on), .px_code(c2_code)
   );
 
   wire       chest_on   = c0_on | c1_on | c2_on;
-  wire [1:0] chest_code = c0_on ? c0_code : c1_on ? c1_code : c2_code; // moet derde niet? 
+  wire [2:0] chest_code = c0_on ? c0_code : c1_on ? c1_code : c2_code; // moet derde niet? 
 
   // MINI GAME MENU PAGE 
   wire menu_on;
@@ -183,10 +184,9 @@ localparam [2:0] M_TITLE    = 3'd0,
   // voor de rest gewoon vaste display vanonder aan scherm 
   wire button_on;
   wire [2:0] button_code;
-
+  
   draw_buttons buttons_u (
     .x(px), .y(py),
-    .evolve_now (evolve_now),
     .px_on(button_on), .px_code(button_code)
   );
 
@@ -248,12 +248,16 @@ end
     2'd3: coin_rgb = 6'b111000;       // gold
     default: coin_rgb = 6'b100100;
   endcase
+ 
+  wire [5:0] evolve_rgb = !evolve_now ? 6'b01_00_10 ://gedimd
+                          evolve_blink ? 6'b10_01_11 :// middenpaars 
+                          6'b01_00_10; //donkerpaars
 
   reg [5:0] buttons_rgb;
   always @(*) case (button_code)
     3'd1: buttons_rgb = 6'b000000;
     3'd2: buttons_rgb = 6'b010010;       // donkerpaars
-    3'd3: buttons_rgb = 6'b100111;       // lichtpaars 
+    3'd3: buttons_rgb = evolve_rgb;       // lichtpaars 
     default: buttons_rgb = 6'b111111;
   endcase
   
