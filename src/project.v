@@ -76,6 +76,10 @@ module tt_um_dragonchi (
   // ---- chest minigame (Person C) ----
   wire [1:0] chest_state, chest_sel;
   wire [2:0] chest_outcome;
+  wire [8:0] chest_contents;
+  wire [9:0] pot;
+  wire [3:0] round;
+
   wire req_coins_add, req_heart_lose_chest;
   chest_game u_chest_game (
     .clk(clk), .rst_n(rst_n), .frame_tick(frame_tick),
@@ -83,7 +87,8 @@ module tt_um_dragonchi (
     .btn_pressed(btn_pressed),
     .pot_payout(coins_amount),
     .chest_state(chest_state), .chest_sel(chest_sel),
-    .chest_outcome(chest_outcome),
+    .chest_outcome(chest_outcome),.chest_contents(chest_contents),
+    .pot(pot), .round(round),
     .req_coins_add(req_coins_add), 
     .req_heart_lose_chest(req_heart_lose_chest),
     .minigame_done(minigame_done)
@@ -136,7 +141,7 @@ module tt_um_dragonchi (
     .dragon_bob(dragon_bob), .dragon_mood_anim(dragon_mood_anim),
     .chest_frame(chest_frame), .flash(flash), .flame_frame(flame_frame),
     .R(R), .G(G), .B(B), .overflow(overflow), .evolve_now(evolve_now),
-    .egg_frame(egg_frame)
+    .egg_frame(egg_frame), .chest_contents(chest_contents), .pot(pot), .round(round)
   );
 
   
