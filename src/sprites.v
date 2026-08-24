@@ -285,6 +285,8 @@ module dragon_l1_generator (
 endmodule
 
 
+`default_nettype none
+
 module dragon_l2_generator (
     input  wire        clk,
     input  wire        rst_n,
@@ -297,516 +299,27 @@ module dragon_l2_generator (
 
     wire _unused = &{mood_anim, 1'b0};
 
-    // Sprite startpositie op het scherm
-    // Sprite blijft 256x256 op het scherm door 8x te schalen (ipv 4x)
-    localparam [9:0] SPRITE_X = 10'd184;
-    localparam [9:0] SPRITE_Y = 10'd96;
-    localparam [9:0] SPRITE_W = 10'd256;
-    localparam [9:0] SPRITE_H = 10'd256;
+    // 32 * 6 = 192x192 pixels op het scherm
+    localparam [9:0] SPRITE_X = 10'd224;
+    localparam [9:0] SPRITE_Y = 10'd144;
+    localparam [9:0] SPRITE_W = 10'd192;
+    localparam [9:0] SPRITE_H = 10'd192;
 
     wire in_bounds = (x >= SPRITE_X) && (x < (SPRITE_X + SPRITE_W)) &&
                      (y >= SPRITE_Y) && (y < (SPRITE_Y + SPRITE_H));
 
-    // Delen door 8 (>> 3) i.p.v. door 4 -> 32x32 coördinaten
-    wire [4:0] rel_x = in_bounds ? 5'((x - SPRITE_X) >> 3) : 5'd0;
-    wire [4:0] rel_y = in_bounds ? 5'((y - SPRITE_Y) >> 3) : 5'd0;
+    // Delen door 6 -> 32x32 ROM-coördinaten (bereik 0..31)
+    wire [4:0] rel_x = in_bounds ? 5'((x - SPRITE_X) / 6) : 5'd0;
+    wire [4:0] rel_y = in_bounds ? 5'((y - SPRITE_Y) / 6) : 5'd0;
 
-    // 10-bit adres (1024 entries) i.p.v. 12-bit (4096 entries)
+    // 10-bit adres voor 1024 entries: {rel_y, rel_x}
     wire [9:0] addr = {rel_y, rel_x};
 
     reg [2:0] rom [0:1023];
     initial begin
         $readmemh("dragon_l2.hex", rom);
     end
-    // reg [2:0] rom_code;
-    //   always @(*) begin
-    //   case (addr)
-    //       10'd75: rom_code = 3'd2;
-    //       10'd106: rom_code = 3'd2;
-    //       10'd107: rom_code = 3'd2;
-    //       10'd113: rom_code = 3'd2;
-    //       10'd136: rom_code = 3'd3;
-    //       10'd137: rom_code = 3'd3;
-    //       10'd138: rom_code = 3'd3;
-    //       10'd139: rom_code = 3'd1;
-    //       10'd140: rom_code = 3'd1;
-    //       10'd141: rom_code = 3'd1;
-    //       10'd143: rom_code = 3'd2;
-    //       10'd144: rom_code = 3'd2;
-    //       10'd167: rom_code = 3'd1;
-    //       10'd168: rom_code = 3'd3;
-    //       10'd169: rom_code = 3'd3;
-    //       10'd170: rom_code = 3'd3;
-    //       10'd171: rom_code = 3'd3;
-    //       10'd172: rom_code = 3'd3;
-    //       10'd173: rom_code = 3'd3;
-    //       10'd175: rom_code = 3'd2;
-    //       10'd177: rom_code = 3'd1;
-    //       10'd198: rom_code = 3'd1;
-    //       10'd199: rom_code = 3'd3;
-    //       10'd200: rom_code = 3'd3;
-    //       10'd201: rom_code = 3'd3;
-    //       10'd202: rom_code = 3'd3;
-    //       10'd203: rom_code = 3'd3;
-    //       10'd204: rom_code = 3'd3;
-    //       10'd205: rom_code = 3'd3;
-    //       10'd206: rom_code = 3'd3;
-    //       10'd209: rom_code = 3'd1;
-    //       10'd229: rom_code = 3'd1;
-    //       10'd230: rom_code = 3'd1;
-    //       10'd231: rom_code = 3'd3;
-    //       10'd232: rom_code = 3'd3;
-    //       10'd233: rom_code = 3'd3;
-    //       10'd234: rom_code = 3'd4;
-    //       10'd235: rom_code = 3'd1;
-    //       10'd236: rom_code = 3'd3;
-    //       10'd237: rom_code = 3'd3;
-    //       10'd238: rom_code = 3'd3;
-    //       10'd239: rom_code = 3'd3;
-    //       10'd240: rom_code = 3'd3;
-    //       10'd241: rom_code = 3'd1;
-    //       10'd260: rom_code = 3'd1;
-    //       10'd261: rom_code = 3'd3;
-    //       10'd262: rom_code = 3'd3;
-    //       10'd263: rom_code = 3'd3;
-    //       10'd264: rom_code = 3'd3;
-    //       10'd265: rom_code = 3'd3;
-    //       10'd266: rom_code = 3'd1;
-    //       10'd267: rom_code = 3'd1;
-    //       10'd268: rom_code = 3'd3;
-    //       10'd269: rom_code = 3'd3;
-    //       10'd270: rom_code = 3'd3;
-    //       10'd271: rom_code = 3'd3;
-    //       10'd272: rom_code = 3'd3;
-    //       10'd273: rom_code = 3'd1;
-    //       10'd291: rom_code = 3'd1;
-    //       10'd292: rom_code = 3'd3;
-    //       10'd293: rom_code = 3'd2;
-    //       10'd294: rom_code = 3'd3;
-    //       10'd295: rom_code = 3'd3;
-    //       10'd296: rom_code = 3'd3;
-    //       10'd297: rom_code = 3'd3;
-    //       10'd298: rom_code = 3'd1;
-    //       10'd299: rom_code = 3'd1;
-    //       10'd300: rom_code = 3'd3;
-    //       10'd301: rom_code = 3'd3;
-    //       10'd302: rom_code = 3'd3;
-    //       10'd303: rom_code = 3'd3;
-    //       10'd304: rom_code = 3'd3;
-    //       10'd305: rom_code = 3'd1;
-    //       10'd323: rom_code = 3'd1;
-    //       10'd324: rom_code = 3'd3;
-    //       10'd325: rom_code = 3'd3;
-    //       10'd326: rom_code = 3'd3;
-    //       10'd327: rom_code = 3'd1;
-    //       10'd328: rom_code = 3'd3;
-    //       10'd329: rom_code = 3'd3;
-    //       10'd330: rom_code = 3'd3;
-    //       10'd331: rom_code = 3'd3;
-    //       10'd332: rom_code = 3'd3;
-    //       10'd333: rom_code = 3'd3;
-    //       10'd334: rom_code = 3'd3;
-    //       10'd335: rom_code = 3'd3;
-    //       10'd336: rom_code = 3'd3;
-    //       10'd337: rom_code = 3'd1;
-    //       10'd355: rom_code = 3'd1;
-    //       10'd356: rom_code = 3'd3;
-    //       10'd357: rom_code = 3'd3;
-    //       10'd358: rom_code = 3'd3;
-    //       10'd359: rom_code = 3'd3;
-    //       10'd360: rom_code = 3'd3;
-    //       10'd361: rom_code = 3'd3;
-    //       10'd362: rom_code = 3'd3;
-    //       10'd363: rom_code = 3'd3;
-    //       10'd364: rom_code = 3'd3;
-    //       10'd365: rom_code = 3'd3;
-    //       10'd366: rom_code = 3'd3;
-    //       10'd367: rom_code = 3'd3;
-    //       10'd368: rom_code = 3'd3;
-    //       10'd369: rom_code = 3'd1;
-    //       10'd388: rom_code = 3'd1;
-    //       10'd389: rom_code = 3'd3;
-    //       10'd390: rom_code = 3'd3;
-    //       10'd391: rom_code = 3'd3;
-    //       10'd392: rom_code = 3'd3;
-    //       10'd393: rom_code = 3'd3;
-    //       10'd394: rom_code = 3'd3;
-    //       10'd395: rom_code = 3'd3;
-    //       10'd396: rom_code = 3'd3;
-    //       10'd397: rom_code = 3'd3;
-    //       10'd398: rom_code = 3'd3;
-    //       10'd399: rom_code = 3'd3;
-    //       10'd400: rom_code = 3'd1;
-    //       10'd421: rom_code = 3'd1;
-    //       10'd422: rom_code = 3'd1;
-    //       10'd423: rom_code = 3'd3;
-    //       10'd424: rom_code = 3'd3;
-    //       10'd425: rom_code = 3'd3;
-    //       10'd426: rom_code = 3'd3;
-    //       10'd427: rom_code = 3'd3;
-    //       10'd428: rom_code = 3'd3;
-    //       10'd429: rom_code = 3'd3;
-    //       10'd430: rom_code = 3'd3;
-    //       10'd431: rom_code = 3'd3;
-    //       10'd432: rom_code = 3'd1;
-    //       10'd439: rom_code = 3'd1;
-    //       10'd440: rom_code = 3'd1;
-    //       10'd455: rom_code = 3'd1;
-    //       10'd456: rom_code = 3'd1;
-    //       10'd457: rom_code = 3'd1;
-    //       10'd458: rom_code = 3'd1;
-    //       10'd459: rom_code = 3'd3;
-    //       10'd460: rom_code = 3'd3;
-    //       10'd461: rom_code = 3'd3;
-    //       10'd462: rom_code = 3'd3;
-    //       10'd463: rom_code = 3'd3;
-    //       10'd464: rom_code = 3'd1;
-    //       10'd470: rom_code = 3'd1;
-    //       10'd471: rom_code = 3'd3;
-    //       10'd472: rom_code = 3'd1;
-    //       10'd491: rom_code = 3'd3;
-    //       10'd492: rom_code = 3'd3;
-    //       10'd493: rom_code = 3'd3;
-    //       10'd494: rom_code = 3'd3;
-    //       10'd495: rom_code = 3'd3;
-    //       10'd496: rom_code = 3'd1;
-    //       10'd501: rom_code = 3'd1;
-    //       10'd502: rom_code = 3'd3;
-    //       10'd503: rom_code = 3'd3;
-    //       10'd504: rom_code = 3'd1;
-    //       10'd522: rom_code = 3'd2;
-    //       10'd523: rom_code = 3'd2;
-    //       10'd524: rom_code = 3'd3;
-    //       10'd525: rom_code = 3'd3;
-    //       10'd526: rom_code = 3'd3;
-    //       10'd527: rom_code = 3'd3;
-    //       10'd528: rom_code = 3'd1;
-    //       10'd529: rom_code = 3'd1;
-    //       10'd533: rom_code = 3'd1;
-    //       10'd534: rom_code = 3'd3;
-    //       10'd535: rom_code = 3'd2;
-    //       10'd536: rom_code = 3'd1;
-    //       10'd551: rom_code = 3'd1;
-    //       10'd552: rom_code = 3'd1;
-    //       10'd553: rom_code = 3'd2;
-    //       10'd554: rom_code = 3'd2;
-    //       10'd555: rom_code = 3'd2;
-    //       10'd556: rom_code = 3'd3;
-    //       10'd557: rom_code = 3'd3;
-    //       10'd558: rom_code = 3'd3;
-    //       10'd559: rom_code = 3'd3;
-    //       10'd560: rom_code = 3'd3;
-    //       10'd561: rom_code = 3'd1;
-    //       10'd562: rom_code = 3'd1;
-    //       10'd564: rom_code = 3'd1;
-    //       10'd565: rom_code = 3'd3;
-    //       10'd566: rom_code = 3'd2;
-    //       10'd567: rom_code = 3'd2;
-    //       10'd568: rom_code = 3'd3;
-    //       10'd569: rom_code = 3'd1;
-    //       10'd582: rom_code = 3'd1;
-    //       10'd585: rom_code = 3'd2;
-    //       10'd586: rom_code = 3'd2;
-    //       10'd587: rom_code = 3'd1;
-    //       10'd588: rom_code = 3'd1;
-    //       10'd589: rom_code = 3'd3;
-    //       10'd590: rom_code = 3'd3;
-    //       10'd591: rom_code = 3'd3;
-    //       10'd592: rom_code = 3'd3;
-    //       10'd593: rom_code = 3'd1;
-    //       10'd594: rom_code = 3'd1;
-    //       10'd595: rom_code = 3'd1;
-    //       10'd596: rom_code = 3'd1;
-    //       10'd597: rom_code = 3'd3;
-    //       10'd598: rom_code = 3'd2;
-    //       10'd599: rom_code = 3'd2;
-    //       10'd600: rom_code = 3'd3;
-    //       10'd601: rom_code = 3'd1;
-    //       10'd602: rom_code = 3'd1;
-    //       10'd613: rom_code = 3'd1;
-    //       10'd615: rom_code = 3'd1;
-    //       10'd616: rom_code = 3'd1;
-    //       10'd617: rom_code = 3'd2;
-    //       10'd618: rom_code = 3'd1;
-    //       10'd619: rom_code = 3'd4;
-    //       10'd620: rom_code = 3'd4;
-    //       10'd621: rom_code = 3'd1;
-    //       10'd622: rom_code = 3'd3;
-    //       10'd623: rom_code = 3'd3;
-    //       10'd624: rom_code = 3'd3;
-    //       10'd625: rom_code = 3'd1;
-    //       10'd626: rom_code = 3'd4;
-    //       10'd627: rom_code = 3'd1;
-    //       10'd628: rom_code = 3'd1;
-    //       10'd629: rom_code = 3'd1;
-    //       10'd630: rom_code = 3'd1;
-    //       10'd631: rom_code = 3'd1;
-    //       10'd632: rom_code = 3'd1;
-    //       10'd633: rom_code = 3'd1;
-    //       10'd634: rom_code = 3'd1;
-    //       10'd643: rom_code = 3'd1;
-    //       10'd644: rom_code = 3'd4;
-    //       10'd645: rom_code = 3'd1;
-    //       10'd646: rom_code = 3'd1;
-    //       10'd647: rom_code = 3'd4;
-    //       10'd648: rom_code = 3'd4;
-    //       10'd649: rom_code = 3'd1;
-    //       10'd650: rom_code = 3'd4;
-    //       10'd651: rom_code = 3'd3;
-    //       10'd652: rom_code = 3'd3;
-    //       10'd653: rom_code = 3'd1;
-    //       10'd654: rom_code = 3'd1;
-    //       10'd655: rom_code = 3'd3;
-    //       10'd656: rom_code = 3'd1;
-    //       10'd657: rom_code = 3'd4;
-    //       10'd658: rom_code = 3'd4;
-    //       10'd659: rom_code = 3'd4;
-    //       10'd660: rom_code = 3'd4;
-    //       10'd661: rom_code = 3'd4;
-    //       10'd662: rom_code = 3'd4;
-    //       10'd663: rom_code = 3'd4;
-    //       10'd664: rom_code = 3'd2;
-    //       10'd665: rom_code = 3'd2;
-    //       10'd666: rom_code = 3'd1;
-    //       10'd675: rom_code = 3'd1;
-    //       10'd676: rom_code = 3'd4;
-    //       10'd677: rom_code = 3'd4;
-    //       10'd678: rom_code = 3'd4;
-    //       10'd679: rom_code = 3'd4;
-    //       10'd680: rom_code = 3'd4;
-    //       10'd681: rom_code = 3'd4;
-    //       10'd682: rom_code = 3'd4;
-    //       10'd683: rom_code = 3'd3;
-    //       10'd684: rom_code = 3'd3;
-    //       10'd685: rom_code = 3'd3;
-    //       10'd686: rom_code = 3'd1;
-    //       10'd687: rom_code = 3'd1;
-    //       10'd688: rom_code = 3'd1;
-    //       10'd689: rom_code = 3'd4;
-    //       10'd690: rom_code = 3'd4;
-    //       10'd691: rom_code = 3'd4;
-    //       10'd692: rom_code = 3'd4;
-    //       10'd693: rom_code = 3'd3;
-    //       10'd694: rom_code = 3'd3;
-    //       10'd695: rom_code = 3'd4;
-    //       10'd696: rom_code = 3'd2;
-    //       10'd697: rom_code = 3'd2;
-    //       10'd698: rom_code = 3'd1;
-    //       10'd707: rom_code = 3'd1;
-    //       10'd708: rom_code = 3'd4;
-    //       10'd709: rom_code = 3'd4;
-    //       10'd710: rom_code = 3'd4;
-    //       10'd711: rom_code = 3'd4;
-    //       10'd712: rom_code = 3'd4;
-    //       10'd713: rom_code = 3'd4;
-    //       10'd714: rom_code = 3'd4;
-    //       10'd715: rom_code = 3'd4;
-    //       10'd716: rom_code = 3'd3;
-    //       10'd717: rom_code = 3'd3;
-    //       10'd718: rom_code = 3'd3;
-    //       10'd719: rom_code = 3'd1;
-    //       10'd720: rom_code = 3'd4;
-    //       10'd721: rom_code = 3'd4;
-    //       10'd722: rom_code = 3'd4;
-    //       10'd723: rom_code = 3'd4;
-    //       10'd724: rom_code = 3'd4;
-    //       10'd725: rom_code = 3'd3;
-    //       10'd726: rom_code = 3'd3;
-    //       10'd727: rom_code = 3'd3;
-    //       10'd728: rom_code = 3'd2;
-    //       10'd729: rom_code = 3'd2;
-    //       10'd730: rom_code = 3'd1;
-    //       10'd739: rom_code = 3'd1;
-    //       10'd740: rom_code = 3'd4;
-    //       10'd741: rom_code = 3'd4;
-    //       10'd742: rom_code = 3'd4;
-    //       10'd743: rom_code = 3'd3;
-    //       10'd744: rom_code = 3'd3;
-    //       10'd745: rom_code = 3'd4;
-    //       10'd746: rom_code = 3'd4;
-    //       10'd747: rom_code = 3'd4;
-    //       10'd748: rom_code = 3'd4;
-    //       10'd749: rom_code = 3'd3;
-    //       10'd750: rom_code = 3'd3;
-    //       10'd751: rom_code = 3'd4;
-    //       10'd752: rom_code = 3'd4;
-    //       10'd753: rom_code = 3'd4;
-    //       10'd754: rom_code = 3'd4;
-    //       10'd755: rom_code = 3'd4;
-    //       10'd756: rom_code = 3'd3;
-    //       10'd757: rom_code = 3'd3;
-    //       10'd758: rom_code = 3'd3;
-    //       10'd759: rom_code = 3'd3;
-    //       10'd760: rom_code = 3'd3;
-    //       10'd761: rom_code = 3'd2;
-    //       10'd762: rom_code = 3'd1;
-    //       10'd771: rom_code = 3'd1;
-    //       10'd772: rom_code = 3'd4;
-    //       10'd773: rom_code = 3'd4;
-    //       10'd774: rom_code = 3'd3;
-    //       10'd775: rom_code = 3'd3;
-    //       10'd776: rom_code = 3'd3;
-    //       10'd777: rom_code = 3'd3;
-    //       10'd778: rom_code = 3'd4;
-    //       10'd779: rom_code = 3'd4;
-    //       10'd780: rom_code = 3'd4;
-    //       10'd781: rom_code = 3'd4;
-    //       10'd782: rom_code = 3'd4;
-    //       10'd783: rom_code = 3'd4;
-    //       10'd784: rom_code = 3'd4;
-    //       10'd785: rom_code = 3'd4;
-    //       10'd786: rom_code = 3'd4;
-    //       10'd787: rom_code = 3'd4;
-    //       10'd788: rom_code = 3'd3;
-    //       10'd789: rom_code = 3'd3;
-    //       10'd790: rom_code = 3'd3;
-    //       10'd791: rom_code = 3'd3;
-    //       10'd792: rom_code = 3'd2;
-    //       10'd793: rom_code = 3'd2;
-    //       10'd794: rom_code = 3'd1;
-    //       10'd803: rom_code = 3'd1;
-    //       10'd804: rom_code = 3'd4;
-    //       10'd805: rom_code = 3'd4;
-    //       10'd806: rom_code = 3'd3;
-    //       10'd807: rom_code = 3'd3;
-    //       10'd808: rom_code = 3'd3;
-    //       10'd809: rom_code = 3'd3;
-    //       10'd810: rom_code = 3'd4;
-    //       10'd811: rom_code = 3'd4;
-    //       10'd812: rom_code = 3'd4;
-    //       10'd813: rom_code = 3'd3;
-    //       10'd814: rom_code = 3'd4;
-    //       10'd815: rom_code = 3'd4;
-    //       10'd816: rom_code = 3'd2;
-    //       10'd817: rom_code = 3'd4;
-    //       10'd818: rom_code = 3'd4;
-    //       10'd819: rom_code = 3'd3;
-    //       10'd820: rom_code = 3'd3;
-    //       10'd821: rom_code = 3'd3;
-    //       10'd822: rom_code = 3'd3;
-    //       10'd823: rom_code = 3'd3;
-    //       10'd824: rom_code = 3'd2;
-    //       10'd825: rom_code = 3'd2;
-    //       10'd826: rom_code = 3'd1;
-    //       10'd835: rom_code = 3'd1;
-    //       10'd836: rom_code = 3'd2;
-    //       10'd837: rom_code = 3'd2;
-    //       10'd838: rom_code = 3'd3;
-    //       10'd839: rom_code = 3'd3;
-    //       10'd840: rom_code = 3'd3;
-    //       10'd841: rom_code = 3'd3;
-    //       10'd842: rom_code = 3'd4;
-    //       10'd843: rom_code = 3'd4;
-    //       10'd844: rom_code = 3'd3;
-    //       10'd845: rom_code = 3'd3;
-    //       10'd846: rom_code = 3'd3;
-    //       10'd847: rom_code = 3'd4;
-    //       10'd848: rom_code = 3'd4;
-    //       10'd849: rom_code = 3'd4;
-    //       10'd850: rom_code = 3'd4;
-    //       10'd851: rom_code = 3'd3;
-    //       10'd852: rom_code = 3'd3;
-    //       10'd853: rom_code = 3'd3;
-    //       10'd854: rom_code = 3'd3;
-    //       10'd855: rom_code = 3'd3;
-    //       10'd856: rom_code = 3'd2;
-    //       10'd857: rom_code = 3'd1;
-    //       10'd868: rom_code = 3'd1;
-    //       10'd869: rom_code = 3'd2;
-    //       10'd870: rom_code = 3'd2;
-    //       10'd871: rom_code = 3'd3;
-    //       10'd872: rom_code = 3'd3;
-    //       10'd873: rom_code = 3'd4;
-    //       10'd874: rom_code = 3'd4;
-    //       10'd875: rom_code = 3'd3;
-    //       10'd876: rom_code = 3'd3;
-    //       10'd877: rom_code = 3'd3;
-    //       10'd878: rom_code = 3'd3;
-    //       10'd879: rom_code = 3'd3;
-    //       10'd880: rom_code = 3'd4;
-    //       10'd881: rom_code = 3'd4;
-    //       10'd882: rom_code = 3'd4;
-    //       10'd883: rom_code = 3'd3;
-    //       10'd884: rom_code = 3'd3;
-    //       10'd885: rom_code = 3'd3;
-    //       10'd886: rom_code = 3'd3;
-    //       10'd887: rom_code = 3'd3;
-    //       10'd888: rom_code = 3'd2;
-    //       10'd889: rom_code = 3'd1;
-    //       10'd901: rom_code = 3'd1;
-    //       10'd902: rom_code = 3'd2;
-    //       10'd903: rom_code = 3'd2;
-    //       10'd904: rom_code = 3'd4;
-    //       10'd905: rom_code = 3'd4;
-    //       10'd906: rom_code = 3'd4;
-    //       10'd907: rom_code = 3'd3;
-    //       10'd908: rom_code = 3'd3;
-    //       10'd909: rom_code = 3'd3;
-    //       10'd910: rom_code = 3'd3;
-    //       10'd911: rom_code = 3'd3;
-    //       10'd912: rom_code = 3'd3;
-    //       10'd913: rom_code = 3'd4;
-    //       10'd914: rom_code = 3'd4;
-    //       10'd915: rom_code = 3'd4;
-    //       10'd916: rom_code = 3'd4;
-    //       10'd917: rom_code = 3'd4;
-    //       10'd918: rom_code = 3'd4;
-    //       10'd919: rom_code = 3'd2;
-    //       10'd920: rom_code = 3'd1;
-    //       10'd934: rom_code = 3'd1;
-    //       10'd935: rom_code = 3'd2;
-    //       10'd936: rom_code = 3'd4;
-    //       10'd937: rom_code = 3'd4;
-    //       10'd938: rom_code = 3'd4;
-    //       10'd939: rom_code = 3'd4;
-    //       10'd940: rom_code = 3'd3;
-    //       10'd941: rom_code = 3'd3;
-    //       10'd942: rom_code = 3'd3;
-    //       10'd943: rom_code = 3'd3;
-    //       10'd944: rom_code = 3'd3;
-    //       10'd945: rom_code = 3'd4;
-    //       10'd946: rom_code = 3'd4;
-    //       10'd947: rom_code = 3'd4;
-    //       10'd948: rom_code = 3'd4;
-    //       10'd949: rom_code = 3'd2;
-    //       10'd950: rom_code = 3'd2;
-    //       10'd951: rom_code = 3'd2;
-    //       10'd967: rom_code = 3'd1;
-    //       10'd968: rom_code = 3'd2;
-    //       10'd969: rom_code = 3'd2;
-    //       10'd970: rom_code = 3'd2;
-    //       10'd971: rom_code = 3'd2;
-    //       10'd972: rom_code = 3'd2;
-    //       10'd973: rom_code = 3'd3;
-    //       10'd974: rom_code = 3'd3;
-    //       10'd975: rom_code = 3'd3;
-    //       10'd976: rom_code = 3'd2;
-    //       10'd977: rom_code = 3'd2;
-    //       10'd978: rom_code = 3'd2;
-    //       10'd979: rom_code = 3'd2;
-    //       10'd980: rom_code = 3'd2;
-    //       10'd981: rom_code = 3'd2;
-    //       10'd982: rom_code = 3'd1;
-    //       10'd983: rom_code = 3'd1;
-    //       10'd999: rom_code = 3'd1;
-    //       10'd1000: rom_code = 3'd1;
-    //       10'd1001: rom_code = 3'd1;
-    //       10'd1002: rom_code = 3'd1;
-    //       10'd1003: rom_code = 3'd1;
-    //       10'd1004: rom_code = 3'd1;
-    //       10'd1005: rom_code = 3'd1;
-    //       10'd1006: rom_code = 3'd1;
-    //       10'd1007: rom_code = 3'd1;
-    //       10'd1008: rom_code = 3'd1;
-    //       10'd1009: rom_code = 3'd1;
-    //       10'd1010: rom_code = 3'd1;
-    //       10'd1011: rom_code = 3'd1;
-    //       10'd1012: rom_code = 3'd1;
-    //       10'd1013: rom_code = 3'd1;
-    //       default: rom_code = 3'd0;
-    //   endcase
-    // end
-
+    
     // Geregistreerde (pipelined) output
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -825,6 +338,7 @@ module dragon_l2_generator (
 
 endmodule
 
+`default_nettype none
 
 module dragon_l3_generator (
     input  wire        clk,
@@ -838,27 +352,27 @@ module dragon_l3_generator (
 
     wire _unused = &{mood_anim, 1'b0};
 
-    // Sprite startpositie op het scherm
-    // Sprite blijft 256x256 op het scherm door 8x te schalen (ipv 4x)
-    localparam [9:0] SPRITE_X = 10'd184;
-    localparam [9:0] SPRITE_Y = 10'd96;
-    localparam [9:0] SPRITE_W = 10'd256;
-    localparam [9:0] SPRITE_H = 10'd256;
+    // 32 * 6 = 192x192 pixels op het scherm
+    localparam [9:0] SPRITE_X = 10'd224;
+    localparam [9:0] SPRITE_Y = 10'd144;
+    localparam [9:0] SPRITE_W = 10'd192;
+    localparam [9:0] SPRITE_H = 10'd192;
 
     wire in_bounds = (x >= SPRITE_X) && (x < (SPRITE_X + SPRITE_W)) &&
                      (y >= SPRITE_Y) && (y < (SPRITE_Y + SPRITE_H));
 
-    // Delen door 8 (>> 3) i.p.v. door 4 -> 32x32 coördinaten
-    wire [4:0] rel_x = in_bounds ? 5'((x - SPRITE_X) >> 3) : 5'd0;
-    wire [4:0] rel_y = in_bounds ? 5'((y - SPRITE_Y) >> 3) : 5'd0;
+    // Delen door 6 -> 32x32 ROM-coördinaten (bereik 0..31)
+    wire [4:0] rel_x = in_bounds ? 5'((x - SPRITE_X) / 6) : 5'd0;
+    wire [4:0] rel_y = in_bounds ? 5'((y - SPRITE_Y) / 6) : 5'd0;
 
-    // 10-bit adres (1024 entries) i.p.v. 12-bit (4096 entries)
+    // 10-bit adres voor 1024 entries: {rel_y, rel_x}
     wire [9:0] addr = {rel_y, rel_x};
 
     reg [2:0] rom [0:1023];
     initial begin
         $readmemh("dragon_l3.hex", rom);
     end
+    
     // Geregistreerde (pipelined) output
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
