@@ -89,17 +89,16 @@ module home (
 
         // -------------------------------------------------------------
         M_EGG: begin
-          if (egg_timer != 7'd0) begin
-            if (any_btn) egg_timer <= 7'd90; // dit is 1.5 seconds at 60 fps
+          if (egg_timer == 7'd0) begin
+           if (any_btn) egg_timer <= 7'd90;   // stilstaan tot de speler drukt
           end else begin
-            egg_timer <= egg_timer - 7'd1;
-            if (egg_timer == 7'd1) begin
-              restart <= 1'b1; // 
-              mode    <= M_HOME;
+           egg_timer <= egg_timer - 7'd1;     // loopt af
+           if (egg_timer == 7'd1) begin
+            restart <= 1'b1;
+            mode    <= M_HOME;
             end
           end
         end
-
         // -------------------------------------------------------------
         M_HOME: begin
           // end conditions first: they are levels, so test before buttons
