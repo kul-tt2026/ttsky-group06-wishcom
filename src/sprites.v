@@ -299,20 +299,20 @@ module dragon_l2_generator (
 
     wire _unused = &{mood_anim, 1'b0};
 
-    // 32 * 6 = 192x192 pixels op het scherm
-    localparam [9:0] SPRITE_X = 10'd170;
-    localparam [9:0] SPRITE_Y = 10'd144;
-    localparam [9:0] SPRITE_W = 10'd192;
-    localparam [9:0] SPRITE_H = 10'd192;
+    // 32 * 5 = 160x160 pixels op het scherm (gecentreerd op 480x640)
+    localparam [9:0] SPRITE_X = 10'd170;  // (480 - 160) / 2 = 160
+    localparam [9:0] SPRITE_Y = 10'd180;
+    localparam [9:0] SPRITE_W = 10'd160;
+    localparam [9:0] SPRITE_H = 10'd160;
 
     wire in_bounds = (x >= SPRITE_X) && (x < (SPRITE_X + SPRITE_W)) &&
                      (y >= SPRITE_Y) && (y < (SPRITE_Y + SPRITE_H));
 
-    // Delen door 6 -> 32x32 ROM-coördinaten (bereik 0..31)
-    wire [4:0] rel_x = in_bounds ? 5'((x - SPRITE_X) / 6) : 5'd0;
-    wire [4:0] rel_y = in_bounds ? 5'((y - SPRITE_Y) / 6) : 5'd0;
+    // Delen door 5 -> 32x32 ROM-coördinaten (bereik 0..31)
+    wire [4:0] rel_x = in_bounds ? ((x - SPRITE_X) / 10'd5) : 5'd0;
+    wire [4:0] rel_y = in_bounds ? ((y - SPRITE_Y) / 10'd5) : 5'd0;
 
-    // 10-bit adres voor 1024 entries: {rel_y, rel_x}
+    // 10-bit adres voor de 1024 entries: {rel_y, rel_x}
     wire [9:0] addr = {rel_y, rel_x};
 
     reg [2:0] rom [0:1023];
@@ -320,7 +320,7 @@ module dragon_l2_generator (
         $readmemh("dragon_l2.hex", rom);
     end
     
-    // Geregistreerde (pipelined) output
+    // Geregistreerde output
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             px_on   <= 1'b0;
