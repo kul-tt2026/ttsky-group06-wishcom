@@ -34,6 +34,10 @@ module renderer (
     input  wire       flame_frame,
 
     input             overflow, // als hartjes vol of geld vol
+    input  wire [8:0] chest_contents,  // {kist2, kist1, kist0}, 3 bits elk
+    input  wire [9:0] pot,             // groot tonen, los van coins, hoeveel coins je hebt in minigame
+    input  wire [3:0] round,           // teken round+1, wleke ronde je zit in mini game
+    input  wire [1:0] egg_frame,       // 0 heel, 1 barst, 2 open, 3 weg
 
     output reg  [1:0] R,
     output reg  [1:0] G,
@@ -246,6 +250,7 @@ end
     if (!video_active)           rgb = 6'b000000;      // MUST stay black
     else if (mode == M_TITLE)    rgb = 6'b000110;      // TODO: title text
     else if (mode == M_GAMEOVER) rgb = 6'b010000;      // TODO: game over text
+    else if (mode == M_EGG)      rgb = 6'b010000;      // TODO: egg 
     else if (show_coin_hearts    && heartsinfo_on)    rgb = heartsinfo_rgb;
     else if (show_coin_hearts    && coin_on)          rgb = coin_rgb;
     else if (show_satbar   && sat_on)                 rgb = sat_rgb;
