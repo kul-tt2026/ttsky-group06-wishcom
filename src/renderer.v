@@ -142,6 +142,12 @@ localparam [2:0] M_TITLE    = 3'd0,
   );
   // vraag: hier nog aantal bijschrijven + overflow
 
+  wire gameover_text_on;
+  gameover_text u_gameover (
+    .px(px),
+    .py(py),
+    .text_on(gameover_text_on)
+  );
   // HEARTS  + OVERFLOW (absolute coordinates??) -------------------------
   // --- vraag: wat bedoelen ze met absolute coordinaten? en waarom hierwel absolute coordinaten? 
   wire heartsinfo_on;
@@ -275,7 +281,12 @@ end
   always @(*) begin
     if (!video_active)           rgb = 6'b000000;      // MUST stay black
     else if (mode == M_TITLE)    rgb = 6'b000110;      // TODO: title text
-    else if (mode == M_GAMEOVER) rgb = 6'b010000;      // TODO: game over text
+    else if (mode == M_GAMEOVER) begin
+    if (gameover_text_on)
+      rgb = 6'b00_00_00; // Zwarte letters "GAME OVER"
+    else
+      rgb = 6'b01_00_00; // Donkerrode achtergrond
+  end
     else if (show_coin_hearts    && heartsinfo_on)    rgb = heartsinfo_rgb;
     else if (show_coin_hearts    && coin_on)          rgb = coin_rgb;
     else if (show_satbar   && sat_on)                 rgb = sat_rgb;

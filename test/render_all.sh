@@ -26,6 +26,14 @@ vvp sim_egg
 python3 -c "from PIL import Image; Image.open('frame.ppm').save('figures/home_lvl3_render.png')"
 echo "✓ Opslaan voltooid: figures/home_render.png"
 
+# Zorg ervoor dat de map test/figures bestaat
+mkdir -p figures
+echo ""
+iverilog -g2012 -o sim_egg gameover_tb.v ../src/dragon_draw.v ../src/sprites.v ../src/home.v ../src/renderer.v ../src/chest_draw.v ../src/satisfactionbar.v ../src/coinbar.v ../src/hearts.v ../src/draw_buttons.v
+vvp sim_egg
+python3 -c "from PIL import Image; Image.open('frame.ppm').save('figures/gameover_render.png')"
+echo "✓ Opslaan voltooid: figures/gameover_render.png"
+
 # Opruimen van tijdelijke bestanden
 rm -f sim_egg sim_render frame.ppm
 

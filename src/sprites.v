@@ -513,3 +513,118 @@ module background (
   end
 
 endmodule
+
+`default_nettype none
+
+module gameover_text (
+    input  wire [9:0] px,        // 0..479 (portrait X)
+    input  wire [9:0] py,        // 0..639 (portrait Y)
+    output wire       text_on
+);
+
+  // ======================= Geometrie & Positie =============================
+  // Scherm: 480 x 640
+  // Woordbreedte: 4 letters * 48px stride = 192 px -> X start op (480 - 192) / 2 = 144
+  localparam [9:0] START_X = 10'd144;
+  localparam [9:0] LINE1_Y = 10'd250; // GAME
+  localparam [9:0] LINE2_Y = 10'd320; // OVER
+  localparam [9:0] CHAR_W  = 10'd48;  // Stride per letter
+  localparam [9:0] CHAR_H  = 10'd48;  // Hoogte per letter (6x geschaald: 8 * 6 = 48)
+
+  wire in_line1 = (px >= START_X) && (px < START_X + 10'd192) &&
+                  (py >= LINE1_Y) && (py < LINE1_Y + CHAR_H);
+
+  wire in_line2 = (px >= START_X) && (px < START_X + 10'd192) &&
+                  (py >= LINE2_Y) && (py < LINE2_Y + CHAR_H);
+
+  wire [9:0] lx = px - START_X;       // 0..191
+  wire [1:0] char_pos = lx / CHAR_W;  // Welke letter in het woord: 0..3
+  wire [5:0] cx = lx % CHAR_W;        // 0..47 binnen de lettercel
+
+  wire [9:0] ly = in_line1 ? (py - LINE1_Y) : (py - LINE2_Y);
+
+  // 6x Schaling naar het 6x8 font (deling door 6)
+  wire [2:0] gcol = cx / 6'd6;        // 0..5 (bij cx 0..35)
+  wire [2:0] grow = ly / 6'd6;        // 0..7 (bij ly 0..47)
+  wire       in_glyph = (cx < 6'd36); // Laatste 12 pixels zijn tussenruimte
+
+  // ======================= Karakter Selectie ===============================
+  // IDs: 0:G, 1:A, 2:M, 3:E, 4:O, 5:V, 6:R
+  reg [2:0] glyph_id;
+  always @(*) begin
+    if (in_line1) begin
+      // "GAME"
+      case (char_pos)
+        2'd0: glyph_id = 3'd0; // G
+        2'd1: glyph_id = 3'd1; // A
+        2'd2: glyph_id = 3'd2; // M
+        2'd3: glyph_id = 3'd3; // E
+      endcase
+    end else begin
+      // "OVER"
+      case (char_pos)
+        2'd0: glyph_id = 3'd4; // O
+        2'd1: glyph_id = 3'd5; // V
+        2'd2: glyph_id = 3'd3; // E
+        2'd3: glyph_id = 3'd6; // R
+      endcase
+    end
+  end
+
+  // ======================= Glyph ROM ======================================
+  reg [5:0] glyph_bits;
+  always @(*) begin
+    case (glyph_id)
+      3'd0: case (grow) // G
+        3'd0: glyph_bits = 6'b011110; 3'd1: glyph_bits = 6'b110011;
+        3'd2: bits_g();               3'd3: glyph_bits = 6'b110111;
+        3'd4: glyph_bits = 6'b110011; 3'd5: glyph_bits = 6'b110011;
+        3'd6: glyph_bits = 6'b110011; 3'd7: glyph_bits = 6'b011110;
+      endcase
+      3'd1: case (grow) // A
+        3'd0: glyph_bits = 6'b011110; 3'd1: glyph_bits = 6'b110011;
+        3'd2: glyph_bits = 6'b110011; 3'd3: glyph_bits = 6'b111111;
+        3'd4: glyph_bits = 6'b110011; 3'd5: glyph_bits = 6'b110011;
+        3'd6: glyph_bits = 6'b110011; 3'd7: glyph_bits = 6'b110011;
+      endcase
+      3'd2: case (grow) // M
+        3'd0: glyph_bits = 6'b110011; 3'd1: glyph_bits = 6'b111111;
+        3'd2: glyph_bits = 6'b101101; 3'd3: glyph_bits = 6'b100001;
+        3'd4: glyph_bits = 6'b110011; 3'd5: glyph_bits = 6'b110011;
+        3'd6: glyph_bits = 6'b110011; 3'd7: glyph_bits = 6'b110011;
+      endcase
+      3'd3: case (grow) // E
+        3'd0: glyph_bits = 6'b111111; 3'd1: glyph_bits = 6'b110000;
+        3'd2: glyph_bits = 6'b110000; 3'd3: glyph_bits = 6'b111100;
+        3'd4: glyph_bits = 6'b110000; 3'd5: glyph_bits = 6'b110000;
+        3'd6: glyph_bits = 6'b110000; 3'd7: glyph_bits = 6'b111111;
+      endcase
+      3'd4: case (grow) // O
+        3'd0: glyph_bits = 6'b011110; 3'd1: glyph_bits = 6'b110011;
+        3'd2: glyph_bits = 6'b110011; 3'd3: glyph_bits = 6'b110011;
+        3'd4: glyph_bits = 6'b110011; 3'd5: glyph_bits = 6'b110011;
+        3'd6: glyph_bits = 6'b110011; 3'd7: glyph_bits = 6'b011110;
+      endcase
+      3'd5: case (grow) // V
+        3'd0: glyph_bits = 6'b110011; 3'd1: glyph_bits = 6'b110011;
+        3'd2: glyph_bits = 6'b110011; 3'd3: glyph_bits = 6'b110011;
+        3'd4: glyph_bits = 6'b110011; 3'd5: glyph_bits = 6'b011110;
+        3'd6: glyph_bits = 6'b011110; 3'd7: glyph_bits = 6'b001100;
+      endcase
+      default: case (grow) // R
+        3'd0: glyph_bits = 6'b111110; 3'd1: glyph_bits = 6'b110011;
+        3'd2: glyph_bits = 6'b110011; 3'd3: glyph_bits = 6'b111110;
+        3'd4: glyph_bits = 6'b111100; 3'd5: glyph_bits = 6'b110110;
+        3'd6: glyph_bits = 6'b110011; 3'd7: glyph_bits = 6'b110011;
+      endcase
+    endcase
+  end
+
+  task bits_g;
+    glyph_bits = 6'b110000;
+  endtask
+
+  // ======================= Output ==========================================
+  assign text_on = (in_line1 || in_line2) && in_glyph && glyph_bits[3'd5 - gcol];
+
+endmodule
