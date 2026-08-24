@@ -451,3 +451,65 @@ module dragon_l4_generator (
     end
 
 endmodule
+
+`default_nettype none
+
+`default_nettype none
+
+module background (
+    input  wire [9:0] pix_x,    // 0..639 (horizontaal)
+    input  wire [9:0] pix_y,    // 0..479 (verticaal)
+    output reg  [5:0] bg_rgb
+);
+
+  // ======================= 1. WOLKJES =====================================
+  // Wolk 1: Bovenaan (pix_x: 480..540, pix_y: 110..140)
+  wire wolk1 = ((pix_x >= 10'd490 && pix_x < 10'd530 && pix_y >= 10'd110 && pix_y < 10'd120) ||
+                (pix_x >= 10'd480 && pix_x < 10'd540 && pix_y >= 10'd120 && pix_y < 10'd140));
+
+  // Wolk 2: Onderaan (pix_x: 460..520, pix_y: 340..370)
+  wire wolk2 = ((pix_x >= 10'd470 && pix_x < 10'd510 && pix_y >= 10'd340 && pix_y < 10'd350) ||
+                (pix_x >= 10'd460 && pix_x < 10'd520 && pix_y >= 10'd350 && pix_y < 10'd370));
+
+  wire is_cloud = wolk1 || wolk2;
+
+  // ======================= 2. ZACHTE GLOOIENDE BERGEN =====================
+  // We maken 2 mooie heuveltoppen: één op y=140 en één op y=340
+  // Heuvel 1 (top rond y = 140, raakt x = 285)
+  wire [8:0] dy1 = (pix_y > 10'd140) ? (pix_y[8:0] - 9'd140) : (9'd140 - pix_y[8:0]);
+  wire [9:0] curve1 = (dy1 * dy1) >> 7; // Zachte parabool
+  wire [9:0] hill1_x = (10'd285 > curve1) ? (10'd285 - curve1) : 10'd0;
+
+  // Heuvel 2 (top rond y = 340, raakt x = 270)
+  wire [8:0] dy2 = (pix_y > 10'd340) ? (pix_y[8:0] - 9'd340) : (9'd340 - pix_y[8:0]);
+  wire [9:0] curve2 = (dy2 * dy2) >> 7;
+  wire [9:0] hill2_x = (10'd270 > curve2) ? (10'd270 - curve2) : 10'd0;
+
+  // Gecombineerde heuvelranden (achterste heuvels pieken net wat verder naar links)
+  wire in_front_hill = (pix_x <= hill1_x);
+  wire in_back_hill  = (pix_x <= hill2_x);
+
+  // ======================= 3. KLEUREN =====================================
+  always @(*) begin
+    // Voorste zachte heuvel (fris groen)
+    if (in_front_hill) begin
+      if (pix_x >= (hill1_x - 10'd8))
+        bg_rgb = 6'b10_11_01; // Limoen/lichtgroene rand highlight
+      else
+        bg_rgb = 6'b00_11_00; // Grasgroen vlak
+    // Achterste heuvel (donkerder dieptegroen)
+    end else if (in_back_hill) begin
+      if (pix_x >= (hill2_x - 10'd8))
+        bg_rgb = 6'b00_11_00; // Grasgroene rand
+      else
+        bg_rgb = 6'b00_10_00; // Donkerder bosgroen
+    // Wolkjes
+    end else if (is_cloud) begin
+      bg_rgb = 6'b11_11_11;   // Wit
+    // Egale hemelsblauwe lucht
+    end else begin
+      bg_rgb = 6'b01_10_11;   // 1 vaste kleur blauw
+    end
+  end
+
+endmodule
