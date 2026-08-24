@@ -45,7 +45,7 @@ module renderer (
 );
 // VERANDER NAAR (3-bit):
 localparam [2:0] M_TITLE    = 3'd0,
-                 M_EGG      = 3'd1
+                 M_EGG      = 3'd1,
                  M_HOME     = 3'd2,
                  M_CHEST    = 3'd3,
                  M_GAMEOVER = 3'd4;
@@ -103,23 +103,48 @@ localparam [2:0] M_TITLE    = 3'd0,
   wire       c0_on, c1_on, c2_on;
   wire [2:0] c0_code, c1_code, c2_code;
 
+  // deksel nu hardcoded frame, kan nog animatie van gemaakt worden 
+  // deksel => chest_state: 0 PICK == toe, 1 OPEN (animatie) == open
+
+  // gekozen kist
+  wire [1:0] cframe_sel = (chest_state == 2'd0) ? 2'd0 :   // PICK   dicht
+                          (chest_state == 2'd1) ? 2'd1 :   // OPEN   op een kier
+                                                  2'd2;    // RESULT/MENU open
+  // andere kisten 
+  wire [1:0] cframe_oth = (chest_state == 2'd1) ? 2'd0 : cframe_sel;
+
   chest_draw u_chest0 (
     .x(px - CHEST0_X), .y(py - CHEST_Y),
     .highlighted(chest_sel==2'd0),
+    .frame(chest_sel == 2'd0 ? cframe_sel : cframe_oth),
     .px_on(c0_on), .px_code(c0_code)
   );
   chest_draw u_chest1 (
     .x(px - CHEST1_X), .y(py - CHEST_Y),
     .highlighted(chest_sel==2'd1),
+    .frame(chest_sel == 2'd0 ? cframe_sel : cframe_oth),
     .px_on(c1_on), .px_code(c1_code)
   );
   chest_draw u_chest2 (
     .x(px - CHEST2_X), .y(py - CHEST_Y),
     .highlighted(chest_sel==2'd2),
+    .frame(chest_sel == 2'd0 ? cframe_sel : cframe_oth),
     .px_on(c2_on), .px_code(c2_code)
   );
+
   wire       chest_on   = c0_on | c1_on | c2_on;
   wire [1:0] chest_code = c0_on ? c0_code : c1_on ? c1_code : c2_code; // moet derde niet? 
+
+  // MINI GAME MENU PAGE 
+  wire menu_on;
+  wire [2:0] menu_code;
+  chest_menu u_menu (
+    .x(px), .y(py), .pot(pot), .round(round),
+    .px_on(menu_on), .px_code(menu_code)
+  );
+
+  wire show_menu   = (mode == M_CHEST) && (chest_state == 2'd3);
+  wire show_chests = (mode == M_CHEST) && (chest_state != 2'd3);
 
 
   // TWO BARS: satisfaction (5 levels, 3 bits ) & coins (8 bits)  ---------------------
@@ -195,10 +220,25 @@ end
 
   reg [5:0] chest_rgb;
   always @(*) case (chest_code)
-    2'd1: chest_rgb = 6'b000000;
-    2'd2: chest_rgb = 6'b100100;       // wood
-    2'd3: chest_rgb = 6'b111000;       // gold
-    default: chest_rgb = 6'b100100;
+    3'd1: chest_rgb = 6'b00_00_00;   // zwart / outline
+    3'd2: chest_rgb = 6'b10_01_00;   // hout
+    3'd3: chest_rgb = 6'b11_10_00;   // goud
+    3'd4: chest_rgb = 6'b11_11_11;   // wit
+    3'd5: chest_rgb = 6'b11_00_00;   // rood
+    3'd6: chest_rgb = 6'b01_00_00;   // donkere binnenkant
+    default: chest_rgb = 6'b10_01_00;
+  endcase
+
+  reg [5:0] menu_rgb;
+  always @(*) case (menu_code)
+    3'd1: menu_rgb = 6'b00_00_00;   // outline
+    3'd2: menu_rgb = 6'b10_01_00;   // hout (de pot)
+    3'd3: menu_rgb = 6'b11_10_00;   // goud
+    3'd4: menu_rgb = 6'b11_11_11;   // wit (tekst)
+    3'd5: menu_rgb = 6'b11_00_00;   // rood
+    3'd6: menu_rgb = 6'b01_00_00;   // donker
+    3'd7: menu_rgb = 6'b00_11_00;   // groen (CONTINUE)
+    default: menu_rgb = 6'b10_01_00;
   endcase
 
   reg [5:0] coin_rgb;
@@ -250,13 +290,14 @@ end
     if (!video_active)           rgb = 6'b000000;      // MUST stay black
     else if (mode == M_TITLE)    rgb = 6'b000110;      // TODO: title text
     else if (mode == M_GAMEOVER) rgb = 6'b010000;      // TODO: game over text
-    else if (mode == M_EGG)      rgb = 6'b010000;      // TODO: egg 
-    else if (show_coin_hearts    && heartsinfo_on)    rgb = heartsinfo_rgb;
-    else if (show_coin_hearts    && coin_on)          rgb = coin_rgb;
-    else if (show_satbar   && sat_on)                 rgb = sat_rgb;
-    else if (show_buttons  && button_on)              rgb = buttons_rgb;
-    else if (show_chests && chest_on)                 rgb = chest_rgb;
-    else if (show_dragon && dragon_on)                rgb = dragon_rgb;
+    else if (mode == M_EGG)      rgb = 6'b010000;      // TODO: egg
+    else if (show_coin_hearts && heartsinfo_on) rgb = heartsinfo_rgb;
+    else if (show_coin_hearts && coin_on)       rgb = coin_rgb;
+    else if (show_menu       && menu_on)        rgb = menu_rgb;
+    else if (show_satbar     && sat_on)         rgb = sat_rgb;
+    else if (show_buttons    && button_on)      rgb = buttons_rgb;
+    else if (show_chests     && chest_on)       rgb = chest_rgb;
+    else if (show_dragon     && dragon_on)      rgb = dragon_rgb;
     else rgb = (mode == M_CHEST) ? BG_CHEST : BG_HOME;
     {R, G, B} = rgb;
   end

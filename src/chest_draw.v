@@ -38,7 +38,7 @@ endmodule
 module chest_draw (
     input  wire [9:0] x,            // local
     input  wire [9:0] y,
-    // input  wire [1:0] frame,        // 0 closed, 1 opening, 2 open
+    input  wire [1:0] frame,        // 0 closed, 1 opening, 2 open
     input  wire       highlighted,  // this chest is under the cursor
     input  wire [2:0] content,      // O_COIN / O_2X / O_CURSED / O_BOMB / O_BOMB2 (nog niet implemented)
     output wire       px_on,
@@ -62,12 +62,6 @@ module chest_draw (
   wire in_box = (x < W) && (y < H);
 
   // ======================= 2. het deksel ==================================
-  // deksel nu hardcoded frame, kan nog animatie van gemaakt worden 
-  // deksel => chest_state: 0 PICK == toe, 1 OPEN (animatie) == open
-
-  wire [1:0] frame = (chest_state == 2'd0) ? 2'd0 :   // dicht
-                     (chest_state == 2'd1) ? 2'd1 :   // gaat open
-                                             2'd2;    // open (RESULT + MENU)
 
   reg [9:0] lid_y0;
   always @(*) case (frame)

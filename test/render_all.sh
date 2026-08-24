@@ -47,6 +47,10 @@ vvp sim_render
 python3 -c "from PIL import Image; Image.open('frame.ppm').save('figures/module_render.png')"
 echo "✓ Opslaan voltooid: figures/module_render.png"
 
+iverilog -g2012 -o sim_chest chest_menu_tb.v ../src/dragon_draw.v ../src/sprites.v ../src/home.v ../src/renderer.v ../src/chest_draw.v ../src/satisfactionbar.v ../src/coinbar.v ../src/hearts.v ../src/draw_buttons.v
+vvp sim_chest
+python3 -c "from PIL import Image; Image.open('frame.ppm').save('figures/chest_menu_render.png')"
+
 # Opruimen van tijdelijke bestanden
 rm -f sim_egg sim_render frame.ppm
 
