@@ -14,7 +14,7 @@ module renderer (
     input  wire [9:0] pix_y,
     input  wire       video_active,
 
-    input  wire [2:0] mode,          // 0 EGG, 1 HOME, 2 CHEST, 3 GAMEOVER
+    input  wire [2:0] mode,          // 0 TITLE, 1 EGG, 2 HOME, 4 CHEST 5GAMEOVER
     input  wire [2:0] menu_sel,
     input  wire [2:0] hearts, // 3 bit
     input  wire [2:0] satisfaction, // 3 bit => 5 options
@@ -252,9 +252,9 @@ end
   reg [5:0] buttons_rgb;
   always @(*) case (button_code)
     3'd1: buttons_rgb = 6'b000000;
-    3'd2: buttons_rgb = 6'b100100;       // wood
-    3'd3: buttons_rgb = 6'b111000;       // gold
-    default: buttons_rgb = 6'b100100;
+    3'd2: buttons_rgb = 6'b010010;       // donkerpaars
+    3'd3: buttons_rgb = 6'b100111;       // lichtpaars 
+    default: buttons_rgb = 6'b111111;
   endcase
   
 
