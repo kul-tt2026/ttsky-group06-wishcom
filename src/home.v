@@ -28,13 +28,15 @@ module home (
     output reg        act_sleep,
     output reg        act_minigame,    // the 4th combo action
     output reg        req_evolve,      // -> dragon_state
-    output reg        restart          // -> dragon_state (one frame only!)
+    output reg        restart,
+    output reg  [1:0] egg_frame        // 0 heel, 1 barst, 2 open, 3 weg
 );
   localparam [2:0] M_TITLE    = 3'd0,
-                   M_HOME     = 3'd1,
-                   M_CHEST    = 3'd2,
-                   M_GAMEOVER = 3'd3,
-                   M_YOU_WIN  = 3'd4;
+                   M_EGG      = 3'd1,
+                   M_HOME     = 3'd2,
+                   M_CHEST    = 3'd3,
+                   M_GAMEOVER = 3'd4,
+                   M_YOU_WIN  = 3'd5;
 
   // button bit names, so the code reads like the controller card
   localparam BTN_EVOLVE = 3'd1,
@@ -46,7 +48,16 @@ module home (
   // any button at all -- used on the title / end screens
   wire any_btn = |btn_pressed;
 
-  always @(posedge clk or negedge rst_n) begin
+  reg [6:0] egg_timer;
+
+  always @(*) begin
+    if      (egg_timer == 7'd0) egg_frame = 2'd0; // heel
+    else if (egg_timer > 7'd60) egg_frame = 2'd1; // barst
+    else if (egg_timer > 7'd30) egg_frame = 2'd2; // open
+    else                        egg_frame = 2'd3; // weg
+  end
+
+  always @(posedge clk) begin
     if (!rst_n) begin
       mode         <= M_TITLE;
       menu_sel     <= 3'd0;
@@ -56,6 +67,7 @@ module home (
       act_minigame <= 1'b0;
       req_evolve   <= 1'b0;
       restart      <= 1'b0;
+      egg_timer    <= 7'd0;
     end else if (frame_tick) begin
       // every pulse defaults to 0; the case below may raise one for one frame
       act_feed     <= 1'b0;
@@ -71,8 +83,20 @@ module home (
         M_TITLE: begin
           // any button starts a new game.  restart clears the stats.
           if (any_btn) begin
-            restart <= 1'b1;
-            mode    <= M_HOME;
+            mode    <= M_EGG;
+          end
+        end
+
+        // -------------------------------------------------------------
+        M_EGG: begin
+          if (egg_timer != 7'd0) begin
+            if (any_btn) egg_timer <= 7'd90; // dit is 1.5 seconds at 60 fps
+          end else begin
+            egg_timer <= egg_timer - 7'd1;
+            if (egg_timer == 7'd1) begin
+              restart <= 1'b1; // 
+              mode    <= M_HOME;
+            end
           end
         end
 
