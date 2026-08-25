@@ -1,20 +1,25 @@
 `default_nettype none
 // ---------------------------------------------------------------------------
-// TITLE_EGG  --  grasstrook onderaan het titelscherm met een wiegend ei.
+// TITLE_EGG  --  grasstrook, hoppend ei en "PRESS ANY BUTTON".
 //
-//   * GRAS   : een strook van GRASS_H px onderaan.
-//   * SCHADUW: ellips onder het ei, schuift mee met de kanteling.
-//   * EI     : de echte sprite uit dragon_l1.hex (32x32), EGG_SC x geschaald,
-//              met SHEAR: elke rij schuift horizontaal met (dy * tilt) >>> 6.
-//              Het draaipunt is de VOET van het ei, dus het wiegt op de grond
-//              in plaats van zijwaarts weg te glijden.
+//   * GRAS   : strook van GRASS_H px onderaan.
+//   * EI     : sprite uit egg_128s.hex (128x128), 2x geschaald -> 256 px.
+//              Het ei HOPT: een verticale verschuiving uit een tabel.  Geen
+//              shear meer -- die brak lijnen omdat een 2x vergrote sprite niet
+//              per halve bronpixel kan verschuiven.  Verticaal schuiven is
+//              artefactvrij zolang de stappen even zijn (= hele bronpixels).
+//   * SCHADUW: blijft op dezelfde plek maar KRIMPT als het ei omhoog gaat.
+//              Dat is de gangbare spelconventie: kleiner = verder van de grond.
+//              Wil je het andersom (groter in de lucht), zet SHADOW_GROW op 1.
+//   * TEKST  : "PRESS ANY BUTTON", knippert asymmetrisch (lang aan, kort uit).
 //
 // Uitgangen (de renderer kiest de kleuren):
 //   egg_on / egg_code : gebruik hetzelfde palet als dragon_rgb (codes 1..7)
+//   press_on          : tekstpixel, teken hem zwart
 //   ground_on         : gras of schaduw
 //   ground_shadow     : 1 = schaduw, 0 = gras
 //
-// Laagvolgorde in de renderer:  ei > grond > lucht
+// Laagvolgorde in de renderer:  tekst > ei > grond > lucht
 // ---------------------------------------------------------------------------
 module title_egg (
     input  wire       clk,
@@ -25,68 +30,245 @@ module title_egg (
 
     output wire       egg_on,
     output wire [2:0] egg_code,
+    output wire       press_on,
     output wire       ground_on,
     output wire       ground_shadow
 );
-  // --- plaatsing -----------------------------------------------------------
-  localparam [9:0] GRASS_Y = 10'd540;   // bovenkant van de grasstrook
-  localparam [9:0] GRASS_H = 10'd100;   // hoogte van de strook
-  localparam [9:0] EGG_CX  = 10'd240;   // midden van het scherm
-  localparam [9:0] EGG_SC  = 10'd4;     // schaal: 32 * 4 = 128 px
-  localparam [9:0] EGG_W   = 10'd128;
-  localparam [9:0] EGG_H   = 10'd128;
-  localparam [9:0] EGG_FOOT= 10'd556;   // waar de onderkant van het ei staat
-  localparam [9:0] EGG_X   = EGG_CX - (EGG_W >> 1);
-  localparam [9:0] EGG_Y   = EGG_FOOT - EGG_H;
+  // --- plaatsing (titelkaart eindigt op y = 249 bij T_Y = 155) -------------
+  localparam [9:0] PRESS_X  = 10'd114;   // (480 - 252) / 2
+  localparam [9:0] PRESS_Y  = 10'd286;
+  localparam [9:0] PRESS_W  = 10'd252;   // 63 native * 4
+  localparam [9:0] PRESS_H  = 10'd20;    //  5 native * 4
 
-  // --- wiegen: driehoeksgolf -> tilt -8..+7 --------------------------------
-  reg [8:0] wave;
+  localparam [9:0] GRASS_Y  = 10'd540;
+  localparam [9:0] GRASS_H  = 10'd100;
+
+  localparam [9:0] EGG_CX   = 10'd240;
+  localparam [9:0] EGG_W    = 10'd256;   // 128 * 2
+  localparam [9:0] EGG_H    = 10'd256;
+  localparam [9:0] EGG_FOOT = 10'd590;   // voet in rust: midden van het gras
+  localparam [9:0] EGG_X    = EGG_CX - (EGG_W >> 1);
+
+  localparam SHADOW_GROW = 1'b0;         // 0 = krimpen (normaal), 1 = groeien
+
+  // --- hop: tabel van verticale offsets ------------------------------------
+  // 96 frames = 1.6 s.  Twaalf stappen van 8 frames: omhoog, even hangen,
+  // omlaag, dan rust.  Alle waarden EVEN, dus hele bronpixels.
+  reg [6:0] hop_cnt;
   always @(posedge clk) begin
-    if (!rst_n)          wave <= 9'd0;
-    else if (frame_tick) wave <= wave + 9'd2;
+    if (!rst_n)          hop_cnt <= 7'd0;
+    else if (frame_tick) hop_cnt <= (hop_cnt == 7'd95) ? 7'd0 : hop_cnt + 7'd1;
   end
-  wire [7:0] tri_wave = wave[8] ? (8'd255 - wave[7:0]) : wave[7:0];
-  wire signed [5:0] tilt = $signed({1'b0, tri_wave[7:3]}) - 6'sd16;
 
-  // --- SHEAR: draaipunt is de voet ----------------------------------------
-  wire signed [10:0] dyp   = $signed({1'b0, y}) - $signed({1'b0, EGG_FOOT});
-  wire signed [16:0] smul  = dyp * tilt;
-  wire signed [10:0] shear = smul[16:6];        // ~ (dy*tilt)/64
-  wire signed [11:0] xs    = $signed({2'b0, x}) - shear;
-  wire xs_ok = (xs >= 0) && (xs < 12'sd480);
-  wire [9:0] ex = xs[9:0];
+  reg [5:0] hop;                          // hoogte boven de grond, 0..20
+  always @(*) case (hop_cnt[6:3])
+    4'd0:  hop = 6'd0;
+    4'd1:  hop = 6'd8;
+    4'd2:  hop = 6'd14;
+    4'd3:  hop = 6'd18;
+    4'd4:  hop = 6'd20;                   // hangen
+    4'd5:  hop = 6'd20;
+    4'd6:  hop = 6'd18;
+    4'd7:  hop = 6'd14;
+    4'd8:  hop = 6'd8;
+    default: hop = 6'd0;                  // 9,10,11 = rust op de grond
+  endcase
 
-  // --- ei-sprite ------------------------------------------------------------
-  wire in_egg_box = xs_ok && (ex >= EGG_X) && (ex < EGG_X + EGG_W) &&
-                    (y  >= EGG_Y) && (y  < EGG_Y + EGG_H);
-  wire [9:0] offx = ex - EGG_X;
-  wire [9:0] offy = y  - EGG_Y;
-  wire [9:0] sclx = offx >> 2;                  // /4
-  wire [9:0] scly = offy >> 2;
-  wire [4:0] rel_x = in_egg_box ? sclx[4:0] : 5'd0;
-  wire [4:0] rel_y = in_egg_box ? scly[4:0] : 5'd0;
-  wire [9:0] addr  = {rel_y, rel_x};
+  wire [9:0] foot_now = EGG_FOOT - {4'b0, hop};
+  wire [9:0] EGG_Y    = foot_now - EGG_H;
 
-  reg [2:0] rom [0:1023];
-  initial $readmemh("dragon_l1.hex", rom);
+  // --- knipperen: 3 s cyclus, lang aan / kort uit --------------------------
+  reg [7:0] blink_cnt;
+  reg       blink;
+  always @(posedge clk) begin
+    if (!rst_n) begin
+      blink_cnt <= 8'd0; blink <= 1'b1;
+    end else if (frame_tick) begin
+      if (blink_cnt == 8'd179) blink_cnt <= 8'd0;
+      else                     blink_cnt <= blink_cnt + 8'd1;
+      blink <= (blink_cnt < 8'd150);      // 2.5 s aan, 0.5 s uit
+    end
+  end
+
+  // --- ei-sprite (128x128, 2x) ---------------------------------------------
+  wire in_egg_box = (x >= EGG_X) && (x < EGG_X + EGG_W) &&
+                    (y >= EGG_Y) && (y < EGG_Y + EGG_H);
+  wire [9:0] offx = x - EGG_X;
+  wire [9:0] offy = y - EGG_Y;
+  wire [9:0] sclx = offx >> 1;
+  wire [9:0] scly = offy >> 1;
+  wire [6:0] rel_x = in_egg_box ? sclx[6:0] : 7'd0;
+  wire [6:0] rel_y = in_egg_box ? scly[6:0] : 7'd0;
+  wire [13:0] addr = {rel_y, rel_x};
+
+  reg [2:0] rom [0:16383];
+  initial $readmemh("egg_128s.hex", rom);
 
   wire [2:0] code = rom[addr];
   assign egg_on   = in_egg_box && (code != 3'd0);
   assign egg_code = code;
 
-  // --- schaduw: ellips onder de voet, schuift mee -------------------------
-  localparam [9:0] SH_Y = 10'd560;
-  wire signed [10:0] sh_off = {{5{tilt[5]}}, tilt};          // = tilt
-  wire signed [11:0] sh_cx  = $signed({2'b0, EGG_CX}) - sh_off;
-  wire [9:0] shy  = (y >= SH_Y) ? (y - SH_Y) : (SH_Y - y);
-  reg  [6:0] shw;
+  // --- PRESS ANY BUTTON (3x5 font, 4x geschaald) --------------------------
+  wire in_press = blink &&
+                  (x >= PRESS_X) && (x < PRESS_X + PRESS_W) &&
+                  (y >= PRESS_Y) && (y < PRESS_Y + PRESS_H);
+  wire [5:0] tx = (x - PRESS_X) >> 2;   // 0..62
+  wire [2:0] ty = (y - PRESS_Y) >> 2;   // 0..4
+  reg pon;
+  always @(*) begin
+    pon = 1'b0;
+    case ({ty, tx})
+      {3'd0,6'd0}: pon = 1'b1;
+      {3'd0,6'd1}: pon = 1'b1;
+      {3'd0,6'd4}: pon = 1'b1;
+      {3'd0,6'd5}: pon = 1'b1;
+      {3'd0,6'd8}: pon = 1'b1;
+      {3'd0,6'd9}: pon = 1'b1;
+      {3'd0,6'd10}: pon = 1'b1;
+      {3'd0,6'd13}: pon = 1'b1;
+      {3'd0,6'd14}: pon = 1'b1;
+      {3'd0,6'd17}: pon = 1'b1;
+      {3'd0,6'd18}: pon = 1'b1;
+      {3'd0,6'd25}: pon = 1'b1;
+      {3'd0,6'd28}: pon = 1'b1;
+      {3'd0,6'd30}: pon = 1'b1;
+      {3'd0,6'd32}: pon = 1'b1;
+      {3'd0,6'd34}: pon = 1'b1;
+      {3'd0,6'd40}: pon = 1'b1;
+      {3'd0,6'd41}: pon = 1'b1;
+      {3'd0,6'd44}: pon = 1'b1;
+      {3'd0,6'd46}: pon = 1'b1;
+      {3'd0,6'd48}: pon = 1'b1;
+      {3'd0,6'd49}: pon = 1'b1;
+      {3'd0,6'd50}: pon = 1'b1;
+      {3'd0,6'd52}: pon = 1'b1;
+      {3'd0,6'd53}: pon = 1'b1;
+      {3'd0,6'd54}: pon = 1'b1;
+      {3'd0,6'd56}: pon = 1'b1;
+      {3'd0,6'd57}: pon = 1'b1;
+      {3'd0,6'd58}: pon = 1'b1;
+      {3'd0,6'd60}: pon = 1'b1;
+      {3'd0,6'd62}: pon = 1'b1;
+      {3'd1,6'd0}: pon = 1'b1;
+      {3'd1,6'd2}: pon = 1'b1;
+      {3'd1,6'd4}: pon = 1'b1;
+      {3'd1,6'd6}: pon = 1'b1;
+      {3'd1,6'd8}: pon = 1'b1;
+      {3'd1,6'd12}: pon = 1'b1;
+      {3'd1,6'd16}: pon = 1'b1;
+      {3'd1,6'd24}: pon = 1'b1;
+      {3'd1,6'd26}: pon = 1'b1;
+      {3'd1,6'd28}: pon = 1'b1;
+      {3'd1,6'd29}: pon = 1'b1;
+      {3'd1,6'd30}: pon = 1'b1;
+      {3'd1,6'd32}: pon = 1'b1;
+      {3'd1,6'd34}: pon = 1'b1;
+      {3'd1,6'd40}: pon = 1'b1;
+      {3'd1,6'd42}: pon = 1'b1;
+      {3'd1,6'd44}: pon = 1'b1;
+      {3'd1,6'd46}: pon = 1'b1;
+      {3'd1,6'd49}: pon = 1'b1;
+      {3'd1,6'd53}: pon = 1'b1;
+      {3'd1,6'd56}: pon = 1'b1;
+      {3'd1,6'd58}: pon = 1'b1;
+      {3'd1,6'd60}: pon = 1'b1;
+      {3'd1,6'd61}: pon = 1'b1;
+      {3'd1,6'd62}: pon = 1'b1;
+      {3'd2,6'd0}: pon = 1'b1;
+      {3'd2,6'd1}: pon = 1'b1;
+      {3'd2,6'd4}: pon = 1'b1;
+      {3'd2,6'd5}: pon = 1'b1;
+      {3'd2,6'd8}: pon = 1'b1;
+      {3'd2,6'd9}: pon = 1'b1;
+      {3'd2,6'd13}: pon = 1'b1;
+      {3'd2,6'd17}: pon = 1'b1;
+      {3'd2,6'd24}: pon = 1'b1;
+      {3'd2,6'd25}: pon = 1'b1;
+      {3'd2,6'd26}: pon = 1'b1;
+      {3'd2,6'd28}: pon = 1'b1;
+      {3'd2,6'd30}: pon = 1'b1;
+      {3'd2,6'd33}: pon = 1'b1;
+      {3'd2,6'd40}: pon = 1'b1;
+      {3'd2,6'd41}: pon = 1'b1;
+      {3'd2,6'd44}: pon = 1'b1;
+      {3'd2,6'd46}: pon = 1'b1;
+      {3'd2,6'd49}: pon = 1'b1;
+      {3'd2,6'd53}: pon = 1'b1;
+      {3'd2,6'd56}: pon = 1'b1;
+      {3'd2,6'd58}: pon = 1'b1;
+      {3'd2,6'd60}: pon = 1'b1;
+      {3'd2,6'd62}: pon = 1'b1;
+      {3'd3,6'd0}: pon = 1'b1;
+      {3'd3,6'd4}: pon = 1'b1;
+      {3'd3,6'd6}: pon = 1'b1;
+      {3'd3,6'd8}: pon = 1'b1;
+      {3'd3,6'd14}: pon = 1'b1;
+      {3'd3,6'd18}: pon = 1'b1;
+      {3'd3,6'd24}: pon = 1'b1;
+      {3'd3,6'd26}: pon = 1'b1;
+      {3'd3,6'd28}: pon = 1'b1;
+      {3'd3,6'd30}: pon = 1'b1;
+      {3'd3,6'd33}: pon = 1'b1;
+      {3'd3,6'd40}: pon = 1'b1;
+      {3'd3,6'd42}: pon = 1'b1;
+      {3'd3,6'd44}: pon = 1'b1;
+      {3'd3,6'd46}: pon = 1'b1;
+      {3'd3,6'd49}: pon = 1'b1;
+      {3'd3,6'd53}: pon = 1'b1;
+      {3'd3,6'd56}: pon = 1'b1;
+      {3'd3,6'd58}: pon = 1'b1;
+      {3'd3,6'd60}: pon = 1'b1;
+      {3'd3,6'd62}: pon = 1'b1;
+      {3'd4,6'd0}: pon = 1'b1;
+      {3'd4,6'd4}: pon = 1'b1;
+      {3'd4,6'd6}: pon = 1'b1;
+      {3'd4,6'd8}: pon = 1'b1;
+      {3'd4,6'd9}: pon = 1'b1;
+      {3'd4,6'd10}: pon = 1'b1;
+      {3'd4,6'd12}: pon = 1'b1;
+      {3'd4,6'd13}: pon = 1'b1;
+      {3'd4,6'd16}: pon = 1'b1;
+      {3'd4,6'd17}: pon = 1'b1;
+      {3'd4,6'd24}: pon = 1'b1;
+      {3'd4,6'd26}: pon = 1'b1;
+      {3'd4,6'd28}: pon = 1'b1;
+      {3'd4,6'd30}: pon = 1'b1;
+      {3'd4,6'd33}: pon = 1'b1;
+      {3'd4,6'd40}: pon = 1'b1;
+      {3'd4,6'd41}: pon = 1'b1;
+      {3'd4,6'd44}: pon = 1'b1;
+      {3'd4,6'd45}: pon = 1'b1;
+      {3'd4,6'd46}: pon = 1'b1;
+      {3'd4,6'd49}: pon = 1'b1;
+      {3'd4,6'd53}: pon = 1'b1;
+      {3'd4,6'd56}: pon = 1'b1;
+      {3'd4,6'd57}: pon = 1'b1;
+      {3'd4,6'd58}: pon = 1'b1;
+      {3'd4,6'd60}: pon = 1'b1;
+      {3'd4,6'd62}: pon = 1'b1;
+      default: pon = 1'b0;
+    endcase
+  end
+  assign press_on = in_press && pon;
+
+  // --- schaduw: vaste plek, krimpt als het ei omhoog gaat -----------------
+  localparam [9:0] SH_Y = 10'd588;      // net onder de voet in rust
+
+  // halve breedte van de ellips per rij
+  wire [9:0] shy = (y >= SH_Y) ? (y - SH_Y) : (SH_Y - y);
+  reg [6:0] shw_base;
   always @(*) case (shy[3:0])
-    4'd0: shw = 7'd60; 4'd1: shw = 7'd59; 4'd2: shw = 7'd57;
-    4'd3: shw = 7'd53; 4'd4: shw = 7'd47; 4'd5: shw = 7'd38;
-    4'd6: shw = 7'd24; default: shw = 7'd0;
+    4'd0: shw_base = 7'd66; 4'd1: shw_base = 7'd64; 4'd2: shw_base = 7'd60;
+    4'd3: shw_base = 7'd52; 4'd4: shw_base = 7'd40; default: shw_base = 7'd0;
   endcase
-  wire [9:0] shdx = (x >= sh_cx[9:0]) ? (x - sh_cx[9:0]) : (sh_cx[9:0] - x);
-  wire shadow = (shy <= 10'd6) && (shdx < {3'b0, shw});
+
+  // krimp evenredig met de hoogte: bij hop 20 gaat er 20 af (of erbij)
+  wire [6:0] shrink = {1'b0, hop};
+  wire [6:0] shw = SHADOW_GROW ? (shw_base + shrink)
+                 : ((shw_base > shrink) ? (shw_base - shrink) : 7'd0);
+
+  wire [9:0] shdx = (x >= EGG_CX) ? (x - EGG_CX) : (EGG_CX - x);
+  wire shadow = (shy <= 10'd4) && (shdx < {3'b0, shw});
 
   // --- gras ----------------------------------------------------------------
   wire grass = (y >= GRASS_Y) && (y < GRASS_Y + GRASS_H);
