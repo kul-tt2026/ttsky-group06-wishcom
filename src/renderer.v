@@ -34,6 +34,8 @@ module renderer (
     input  wire       flame_frame,
     input  wire       evolve_blink,
 
+    input             frame_tick, // voor animatie van ei
+
     input             overflow, // als hartjes vol of geld vol
     input  wire [8:0] chest_contents,  // {kist2, kist1, kist0}, 3 bits elk
     input  wire [9:0] pot,             // groot tonen, los van coins, hoeveel coins je hebt in minigame
@@ -75,6 +77,25 @@ localparam [2:0] M_TITLE    = 3'd0,
   // localparam HEARTS_X = 10'd168, HEARTS_Y = 10'd16;
 
   // ======================= drawable instances =============================
+
+
+  // TITELKAART -------------------------------------------------------------
+  wire       title_on;
+  wire [2:0] title_code;
+  title_card u_title (
+    .x(px), .y(py),
+    .px_on(title_on), .px_code(title_code)
+  );
+
+  // WIEGEND EI OP GRAS (alleen titelscherm) --------------------------------
+  wire       tegg_on, tground_on, tground_shadow;
+  wire [2:0] tegg_code;
+  title_egg u_title_egg (
+    .clk(clk), .rst_n(rst_n), .frame_tick(frame_tick),
+    .x(px), .y(py),
+    .egg_on(tegg_on), .egg_code(tegg_code),
+    .ground_on(tground_on), .ground_shadow(tground_shadow)
+  );
   // DRAGON -----------------------------------------------------------------
   // uiterlijk draak hangt af van dragon_state
   // als in toekomst genoeg tijd, beinvloed mood ook uiterlijk van draak (houden we momenteel achterwegen)
@@ -272,6 +293,28 @@ end
     default: menu_rgb = 6'b10_01_00;
   endcase
 
+    reg [5:0] tegg_rgb;
+  always @(*) case (tegg_code)
+    3'd1: tegg_rgb = 6'b00_00_00;
+    3'd2: tegg_rgb = 6'b10_10_10;
+    3'd3: tegg_rgb = 6'b00_11_00;
+    3'd4: tegg_rgb = 6'b11_11_11;
+    3'd5: tegg_rgb = 6'b00_10_00;
+    3'd6: tegg_rgb = 6'b01_01_01;
+    3'd7: tegg_rgb = 6'b10_11_01;
+    default: tegg_rgb = 6'b00_00_00;
+  endcase
+
+  reg [5:0] title_rgb;
+  always @(*) case (title_code)
+    3'd1: title_rgb = 6'b00_01_00;   // letters + vleugel-omtrek
+    3'd2: title_rgb = 6'b01_11_01;   // vulling + vleugel-vlak
+    3'd3: title_rgb = 6'b00_01_00;   // donkere rand
+    3'd4: title_rgb = 6'b01_11_01;   // lichte rand
+    3'd5: title_rgb = 6'b00_10_00;   // vleugel-aders
+    default: title_rgb = 6'b00_00_00;
+  endcase
+
   reg [5:0] coin_rgb;
   always @(*) case (coin_code)
     2'd0: coin_rgb = 6'b00_00_00;       // Rand / Outlines (Zwart)
@@ -349,7 +392,13 @@ end
   reg [5:0] rgb;
   always @(*) begin
     if (!video_active)           rgb = 6'b000000;      // MUST stay black
-    else if (mode == M_TITLE)    rgb = 6'b000110;      // TODO: title text
+    else if (mode == M_TITLE)   begin
+      if      (title_on)   rgb = title_rgb;
+      else if (tegg_on)    rgb = tegg_rgb;
+      else if (tground_on) rgb = tground_shadow ? 6'b00_01_00 : 6'b00_10_00;
+      else                 rgb = 6'b01_10_11;      // hemelsblauw
+    end
+
     else if (mode == M_EGG) begin
       if (egg_on)
         rgb = egg_rgb;
