@@ -238,22 +238,17 @@ module dragon_l1_generator (
     wire in_bounds = (x >= SPRITE_X) && (x < (SPRITE_X + SPRITE_W)) &&
                      (y >= SPRITE_Y) && (y < (SPRITE_Y + SPRITE_H));
 
-    // Delen door 8 (>> 3): tussen-wire + slice i.p.v. een SystemVerilog-cast
-    wire [9:0] off_x = x - SPRITE_X;
-    wire [9:0] off_y = y - SPRITE_Y;
-    wire [9:0] scl_x = off_x >> 3;
-    wire [9:0] scl_y = off_y >> 3;
-    wire [4:0] rel_x = in_bounds ? scl_x[4:0] : 5'd0;
-    wire [4:0] rel_y = in_bounds ? scl_y[4:0] : 5'd0;
+    // Delen door 8 (>> 3) i.p.v. door 4 -> 32x32 coördinaten
+    wire [4:0] rel_x = in_bounds ? 5'((x - SPRITE_X) >> 3) : 5'd0;
+    wire [4:0] rel_y = in_bounds ? 5'((y - SPRITE_Y) >> 3) : 5'd0;
 
-    // 10-bit adres (1024 entries)
+    // 10-bit adres (1024 entries) i.p.v. 12-bit (4096 entries)
     wire [9:0] addr = {rel_y, rel_x};
 
     reg [2:0] rom [0:1023];
     initial begin
         $readmemh("dragon_l1.hex", rom);
     end
-
     // Geregistreerde (pipelined) output
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -272,6 +267,8 @@ module dragon_l1_generator (
 
 endmodule
 
+
+`default_nettype none
 
 module dragon_l2_generator (
     input  wire        clk,
@@ -294,23 +291,19 @@ module dragon_l2_generator (
     wire in_bounds = (x >= SPRITE_X) && (x < (SPRITE_X + SPRITE_W)) &&
                      (y >= SPRITE_Y) && (y < (SPRITE_Y + SPRITE_H));
 
-    // Delen door 6: tussen-wire + slice i.p.v. een SystemVerilog-cast
-    wire [9:0] off_x = x - SPRITE_X;
-    wire [9:0] off_y = y - SPRITE_Y;
-    wire [9:0] scl_x = off_x / 10'd6;
-    wire [9:0] scl_y = off_y / 10'd6;
-    wire [4:0] rel_x = in_bounds ? scl_x[4:0] : 5'd0;
-    wire [4:0] rel_y = in_bounds ? scl_y[4:0] : 5'd0;
+    // Delen door 5 -> 32x32 ROM-coördinaten (bereik 0..31)
+    wire [4:0] rel_x = in_bounds ? ((x - SPRITE_X) / 10'd5) : 5'd0;
+    wire [4:0] rel_y = in_bounds ? ((y - SPRITE_Y) / 10'd5) : 5'd0;
 
-    // 10-bit adres (1024 entries)
+    // 10-bit adres voor de 1024 entries: {rel_y, rel_x}
     wire [9:0] addr = {rel_y, rel_x};
 
     reg [2:0] rom [0:1023];
     initial begin
         $readmemh("dragon_l2.hex", rom);
     end
-
-    // Geregistreerde (pipelined) output
+    
+    // Geregistreerde output
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             px_on   <= 1'b0;
@@ -328,6 +321,7 @@ module dragon_l2_generator (
 
 endmodule
 
+`default_nettype none
 
 module dragon_l3_generator (
     input  wire        clk,
@@ -350,22 +344,18 @@ module dragon_l3_generator (
     wire in_bounds = (x >= SPRITE_X) && (x < (SPRITE_X + SPRITE_W)) &&
                      (y >= SPRITE_Y) && (y < (SPRITE_Y + SPRITE_H));
 
-    // Delen door 6: tussen-wire + slice i.p.v. een SystemVerilog-cast
-    wire [9:0] off_x = x - SPRITE_X;
-    wire [9:0] off_y = y - SPRITE_Y;
-    wire [9:0] scl_x = off_x / 10'd6;
-    wire [9:0] scl_y = off_y / 10'd6;
-    wire [4:0] rel_x = in_bounds ? scl_x[4:0] : 5'd0;
-    wire [4:0] rel_y = in_bounds ? scl_y[4:0] : 5'd0;
+    // Delen door 6 -> 32x32 ROM-coördinaten (bereik 0..31)
+    wire [4:0] rel_x = in_bounds ? 5'((x - SPRITE_X) / 6) : 5'd0;
+    wire [4:0] rel_y = in_bounds ? 5'((y - SPRITE_Y) / 6) : 5'd0;
 
-    // 10-bit adres (1024 entries)
+    // 10-bit adres voor 1024 entries: {rel_y, rel_x}
     wire [9:0] addr = {rel_y, rel_x};
 
     reg [2:0] rom [0:1023];
     initial begin
         $readmemh("dragon_l3.hex", rom);
     end
-
+    
     // Geregistreerde (pipelined) output
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -384,6 +374,9 @@ module dragon_l3_generator (
 
 endmodule
 
+
+
+`default_nettype none
 
 module dragon_l4_generator (
     input  wire        clk,
@@ -411,23 +404,20 @@ module dragon_l4_generator (
     wire in_bounds = (x >= SPRITE_X) && (x < (SPRITE_X + SPRITE_W)) &&
                      (y >= SPRITE_Y) && (y < (SPRITE_Y + SPRITE_H));
 
-    // Delen door 6: tussen-wire + slice i.p.v. een SystemVerilog-cast
-    wire [9:0] off_x = x - SPRITE_X;
-    wire [9:0] off_y = y - SPRITE_Y;
-    wire [9:0] scl_x = off_x / 10'd6;
-    wire [9:0] scl_y = off_y / 10'd6;
-    wire [5:0] rel_x = in_bounds ? scl_x[5:0] : 6'd0;
-    wire [5:0] rel_y = in_bounds ? scl_y[5:0] : 6'd0;
+    // Delen door 5 i.p.v. 6
+    wire [5:0] rel_x = in_bounds ? 6'((x - SPRITE_X) / 5) : 6'd0;
+    wire [5:0] rel_y = in_bounds ? 6'((y - SPRITE_Y) / 5) : 6'd0;
 
     // 12-bit adres: rel_y * 48 + rel_x = (rel_y << 5) + (rel_y << 4) + rel_x
     wire [11:0] addr = ({6'd0, rel_y} << 5) + ({6'd0, rel_y} << 4) + {6'd0, rel_x};
 
+    // 2.304 entries (48 * 48)
     reg [2:0] rom [0:2303];
     initial begin
         $readmemh("dragon_l4.hex", rom);
     end
 
-    // Geregistreerde (pipelined) output
+    // Geregistreerde output
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             px_on   <= 1'b0;
