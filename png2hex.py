@@ -1,7 +1,7 @@
 from PIL import Image
 
 # 1. Open je 32x32 afbeelding
-img = Image.open("src/media/lvl3.png").convert("RGBA")
+img = Image.open("src/media/egg5.png").convert("RGBA")
 img = img.resize((32, 32), Image.Resampling.NEAREST)  # Forceer exact 32x32
 
 # 2. Definieer je 8-kleuren mapping (index 0 t/m 7)
@@ -35,7 +35,7 @@ def get_color_code(pixel):
 
 
 # 3. Schrijf exact 1024 regels naar dragon_l1.hex
-with open("dragon_l4.hex", "w") as f:
+with open("egg5.hex", "w") as f:
     for y in range(32):
         for x in range(32):
             px = img.getpixel((x, y))

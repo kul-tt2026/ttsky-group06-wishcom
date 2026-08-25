@@ -44,6 +44,50 @@ echo "✓ Opslaan voltooid: figures/egg_render.png"
 
 echo ""
 
+iverilog -g2012 -o sim_egg egg1_tb.v ../src/dragon_draw.v ../src/sprites.v
+vvp sim_egg
+python3 -c "from PIL import Image; Image.open('frame.ppm').save('figures/egg1_render.png')"
+echo "✓ Opslaan voltooid: figures/egg1_render.png"
+
+
+echo ""
+
+iverilog -g2012 -o sim_egg egg2_tb.v ../src/dragon_draw.v ../src/sprites.v
+vvp sim_egg
+python3 -c "from PIL import Image; Image.open('frame.ppm').save('figures/egg2_render.png')"
+echo "✓ Opslaan voltooid: figures/egg2_render.png"
+
+
+echo ""
+
+iverilog -g2012 -o sim_egg egg3_tb.v ../src/dragon_draw.v ../src/sprites.v
+vvp sim_egg
+python3 -c "from PIL import Image; Image.open('frame.ppm').save('figures/egg3_render.png')"
+echo "✓ Opslaan voltooid: figures/egg3_render.png"
+
+echo ""
+
+iverilog -g2012 -o sim_egg egg4_tb.v ../src/dragon_draw.v ../src/sprites.v
+vvp sim_egg
+python3 -c "from PIL import Image; Image.open('frame.ppm').save('figures/egg4_render.png')"
+echo "✓ Opslaan voltooid: figures/egg4_render.png"
+
+echo ""
+
+iverilog -g2012 -o sim_egg egg5_tb.v ../src/dragon_draw.v ../src/sprites.v
+vvp sim_egg
+python3 -c "from PIL import Image; Image.open('frame.ppm').save('figures/egg5_render.png')"
+echo "✓ Opslaan voltooid: figures/egg5_render.png"
+
+echo ""
+
+iverilog -g2012 -o sim_egg dragon_lvl2_tb.v ../src/dragon_draw.v ../src/sprites.v
+vvp sim_egg
+python3 -c "from PIL import Image; Image.open('frame.ppm').save('figures/lvl2_render.png')"
+echo "✓ Opslaan voltooid: figures/lvl2_render.png"
+
+echo ""
+
 iverilog -g2012 -o sim_egg dragon_lvl2_tb.v ../src/dragon_draw.v ../src/sprites.v
 vvp sim_egg
 python3 -c "from PIL import Image; Image.open('frame.ppm').save('figures/lvl2_render.png')"
