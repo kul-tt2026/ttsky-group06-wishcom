@@ -444,3 +444,31 @@ module dragon_l4_generator (
     end
 
 endmodule
+
+
+module pot_sprite (
+    input  wire [9:0] x,
+    input  wire [9:0] y,
+    output wire       px_on,
+    output wire [2:0] px_code
+);
+  localparam [9:0] SPRITE_X = 10'd144;   // 240 - 192/2, gecentreerd
+  localparam [9:0] SPRITE_Y = 10'd140;
+  localparam [9:0] SPRITE_W = 10'd192;   // 32 * 6
+  localparam [9:0] SPRITE_H = 10'd192;
+ 
+  wire in_bounds = (x >= SPRITE_X) && (x < (SPRITE_X + SPRITE_W)) &&
+                   (y >= SPRITE_Y) && (y < (SPRITE_Y + SPRITE_H));
+ 
+  wire [4:0] rel_x = in_bounds ? 5'((x - SPRITE_X) / 6) : 5'd0;
+  wire [4:0] rel_y = in_bounds ? 5'((y - SPRITE_Y) / 6) : 5'd0;
+  wire [9:0] addr  = {rel_y, rel_x};
+ 
+  reg [2:0] rom [0:1023];
+  initial begin
+    $readmemh("pot.hex", rom);
+  end
+ 
+  assign px_code = in_bounds ? rom[addr] : 3'd0;
+  assign px_on   = (px_code != 3'd0);        // code 0 = transparant
+endmodule

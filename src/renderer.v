@@ -199,7 +199,9 @@ localparam [2:0] M_TITLE    = 3'd0,
 
   //wire show_chests = (mode == M_CHEST);
 
-  wire show_coin_hearts    = (mode == M_HOME) || (mode == M_CHEST); // altijd getoond 
+  wire show_hearts    = (mode == M_HOME) || (mode == M_CHEST); // altijd getoond 
+  wire show_coin      = show_hearts && (mode != M_CHEST); // niet bij minigame 
+
 
   // ======================= 4. COLOUR ======================================
   // Per-drawable palettes: code -> 6-bit {R,G,B}
@@ -232,12 +234,12 @@ end
   reg [5:0] menu_rgb;
   always @(*) case (menu_code)
     3'd1: menu_rgb = 6'b00_00_00;   // outline
-    3'd2: menu_rgb = 6'b10_01_00;   // hout (de pot)
-    3'd3: menu_rgb = 6'b11_10_00;   // goud
-    3'd4: menu_rgb = 6'b11_11_11;   // wit (tekst)
-    3'd5: menu_rgb = 6'b11_00_00;   // rood
-    3'd6: menu_rgb = 6'b01_00_00;   // donker
-    3'd7: menu_rgb = 6'b00_11_00;   // groen (CONTINUE)
+    3'd2: menu_rgb = 6'b10_01_00;   // bruin, de pot
+    3'd3: menu_rgb = 6'b11_10_00;   // oranje highlight
+    3'd4: menu_rgb = 6'b11_11_11;   // wit, tekst
+    3'd5: menu_rgb = 6'b10_10_00;   // dof goud
+    3'd6: menu_rgb = 6'b11_11_00;   // fel geel, munten
+    3'd7: menu_rgb = 6'b001000;   // groen (CONTINUE)
     default: menu_rgb = 6'b10_01_00;
   endcase
 
@@ -295,8 +297,8 @@ end
     else if (mode == M_TITLE)    rgb = 6'b000110;      // TODO: title text
     else if (mode == M_GAMEOVER) rgb = 6'b010000;      // TODO: game over text
     else if (mode == M_EGG)      rgb = 6'b010000;      // TODO: egg
-    else if (show_coin_hearts && heartsinfo_on) rgb = heartsinfo_rgb;
-    else if (show_coin_hearts && coin_on)       rgb = coin_rgb;
+    else if (show_hearts && heartsinfo_on)      rgb = heartsinfo_rgb;
+    else if (show_coin && coin_on)              rgb = coin_rgb;
     else if (show_menu       && menu_on)        rgb = menu_rgb;
     else if (show_satbar     && sat_on)         rgb = sat_rgb;
     else if (show_buttons    && button_on)      rgb = buttons_rgb;

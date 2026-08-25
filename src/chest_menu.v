@@ -48,28 +48,9 @@ module chest_menu (
 
   // ======================= 2. de geldpot ==================================
   // Rand bovenaan, daaronder een naar onderen breder wordende bak.
-  localparam [9:0] RIM_Y0  = 10'd140, RIM_Y1  = 10'd164;
-  localparam [9:0] BODY_Y0 = 10'd164, BODY_Y1 = 10'd330;
-
-  wire [9:0] adx = (x >= CX) ? (x - CX) : (CX - x);      // |x - midden|
-
-  // rim: vaste breedte
-  wire in_rim  = (y >= RIM_Y0) && (y < RIM_Y1) && (adx < 10'd72);
-  wire rim_edge = in_rim && ((adx >= 10'd68) ||
-                             (y < RIM_Y0 + 10'd4) || (y >= RIM_Y1 - 10'd4));
-
-  // body: halve breedte groeit van 56 naar ~76
-  wire [9:0] bhw = 10'd56 + ((y - BODY_Y0) >> 3);
-  wire in_body   = (y >= BODY_Y0) && (y < BODY_Y1) && (adx < bhw);
-  wire body_edge = in_body && ((adx + 10'd4 >= bhw) || (y >= BODY_Y1 - 10'd4));
-
-  // gouden munt op de buik van de pot
-  wire [9:0] cdy = (y >= 10'd250) ? (y - 10'd250) : (10'd250 - y);
-  wire [11:0] cr2 = (adx[5:0] * adx[5:0]) + (cdy[5:0] * cdy[5:0]);
-  wire in_coin   = in_body && (adx < 10'd40) && (cdy < 10'd40) && (cr2 <= 12'd900);
-  wire coin_ring = in_coin && (cr2 >= 12'd676);
-
-  wire pot_on = in_rim || in_body;
+  wire       pot_on;
+  wire [2:0] pot_code;
+  pot_sprite u_pot (.x(x), .y(y), .px_on(pot_on), .px_code(pot_code));
 
   // ======================= 3. het bedrag ==================================
   // Groot, direct onder de pot.  Voorloopnullen worden weggelaten.
