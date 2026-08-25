@@ -51,7 +51,7 @@ module tt_um_dragonchi (
   // ---- home screen / mode control (Person A) ----
   wire [2:0] mode;
   wire [2:0] menu_sel;
-  wire [1:0] egg_frame;
+  wire [2:0] egg_frame;
   wire you_win, overflow, evolve_now;
   wire act_feed, act_drink, act_sleep, act_minigame, req_evolve, restart;
   wire game_over, minigame_done;

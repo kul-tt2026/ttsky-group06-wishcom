@@ -11,19 +11,10 @@ module dragon_draw (
 );
 
     // Draden voor de submodule outputs
-    wire       lvl1_px_on,  lvl2_px_on,  lvl3_px_on,  lvl4_px_on;
-    wire [2:0] lvl1_px_code, lvl2_px_code, lvl3_px_code, lvl4_px_code;
+    wire         lvl2_px_on,  lvl3_px_on,  lvl4_px_on;
+    wire [2:0]  lvl2_px_code, lvl3_px_code, lvl4_px_code;
 
-    // Ei generator (puur combinatorisch, geen clk/rst_n nodig)
-    dragon_l1_generator u_dragon_lvl1 (
-        .clk       (clk),
-        .rst_n     (rst_n),
-        .x         (x),
-        .y         (y),
-        .mood_anim (mood_anim),
-        .px_on     (lvl1_px_on),
-        .px_code   (lvl1_px_code)
-    );
+    
 
     // Level 2 Draak (gesynchroniseerd op clk)
     dragon_l2_generator u_dragon_lvl2 (

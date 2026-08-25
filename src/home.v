@@ -29,7 +29,7 @@ module home (
     output reg        act_minigame,    // the 4th combo action
     output reg        req_evolve,      // -> dragon_state
     output reg        restart,
-    output reg  [1:0] egg_frame        // 0 heel, 1 barst, 2 open, 3 weg
+    output reg  [2:0] egg_frame        // 0 heel, 1 barst, 2 open, 3 weg
 );
   localparam [2:0] M_TITLE    = 3'd0,
                    M_EGG      = 3'd1,
@@ -48,13 +48,15 @@ module home (
   // any button at all -- used on the title / end screens
   wire any_btn = |btn_pressed;
 
-  reg [6:0] egg_timer;
+  reg [7:0] egg_timer;
 
   always @(*) begin
-    if      (egg_timer == 7'd0) egg_frame = 2'd0; // heel
-    else if (egg_timer > 7'd60) egg_frame = 2'd1; // barst
-    else if (egg_timer > 7'd30) egg_frame = 2'd2; // open
-    else                        egg_frame = 2'd3; // weg
+    if      (egg_timer == 8'd0)   egg_frame = 3'd0; // Frame 0: Ei heel (wacht op knop)
+    else if (egg_timer > 8'd120)  egg_frame = 3'd1; // Frame 1: Eerste scheur (150..121)
+    else if (egg_timer > 8'd90)   egg_frame = 3'd2; // Frame 2: Grotere barst (120..91)
+    else if (egg_timer > 8'd60)   egg_frame = 3'd3; // Frame 3: Ei breekt open (90..61)
+    else if (egg_timer > 8'd30)   egg_frame = 3'd4; // Frame 4: Draakje verschijnt (60..31)
+    else                          egg_frame = 3'd5; // Frame 5: Ei weg / draakje klaar (30..1)
   end
 
   always @(posedge clk) begin
@@ -88,17 +90,17 @@ module home (
         end
 
         // -------------------------------------------------------------
-        M_EGG: begin
-          if (egg_timer == 7'd0) begin
-           if (any_btn) egg_timer <= 7'd90;   // stilstaan tot de speler drukt
-          end else begin
-           egg_timer <= egg_timer - 7'd1;     // loopt af
-           if (egg_timer == 7'd1) begin
+       M_EGG: begin
+        if (egg_timer == 8'd0) begin
+          if (any_btn) egg_timer <= 8'd150; // Start animatie van 150 frames
+        end else begin
+          egg_timer <= egg_timer - 8'd1;
+          if (egg_timer == 8'd1) begin
             restart <= 1'b1;
             mode    <= M_HOME;
-            end
           end
         end
+      end
         // -------------------------------------------------------------
         M_HOME: begin
           // end conditions first: they are levels, so test before buttons
