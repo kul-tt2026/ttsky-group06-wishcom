@@ -103,15 +103,15 @@ module home_tb;
     video_active     = 1'b1;
     frame_tick       = 0;
     btn_pressed      = 8'd0;
-    game_over        = 0;
+    game_over        = 1;
     you_win          = 0;
     minigame_done    = 0;
 
     // Dummy waarden voor HUD/status
-    coins            = 10'd401;
-    level            = 3'd3;        // Level 4 (voor je nieuwe 48x48 sprite)
-    hearts           = 3'd3;
-    satisfaction     = 3'd2;
+    coins            = 10'd40;
+    level            = 3'd1;        // Level 4 (voor je nieuwe 48x48 sprite)
+    hearts           = 3'd1;
+    satisfaction     = 3'd1;
     evolve_now       = 1'b0;
     combo_len        = 2'd0;
     chest_frame      = 2'd0;
@@ -127,18 +127,23 @@ module home_tb;
     rst_n = 1; // Reset loslaten (begint in M_TITLE)
     #40;
 
-    // Simuleer een knopdruk om van M_TITLE naar M_HOME te springen
+    // 1. Druk op een knop om van M_TITLE naar M_HOME te gaan
     @(posedge clk);
     frame_tick  = 1'b1;
-    btn_pressed = 8'b0001_0000; // Druk op actieknop
+    btn_pressed = 8'b0001_0000;
     @(posedge clk);
     frame_tick  = 1'b0;
     btn_pressed = 8'd0;
 
     #40;
-    $display("Mode gezet op: %0d (1 = M_HOME)", mode);
-    $display("Starten van 640x480 frame rendering...");
 
+    // 2. Extra tick zodat home.v de 'game_over = 1' registreert en naar M_GAMEOVER springt
+    @(posedge clk);
+    frame_tick  = 1'b1;
+    @(posedge clk);
+    frame_tick  = 1'b0;
+
+    
     f = $fopen("frame.ppm", "w");
     $fwrite(f, "P3\n640 480\n255\n");
 

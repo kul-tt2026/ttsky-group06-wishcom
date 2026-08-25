@@ -62,8 +62,8 @@ localparam [2:0] M_TITLE    = 3'd0,
   // Every position is a constant HERE, in one file.  Moving anything on
   // screen is a one-line edit.
 
-  localparam [9:0] HEARTS_X  = 10'd168, HEARTS_Y  = 10'd16;  // 304 x 24
-  localparam [9:0] SATBAR_X  = 10'd294, SATBAR_Y  = 10'd48;  // 162 x 24
+  localparam [9:0] HEARTS_X  = 10'd130, HEARTS_Y  = 10'd16;  // 304 x 24
+  localparam [9:0] SATBAR_X  = 10'd85, SATBAR_Y  = 10'd370;  // 162 x 24
   localparam [9:0] COINBAR_X = 10'd24,  COINBAR_Y = 10'd80;  //  24 x 132
 
   localparam DRAGON_X = 10'd0, DRAGON_Y = 10'd0;
@@ -167,6 +167,12 @@ localparam [2:0] M_TITLE    = 3'd0,
   );
   // vraag: hier nog aantal bijschrijven + overflow
 
+  wire gameover_text_on;
+  gameover_text u_gameover (
+    .px(px),
+    .py(py),
+    .text_on(gameover_text_on)
+  );
   // HEARTS  + OVERFLOW (absolute coordinates??) -------------------------
   wire heartsinfo_on;
   wire [1:0] heartsinfo_code;
@@ -245,10 +251,11 @@ end
 
   reg [5:0] coin_rgb;
   always @(*) case (coin_code)
-    2'd1: coin_rgb = 6'b000000;
-    2'd2: coin_rgb = 6'b100100;       // wood
-    2'd3: coin_rgb = 6'b111000;       // gold
-    default: coin_rgb = 6'b100100;
+    2'd0: coin_rgb = 6'b00_00_00;       // Rand / Outlines (Zwart)
+    2'd1: coin_rgb = 6'b01_01_01;       // Leeg segment (Donkergrijs)
+    2'd2: coin_rgb = 6'b11_11_00;       // Vol segment + cijfers (#FFDB00 fel goudgeel)
+    2'd3: coin_rgb = 6'b11_11_11;       // Optioneel: Wit
+    default: coin_rgb = 6'b00_00_00;
   endcase
  
   wire [5:0] evolve_rgb = !evolve_now ? 6'b01_00_10 ://gedimd
@@ -278,9 +285,33 @@ end
     default: sat_rgb = 6'b00_00_00; // frame + schotjes
   endcase
 
-  // heartsinfo: juist kleuren nog aanpassen: rood: wit (denk ik)
-  wire [5:0] heartsinfo_rgb       = (heartsinfo_code  == 2'd1) ? 6'b110000 : 6'b111111;
+  // Dynamische achtergrond voor M_HOME: Lucht + Grasvloer
+  reg [5:0] bg_home_dynamic;
+  always @(*) begin
+    if (py < 10'd500)
+      bg_home_dynamic = 6'b01_10_11; // Hemelsblauw
+    else if (py < 10'd540)
+      bg_home_dynamic = 6'b00_11_00; // Grasstrook onder de draak
+    else
+      bg_home_dynamic = 6'b01_01_00; // Aarde / onderlaag
+  end
 
+  // heartsinfo: juist kleuren nog aanpassen: rood: wit (denk ik)
+  // ======================= 4. COLOUR (heartsinfo) ========================
+  reg [5:0] heartsinfo_rgb;
+  always @(*) case (heartsinfo_code)
+    2'd0:    heartsinfo_rgb = 6'b00_00_00; // Zwarte rand / omtrek
+    2'd1:    heartsinfo_rgb = 6'b11_00_00; // Rood gevuld hartje
+    2'd2:    heartsinfo_rgb = 6'b11_11_11; // Witte OVERFLOW tekst
+    default: heartsinfo_rgb = 6'b00_00_00;
+  endcase
+
+  wire [5:0] bg_home_rgb;
+  background u_bg (
+    .pix_x(pix_x),
+    .pix_y(pix_y),
+    .bg_rgb(bg_home_rgb)
+  );
   //buttons_rgb
 
   // ======================= 3. STACK =======================================
@@ -295,16 +326,19 @@ end
   always @(*) begin
     if (!video_active)           rgb = 6'b000000;      // MUST stay black
     else if (mode == M_TITLE)    rgb = 6'b000110;      // TODO: title text
-    else if (mode == M_GAMEOVER) rgb = 6'b010000;      // TODO: game over text
-    else if (mode == M_EGG)      rgb = 6'b010000;      // TODO: egg
-    else if (show_hearts && heartsinfo_on)      rgb = heartsinfo_rgb;
-    else if (show_coin && coin_on)              rgb = coin_rgb;
-    else if (show_menu       && menu_on)        rgb = menu_rgb;
-    else if (show_satbar     && sat_on)         rgb = sat_rgb;
-    else if (show_buttons    && button_on)      rgb = buttons_rgb;
-    else if (show_chests     && chest_on)       rgb = chest_rgb;
-    else if (show_dragon     && dragon_on)      rgb = dragon_rgb;
-    else rgb = (mode == M_CHEST) ? BG_CHEST : BG_HOME;
+    else if (mode == M_GAMEOVER) begin
+    if (gameover_text_on)
+      rgb = 6'b00_00_00; // Zwarte letters "GAME OVER"
+    else
+      rgb = 6'b01_00_00; // Donkerrode achtergrond
+  end
+    else if (show_coin_hearts    && heartsinfo_on)    rgb = heartsinfo_rgb;
+    else if (show_coin_hearts    && coin_on)          rgb = coin_rgb;
+    else if (show_satbar   && sat_on)                 rgb = sat_rgb;
+    else if (show_buttons  && button_on)              rgb = buttons_rgb;
+    else if (show_chests && chest_on)                 rgb = chest_rgb;
+    else if (show_dragon && dragon_on)                rgb = dragon_rgb;
+    else rgb = (mode == M_CHEST) ? BG_CHEST : bg_home_rgb;
     {R, G, B} = rgb;
   end
 

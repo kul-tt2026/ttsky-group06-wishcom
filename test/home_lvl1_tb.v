@@ -109,9 +109,9 @@ module home_tb;
 
     // Dummy waarden voor HUD/status
     coins            = 10'd40;
-    level            = 3'd4;        // Level 4 (voor je nieuwe 48x48 sprite)
-    hearts           = 3'd3;
-    satisfaction     = 3'd2;
+    level            = 3'd1;        // Level 4 (voor je nieuwe 48x48 sprite)
+    hearts           = 3'd1;
+    satisfaction     = 3'd1;
     evolve_now       = 1'b0;
     combo_len        = 2'd0;
     chest_frame      = 2'd0;

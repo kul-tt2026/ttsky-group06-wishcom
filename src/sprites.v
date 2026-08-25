@@ -285,11 +285,11 @@ module dragon_l2_generator (
 
     wire _unused = &{mood_anim, 1'b0};
 
-    // 32 * 6 = 192x192 pixels op het scherm
-    localparam [9:0] SPRITE_X = 10'd224;
-    localparam [9:0] SPRITE_Y = 10'd144;
-    localparam [9:0] SPRITE_W = 10'd192;
-    localparam [9:0] SPRITE_H = 10'd192;
+    // 32 * 5 = 160x160 pixels op het scherm (gecentreerd op 480x640)
+    localparam [9:0] SPRITE_X = 10'd170;  // (480 - 160) / 2 = 160
+    localparam [9:0] SPRITE_Y = 10'd180;
+    localparam [9:0] SPRITE_W = 10'd160;
+    localparam [9:0] SPRITE_H = 10'd160;
 
     wire in_bounds = (x >= SPRITE_X) && (x < (SPRITE_X + SPRITE_W)) &&
                      (y >= SPRITE_Y) && (y < (SPRITE_Y + SPRITE_H));
@@ -342,7 +342,7 @@ module dragon_l3_generator (
     wire _unused = &{mood_anim, 1'b0};
 
     // 32 * 6 = 192x192 pixels op het scherm
-    localparam [9:0] SPRITE_X = 10'd224;
+    localparam [9:0] SPRITE_X = 10'd190;
     localparam [9:0] SPRITE_Y = 10'd144;
     localparam [9:0] SPRITE_W = 10'd192;
     localparam [9:0] SPRITE_H = 10'd192;
@@ -403,10 +403,10 @@ module dragon_l4_generator (
     // Gecentreerd op 640x480: X = (640-168)/2 = 236, Y = (480-168)/2 = 156
     // 48 * 4 = 192 pixels breed en hoog
     // Gecentreerd op 640x480: X = (640-192)/2 = 224, Y = (480-192)/2 = 144
-    localparam [9:0] SPRITE_X = 10'd176;
-    localparam [9:0] SPRITE_Y = 10'd96;
-    localparam [9:0] SPRITE_W = 10'd288;
-    localparam [9:0] SPRITE_H = 10'd288;
+    localparam [9:0] SPRITE_X = 10'd165;
+    localparam [9:0] SPRITE_Y = 10'd120;
+    localparam [9:0] SPRITE_W = 10'd240;
+    localparam [9:0] SPRITE_H = 10'd240;
 
     wire in_bounds = (x >= SPRITE_X) && (x < (SPRITE_X + SPRITE_W)) &&
                      (y >= SPRITE_Y) && (y < (SPRITE_Y + SPRITE_H));
@@ -442,6 +442,360 @@ module dragon_l4_generator (
             end
         end
     end
+
+endmodule
+
+`default_nettype none
+
+`default_nettype none
+
+module background (
+    input  wire [9:0] pix_x,    // 0..639 (horizontaal)
+    input  wire [9:0] pix_y,    // 0..479 (verticaal)
+    output reg  [5:0] bg_rgb
+);
+
+  // ======================= 1. WOLKJES =====================================
+  // Wolk 1: Bovenaan (pix_x: 480..540, pix_y: 110..140)
+  wire wolk1 = ((pix_x >= 10'd490 && pix_x < 10'd530 && pix_y >= 10'd110 && pix_y < 10'd120) ||
+                (pix_x >= 10'd480 && pix_x < 10'd540 && pix_y >= 10'd120 && pix_y < 10'd140));
+
+  // Wolk 2: Onderaan (pix_x: 460..520, pix_y: 340..370)
+  wire wolk2 = ((pix_x >= 10'd470 && pix_x < 10'd510 && pix_y >= 10'd340 && pix_y < 10'd350) ||
+                (pix_x >= 10'd460 && pix_x < 10'd520 && pix_y >= 10'd350 && pix_y < 10'd370));
+
+  wire is_cloud = wolk1 || wolk2;
+
+  // ======================= 2. ZACHTE GLOOIENDE BERGEN =====================
+  // We maken 2 mooie heuveltoppen: één op y=140 en één op y=340
+  // Heuvel 1 (top rond y = 140, raakt x = 285)
+  wire [8:0] dy1 = (pix_y > 10'd140) ? (pix_y[8:0] - 9'd140) : (9'd140 - pix_y[8:0]);
+  wire [9:0] curve1 = (dy1 * dy1) >> 7; // Zachte parabool
+  wire [9:0] hill1_x = (10'd285 > curve1) ? (10'd285 - curve1) : 10'd0;
+
+  // Heuvel 2 (top rond y = 340, raakt x = 270)
+  wire [8:0] dy2 = (pix_y > 10'd340) ? (pix_y[8:0] - 9'd340) : (9'd340 - pix_y[8:0]);
+  wire [9:0] curve2 = (dy2 * dy2) >> 7;
+  wire [9:0] hill2_x = (10'd270 > curve2) ? (10'd270 - curve2) : 10'd0;
+
+  // Gecombineerde heuvelranden (achterste heuvels pieken net wat verder naar links)
+  wire in_front_hill = (pix_x <= hill1_x);
+  wire in_back_hill  = (pix_x <= hill2_x);
+
+  // ======================= 3. KLEUREN =====================================
+  always @(*) begin
+    // Voorste zachte heuvel (fris groen)
+    if (in_front_hill) begin
+      if (pix_x >= (hill1_x - 10'd8))
+        bg_rgb = 6'b10_11_01; // Limoen/lichtgroene rand highlight
+      else
+        bg_rgb = 6'b00_11_00; // Grasgroen vlak
+    // Achterste heuvel (donkerder dieptegroen)
+    end else if (in_back_hill) begin
+      if (pix_x >= (hill2_x - 10'd8))
+        bg_rgb = 6'b00_11_00; // Grasgroene rand
+      else
+        bg_rgb = 6'b00_10_00; // Donkerder bosgroen
+    // Wolkjes
+    end else if (is_cloud) begin
+      bg_rgb = 6'b11_11_11;   // Wit
+    // Egale hemelsblauwe lucht
+    end else begin
+      bg_rgb = 6'b01_10_11;   // 1 vaste kleur blauw
+    end
+  end
+
+endmodule
+
+`default_nettype none
+
+module gameover_text (
+    input  wire [9:0] px,        // 0..479 (portrait X)
+    input  wire [9:0] py,        // 0..639 (portrait Y)
+    output wire       text_on
+);
+
+  // ======================= Geometrie & Positie =============================
+  // Scherm: 480 x 640
+  // Woordbreedte: 4 letters * 48px stride = 192 px -> X start op (480 - 192) / 2 = 144
+  localparam [9:0] START_X = 10'd144;
+  localparam [9:0] LINE1_Y = 10'd250; // GAME
+  localparam [9:0] LINE2_Y = 10'd320; // OVER
+  localparam [9:0] CHAR_W  = 10'd48;  // Stride per letter
+  localparam [9:0] CHAR_H  = 10'd48;  // Hoogte per letter (6x geschaald: 8 * 6 = 48)
+
+  wire in_line1 = (px >= START_X) && (px < START_X + 10'd192) &&
+                  (py >= LINE1_Y) && (py < LINE1_Y + CHAR_H);
+
+  wire in_line2 = (px >= START_X) && (px < START_X + 10'd192) &&
+                  (py >= LINE2_Y) && (py < LINE2_Y + CHAR_H);
+
+  wire [9:0] lx = px - START_X;       // 0..191
+  wire [1:0] char_pos = lx / CHAR_W;  // Welke letter in het woord: 0..3
+  wire [5:0] cx = lx % CHAR_W;        // 0..47 binnen de lettercel
+
+  wire [9:0] ly = in_line1 ? (py - LINE1_Y) : (py - LINE2_Y);
+
+  // 6x Schaling naar het 6x8 font (deling door 6)
+  wire [2:0] gcol = cx / 6'd6;        // 0..5 (bij cx 0..35)
+  wire [2:0] grow = ly / 6'd6;        // 0..7 (bij ly 0..47)
+  wire       in_glyph = (cx < 6'd36); // Laatste 12 pixels zijn tussenruimte
+
+  // ======================= Karakter Selectie ===============================
+  // IDs: 0:G, 1:A, 2:M, 3:E, 4:O, 5:V, 6:R
+  reg [2:0] glyph_id;
+  always @(*) begin
+    if (in_line1) begin
+      // "GAME"
+      case (char_pos)
+        2'd0: glyph_id = 3'd0; // G
+        2'd1: glyph_id = 3'd1; // A
+        2'd2: glyph_id = 3'd2; // M
+        2'd3: glyph_id = 3'd3; // E
+      endcase
+    end else begin
+      // "OVER"
+      case (char_pos)
+        2'd0: glyph_id = 3'd4; // O
+        2'd1: glyph_id = 3'd5; // V
+        2'd2: glyph_id = 3'd3; // E
+        2'd3: glyph_id = 3'd6; // R
+      endcase
+    end
+  end
+
+  // ======================= Glyph ROM ======================================
+  reg [5:0] glyph_bits;
+  always @(*) begin
+    case (glyph_id)
+      3'd0: case (grow) // G
+        3'd0: glyph_bits = 6'b011110; 3'd1: glyph_bits = 6'b110011;
+        3'd2: bits_g();               3'd3: glyph_bits = 6'b110111;
+        3'd4: glyph_bits = 6'b110011; 3'd5: glyph_bits = 6'b110011;
+        3'd6: glyph_bits = 6'b110011; 3'd7: glyph_bits = 6'b011110;
+      endcase
+      3'd1: case (grow) // A
+        3'd0: glyph_bits = 6'b011110; 3'd1: glyph_bits = 6'b110011;
+        3'd2: glyph_bits = 6'b110011; 3'd3: glyph_bits = 6'b111111;
+        3'd4: glyph_bits = 6'b110011; 3'd5: glyph_bits = 6'b110011;
+        3'd6: glyph_bits = 6'b110011; 3'd7: glyph_bits = 6'b110011;
+      endcase
+      3'd2: case (grow) // M
+        3'd0: glyph_bits = 6'b110011; 3'd1: glyph_bits = 6'b111111;
+        3'd2: glyph_bits = 6'b101101; 3'd3: glyph_bits = 6'b100001;
+        3'd4: glyph_bits = 6'b110011; 3'd5: glyph_bits = 6'b110011;
+        3'd6: glyph_bits = 6'b110011; 3'd7: glyph_bits = 6'b110011;
+      endcase
+      3'd3: case (grow) // E
+        3'd0: glyph_bits = 6'b111111; 3'd1: glyph_bits = 6'b110000;
+        3'd2: glyph_bits = 6'b110000; 3'd3: glyph_bits = 6'b111100;
+        3'd4: glyph_bits = 6'b110000; 3'd5: glyph_bits = 6'b110000;
+        3'd6: glyph_bits = 6'b110000; 3'd7: glyph_bits = 6'b111111;
+      endcase
+      3'd4: case (grow) // O
+        3'd0: glyph_bits = 6'b011110; 3'd1: glyph_bits = 6'b110011;
+        3'd2: glyph_bits = 6'b110011; 3'd3: glyph_bits = 6'b110011;
+        3'd4: glyph_bits = 6'b110011; 3'd5: glyph_bits = 6'b110011;
+        3'd6: glyph_bits = 6'b110011; 3'd7: glyph_bits = 6'b011110;
+      endcase
+      3'd5: case (grow) // V
+        3'd0: glyph_bits = 6'b110011; 3'd1: glyph_bits = 6'b110011;
+        3'd2: glyph_bits = 6'b110011; 3'd3: glyph_bits = 6'b110011;
+        3'd4: glyph_bits = 6'b110011; 3'd5: glyph_bits = 6'b011110;
+        3'd6: glyph_bits = 6'b011110; 3'd7: glyph_bits = 6'b001100;
+      endcase
+      default: case (grow) // R
+        3'd0: glyph_bits = 6'b111110; 3'd1: glyph_bits = 6'b110011;
+        3'd2: glyph_bits = 6'b110011; 3'd3: glyph_bits = 6'b111110;
+        3'd4: glyph_bits = 6'b111100; 3'd5: glyph_bits = 6'b110110;
+        3'd6: glyph_bits = 6'b110011; 3'd7: glyph_bits = 6'b110011;
+      endcase
+    endcase
+  end
+
+  task bits_g;
+    glyph_bits = 6'b110000;
+  endtask
+
+  // ======================= Output ==========================================
+  assign text_on = (in_line1 || in_line2) && in_glyph && glyph_bits[3'd5 - gcol];
+
+endmodule
+
+`default_nettype none
+
+`default_nettype none
+
+module background (
+    input  wire [9:0] pix_x,    // 0..639 (horizontaal)
+    input  wire [9:0] pix_y,    // 0..479 (verticaal)
+    output reg  [5:0] bg_rgb
+);
+
+  // ======================= 1. WOLKJES =====================================
+  // Wolk 1: Bovenaan (pix_x: 480..540, pix_y: 110..140)
+  wire wolk1 = ((pix_x >= 10'd490 && pix_x < 10'd530 && pix_y >= 10'd110 && pix_y < 10'd120) ||
+                (pix_x >= 10'd480 && pix_x < 10'd540 && pix_y >= 10'd120 && pix_y < 10'd140));
+
+  // Wolk 2: Onderaan (pix_x: 460..520, pix_y: 340..370)
+  wire wolk2 = ((pix_x >= 10'd470 && pix_x < 10'd510 && pix_y >= 10'd340 && pix_y < 10'd350) ||
+                (pix_x >= 10'd460 && pix_x < 10'd520 && pix_y >= 10'd350 && pix_y < 10'd370));
+
+  wire is_cloud = wolk1 || wolk2;
+
+  // ======================= 2. ZACHTE GLOOIENDE BERGEN =====================
+  // We maken 2 mooie heuveltoppen: één op y=140 en één op y=340
+  // Heuvel 1 (top rond y = 140, raakt x = 285)
+  wire [8:0] dy1 = (pix_y > 10'd140) ? (pix_y[8:0] - 9'd140) : (9'd140 - pix_y[8:0]);
+  wire [9:0] curve1 = (dy1 * dy1) >> 7; // Zachte parabool
+  wire [9:0] hill1_x = (10'd285 > curve1) ? (10'd285 - curve1) : 10'd0;
+
+  // Heuvel 2 (top rond y = 340, raakt x = 270)
+  wire [8:0] dy2 = (pix_y > 10'd340) ? (pix_y[8:0] - 9'd340) : (9'd340 - pix_y[8:0]);
+  wire [9:0] curve2 = (dy2 * dy2) >> 7;
+  wire [9:0] hill2_x = (10'd270 > curve2) ? (10'd270 - curve2) : 10'd0;
+
+  // Gecombineerde heuvelranden (achterste heuvels pieken net wat verder naar links)
+  wire in_front_hill = (pix_x <= hill1_x);
+  wire in_back_hill  = (pix_x <= hill2_x);
+
+  // ======================= 3. KLEUREN =====================================
+  always @(*) begin
+    // Voorste zachte heuvel (fris groen)
+    if (in_front_hill) begin
+      if (pix_x >= (hill1_x - 10'd8))
+        bg_rgb = 6'b10_11_01; // Limoen/lichtgroene rand highlight
+      else
+        bg_rgb = 6'b00_11_00; // Grasgroen vlak
+    // Achterste heuvel (donkerder dieptegroen)
+    end else if (in_back_hill) begin
+      if (pix_x >= (hill2_x - 10'd8))
+        bg_rgb = 6'b00_11_00; // Grasgroene rand
+      else
+        bg_rgb = 6'b00_10_00; // Donkerder bosgroen
+    // Wolkjes
+    end else if (is_cloud) begin
+      bg_rgb = 6'b11_11_11;   // Wit
+    // Egale hemelsblauwe lucht
+    end else begin
+      bg_rgb = 6'b01_10_11;   // 1 vaste kleur blauw
+    end
+  end
+
+endmodule
+
+`default_nettype none
+
+module gameover_text (
+    input  wire [9:0] px,        // 0..479 (portrait X)
+    input  wire [9:0] py,        // 0..639 (portrait Y)
+    output wire       text_on
+);
+
+  // ======================= Geometrie & Positie =============================
+  // Scherm: 480 x 640
+  // Woordbreedte: 4 letters * 48px stride = 192 px -> X start op (480 - 192) / 2 = 144
+  localparam [9:0] START_X = 10'd144;
+  localparam [9:0] LINE1_Y = 10'd250; // GAME
+  localparam [9:0] LINE2_Y = 10'd320; // OVER
+  localparam [9:0] CHAR_W  = 10'd48;  // Stride per letter
+  localparam [9:0] CHAR_H  = 10'd48;  // Hoogte per letter (6x geschaald: 8 * 6 = 48)
+
+  wire in_line1 = (px >= START_X) && (px < START_X + 10'd192) &&
+                  (py >= LINE1_Y) && (py < LINE1_Y + CHAR_H);
+
+  wire in_line2 = (px >= START_X) && (px < START_X + 10'd192) &&
+                  (py >= LINE2_Y) && (py < LINE2_Y + CHAR_H);
+
+  wire [9:0] lx = px - START_X;       // 0..191
+  wire [1:0] char_pos = lx / CHAR_W;  // Welke letter in het woord: 0..3
+  wire [5:0] cx = lx % CHAR_W;        // 0..47 binnen de lettercel
+
+  wire [9:0] ly = in_line1 ? (py - LINE1_Y) : (py - LINE2_Y);
+
+  // 6x Schaling naar het 6x8 font (deling door 6)
+  wire [2:0] gcol = cx / 6'd6;        // 0..5 (bij cx 0..35)
+  wire [2:0] grow = ly / 6'd6;        // 0..7 (bij ly 0..47)
+  wire       in_glyph = (cx < 6'd36); // Laatste 12 pixels zijn tussenruimte
+
+  // ======================= Karakter Selectie ===============================
+  // IDs: 0:G, 1:A, 2:M, 3:E, 4:O, 5:V, 6:R
+  reg [2:0] glyph_id;
+  always @(*) begin
+    if (in_line1) begin
+      // "GAME"
+      case (char_pos)
+        2'd0: glyph_id = 3'd0; // G
+        2'd1: glyph_id = 3'd1; // A
+        2'd2: glyph_id = 3'd2; // M
+        2'd3: glyph_id = 3'd3; // E
+      endcase
+    end else begin
+      // "OVER"
+      case (char_pos)
+        2'd0: glyph_id = 3'd4; // O
+        2'd1: glyph_id = 3'd5; // V
+        2'd2: glyph_id = 3'd3; // E
+        2'd3: glyph_id = 3'd6; // R
+      endcase
+    end
+  end
+
+  // ======================= Glyph ROM ======================================
+  reg [5:0] glyph_bits;
+  always @(*) begin
+    case (glyph_id)
+      3'd0: case (grow) // G
+        3'd0: glyph_bits = 6'b011110; 3'd1: glyph_bits = 6'b110011;
+        3'd2: bits_g();               3'd3: glyph_bits = 6'b110111;
+        3'd4: glyph_bits = 6'b110011; 3'd5: glyph_bits = 6'b110011;
+        3'd6: glyph_bits = 6'b110011; 3'd7: glyph_bits = 6'b011110;
+      endcase
+      3'd1: case (grow) // A
+        3'd0: glyph_bits = 6'b011110; 3'd1: glyph_bits = 6'b110011;
+        3'd2: glyph_bits = 6'b110011; 3'd3: glyph_bits = 6'b111111;
+        3'd4: glyph_bits = 6'b110011; 3'd5: glyph_bits = 6'b110011;
+        3'd6: glyph_bits = 6'b110011; 3'd7: glyph_bits = 6'b110011;
+      endcase
+      3'd2: case (grow) // M
+        3'd0: glyph_bits = 6'b110011; 3'd1: glyph_bits = 6'b111111;
+        3'd2: glyph_bits = 6'b101101; 3'd3: glyph_bits = 6'b100001;
+        3'd4: glyph_bits = 6'b110011; 3'd5: glyph_bits = 6'b110011;
+        3'd6: glyph_bits = 6'b110011; 3'd7: glyph_bits = 6'b110011;
+      endcase
+      3'd3: case (grow) // E
+        3'd0: glyph_bits = 6'b111111; 3'd1: glyph_bits = 6'b110000;
+        3'd2: glyph_bits = 6'b110000; 3'd3: glyph_bits = 6'b111100;
+        3'd4: glyph_bits = 6'b110000; 3'd5: glyph_bits = 6'b110000;
+        3'd6: glyph_bits = 6'b110000; 3'd7: glyph_bits = 6'b111111;
+      endcase
+      3'd4: case (grow) // O
+        3'd0: glyph_bits = 6'b011110; 3'd1: glyph_bits = 6'b110011;
+        3'd2: glyph_bits = 6'b110011; 3'd3: glyph_bits = 6'b110011;
+        3'd4: glyph_bits = 6'b110011; 3'd5: glyph_bits = 6'b110011;
+        3'd6: glyph_bits = 6'b110011; 3'd7: glyph_bits = 6'b011110;
+      endcase
+      3'd5: case (grow) // V
+        3'd0: glyph_bits = 6'b110011; 3'd1: glyph_bits = 6'b110011;
+        3'd2: glyph_bits = 6'b110011; 3'd3: glyph_bits = 6'b110011;
+        3'd4: glyph_bits = 6'b110011; 3'd5: glyph_bits = 6'b011110;
+        3'd6: glyph_bits = 6'b011110; 3'd7: glyph_bits = 6'b001100;
+      endcase
+      default: case (grow) // R
+        3'd0: glyph_bits = 6'b111110; 3'd1: glyph_bits = 6'b110011;
+        3'd2: glyph_bits = 6'b110011; 3'd3: glyph_bits = 6'b111110;
+        3'd4: glyph_bits = 6'b111100; 3'd5: glyph_bits = 6'b110110;
+        3'd6: glyph_bits = 6'b110011; 3'd7: glyph_bits = 6'b110011;
+      endcase
+    endcase
+  end
+
+  task bits_g;
+    glyph_bits = 6'b110000;
+  endtask
+
+  // ======================= Output ==========================================
+  assign text_on = (in_line1 || in_line2) && in_glyph && glyph_bits[3'd5 - gcol];
 
 endmodule
 
