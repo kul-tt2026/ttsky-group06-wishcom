@@ -145,7 +145,7 @@ module tt_um_dragonchi (
     .chest_frame(chest_frame), .flash(flash), .flame_frame(flame_frame),
     .R(R), .G(G), .B(B), .overflow(overflow), .evolve_now(evolve_now),
     .egg_frame(egg_frame), .chest_contents(chest_contents), .pot(pot), .round(round),
-    .evolve_blink(evolve_blink)
+    .evolve_blink(evolve_blink), .frame_tick(frame_tick)
   );
 
   
