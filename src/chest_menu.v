@@ -13,11 +13,11 @@
 //
 // ABSOLUTE portret-coordinaten (px, py), net als draw_buttons.
 //
-// px_code (3 bits):
-//   1 = zwart / outline      4 = wit (tekst)
-//   2 = hout (pot)           5 = rood
-//   3 = goud                 6 = donker
-//                            7 = groen
+// px_code (3 bits) -- gedeeld met de sprite in pot.hex:
+//   1 = zwart / outline      5 = dof goud
+//   2 = bruin (de pot)       6 = fel geel (de munten)
+//   3 = oranje highlight     7 = groen (CONTINUE)
+//   4 = wit (tekst)
 // ---------------------------------------------------------------------------
 module chest_menu (
     input  wire [9:0] x,            // absolute portret-x, 0..479
@@ -27,53 +27,52 @@ module chest_menu (
     output wire       px_on,
     output wire [2:0] px_code
 );
-  localparam [9:0] CX = 10'd240;               // midden van het scherm
-
+ 
   // ======================= 1. "ROUND n" ===================================
   wire lbl_round;
   label u_lbl_round (
-    .x(x), .y(y), .X0(10'd120), .Y0(10'd48),
+    .x(x), .y(y), .X0(10'd120), .Y0(10'd80),
     .nchar(4'd5), .word(2'd0),                 // "ROUND"
     .on(lbl_round)
   );
-
+ 
   // round telt vanaf 0, de speler telt vanaf 1
   wire [4:0] round_disp = {1'b0, round} + 5'd1;
   wire       num_round;
   number2 u_num_round (
-    .x(x), .y(y), .X0(10'd300), .Y0(10'd48),
+    .x(x), .y(y), .X0(10'd300), .Y0(10'd80),
     .val(round_disp),
     .on(num_round)
   );
-
+ 
   // ======================= 2. de geldpot ==================================
-  // Rand bovenaan, daaronder een naar onderen breder wordende bak.
+  // Sprite uit pot.hex (32x32, 6x geschaald -> 192x192 op het scherm).
   wire       pot_on;
   wire [2:0] pot_code;
   pot_sprite u_pot (.x(x), .y(y), .px_on(pot_on), .px_code(pot_code));
-
+ 
   // ======================= 3. het bedrag ==================================
   // Groot, direct onder de pot.  Voorloopnullen worden weggelaten.
   wire num_pot;
   number3 u_num_pot (
-    .x(x), .y(y), .X0(10'd144), .Y0(10'd350),
+    .x(x), .y(y), .X0(10'd144), .Y0(10'd400),
     .val(pot),
     .on(num_pot)
   );
-
+ 
   // ======================= 4. de twee knoppen =============================
   localparam [9:0] BTN_X0 = 10'd60,  BTN_X1 = 10'd420;
   localparam [9:0] B1_Y0  = 10'd450, B1_Y1  = 10'd520;   // CONTINUE
   localparam [9:0] B2_Y0  = 10'd540, B2_Y1  = 10'd610;   // CASH OUT
-
+ 
   wire in_b1 = (x >= BTN_X0) && (x < BTN_X1) && (y >= B1_Y0) && (y < B1_Y1);
   wire in_b2 = (x >= BTN_X0) && (x < BTN_X1) && (y >= B2_Y0) && (y < B2_Y1);
-
+ 
   wire b1_edge = in_b1 && ((x < BTN_X0 + 10'd4) || (x >= BTN_X1 - 10'd4) ||
                            (y < B1_Y0 + 10'd4)  || (y >= B1_Y1 - 10'd4));
   wire b2_edge = in_b2 && ((x < BTN_X0 + 10'd4) || (x >= BTN_X1 - 10'd4) ||
                            (y < B2_Y0 + 10'd4)  || (y >= B2_Y1 - 10'd4));
-
+ 
   // labels: 8 tekens x 32 px = 256 breed, gecentreerd in een knop van 360
   wire lbl_cont, lbl_cash;
   label u_lbl_cont (
@@ -86,24 +85,20 @@ module chest_menu (
     .nchar(4'd8), .word(2'd2),                 // "CASH OUT"
     .on(lbl_cash)
   );
-
+ 
   // ======================= 5. stapelen ====================================
   wire text_on = lbl_round | num_round | num_pot | lbl_cont | lbl_cash;
-
+ 
   assign px_on = text_on || pot_on || in_b1 || in_b2;
-
-  assign px_code = text_on            ? 3'd4 :   // wit
-                   coin_ring          ? 3'd1 :   // zwarte rand om de munt
-                   in_coin            ? 3'd3 :   // gouden munt
-                   (rim_edge || body_edge ||
-                    b1_edge || b2_edge) ? 3'd1 : // zwarte outlines
-                   in_rim             ? 3'd3 :   // gouden rand van de pot
-                   in_body            ? 3'd2 :   // houten pot
-                   in_b1              ? 3'd7 :   // CONTINUE = groen
-                                        3'd3;    // CASH OUT = goud
+ 
+  assign px_code = text_on              ? 3'd4     :   // wit
+                   pot_on               ? pot_code :   // sprite eigen kleuren
+                   (b1_edge || b2_edge) ? 3'd1     :   // zwarte outlines
+                   in_b1                ? 3'd7     :   // CONTINUE = groen
+                                          3'd5;        // CASH OUT = dof goud
 endmodule
-
-
+ 
+ 
 // ---------------------------------------------------------------------------
 // LABEL -- tekent een woord uit word_rom op (X0, Y0).
 // Schaal 4: een 5x8 glyph wordt 20x32, met een pitch van 32 (12 px gat).
@@ -121,27 +116,27 @@ module label (
   wire [9:0] lx = x - X0;
   wire [9:0] ly = y - Y0;
   wire [9:0] wlen = {5'd0, nchar} << 5;        // nchar * 32
-
+ 
   wire in_band = (ly < 10'd32) && (lx < wlen);
-
+ 
   wire [2:0] pos  = lx[7:5];                   // welke letter
   wire [4:0] cx   = lx[4:0];                   // kolom binnen de cel
   wire [4:0] cy   = ly[4:0];
   wire       in_g = (cx < 5'd20);              // 20 px glyph, 12 px gat
-
+ 
   wire [2:0] gcol = cx[4:2];                   // 0..4
   wire [2:0] grow = cy[4:2];                   // 0..7
-
+ 
   wire [3:0] chr;
   word_rom u_word (.word(word), .pos(pos), .chr(chr));
-
+ 
   wire [4:0] bits;
   font_rom u_font (.chr(chr), .row(grow), .bits(bits));
-
+ 
   assign on = in_band && in_g && bits[3'd4 - gcol];
 endmodule
-
-
+ 
+ 
 // ---------------------------------------------------------------------------
 // NUMBER3 -- drie cijfers, schaal 8 (32x48 per cijfer, pitch 64).
 // Voorloopnullen worden weggelaten: 40 leest als "40", niet als "040".
@@ -156,19 +151,19 @@ module number3 (
 );
   wire [3:0] d100, d10, d1;
   bin2bcd u_bcd (.bin(val), .d100(d100), .d10(d10), .d1(d1));
-
+ 
   wire [9:0] lx = x - X0;
   wire [9:0] ly = y - Y0;
   wire in_band = (ly < 10'd48) && (lx < 10'd192);
-
+ 
   wire [1:0] pos  = lx[7:6];                   // 0, 1 of 2
   wire [5:0] cx   = lx[5:0];
   wire [5:0] cy   = ly[5:0];
   wire       in_g = (cx < 6'd32) && (cy < 6'd48);
-
+ 
   wire [2:0] gcol = {1'b0, cx[4:3]};           // 0..3
   wire [2:0] grow = cy[5:3];                   // 0..5
-
+ 
   reg  [3:0] digit;
   reg        visible;
   always @(*) case (pos)
@@ -176,14 +171,14 @@ module number3 (
     2'd1:    begin digit = d10;  visible = (d100 != 4'd0) || (d10 != 4'd0); end
     default: begin digit = d1;   visible = 1'b1; end
   endcase
-
+ 
   wire [3:0] bits;
   digit_rom u_dig (.digit(digit), .row(grow), .bits(bits));
-
+ 
   assign on = in_band && in_g && visible && bits[3'd3 - gcol];
 endmodule
-
-
+ 
+ 
 // ---------------------------------------------------------------------------
 // NUMBER2 -- twee cijfers, schaal 4 (16x24 per cijfer, pitch 32).
 // Alleen voor het rondenummer, dus 0..31 volstaat.
@@ -202,29 +197,29 @@ module number2 (
   wire [4:0] tens10 = {tens[1:0], 3'd0} + {1'b0, tens[2:0], 1'b0};
   wire [4:0] rest   = val - tens10;
   wire [3:0] ones   = rest[3:0];
-
+ 
   wire [9:0] lx = x - X0;
   wire [9:0] ly = y - Y0;
   wire in_band = (ly < 10'd24) && (lx < 10'd64);
-
+ 
   wire       pos  = lx[5];
   wire [4:0] cx   = lx[4:0];
   wire [4:0] cy   = ly[4:0];
   wire       in_g = (cx < 5'd16) && (cy < 5'd24);
-
+ 
   wire [2:0] gcol = {1'b0, cx[3:2]};           // 0..3
   wire [2:0] grow = cy[4:2];                   // 0..5
-
+ 
   wire [3:0] digit   = pos ? ones : tens;
   wire       visible = pos || (tens != 4'd0);
-
+ 
   wire [3:0] bits;
   digit_rom u_dig (.digit(digit), .row(grow), .bits(bits));
-
+ 
   assign on = in_band && in_g && visible && bits[3'd3 - gcol];
 endmodule
-
-
+ 
+ 
 // ---------------------------------------------------------------------------
 // BIN2BCD -- double dabble, 10 bits -> drie decimale cijfers.
 // Puur combinatorisch: een keten van "als een nibble >= 5, tel er 3 bij op,
@@ -251,8 +246,8 @@ module bin2bcd (
     d100 = s[21:18];
   end
 endmodule
-
-
+ 
+ 
 // ---------------------------------------------------------------------------
 // WORD_ROM -- welke letter staat op welke plek in welk woord.
 // 0 = "ROUND", 1 = "CONTINUE", 2 = "CASH OUT".
@@ -280,8 +275,8 @@ module word_rom (
     endcase
   endcase
 endmodule
-
-
+ 
+ 
 // ---------------------------------------------------------------------------
 // FONT_ROM -- 5x8, alleen de twaalf letters die deze drie woorden nodig
 // hebben.  bits[4] is de linkerkolom.  Groeit het aantal woorden, dan groeit

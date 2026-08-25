@@ -452,16 +452,18 @@ module pot_sprite (
     output wire       px_on,
     output wire [2:0] px_code
 );
-  localparam [9:0] SPRITE_X = 10'd144;   // 240 - 192/2, gecentreerd
+  localparam [9:0] SPRITE_X = 10'd112;   // 240 - 192/2, gecentreerd
   localparam [9:0] SPRITE_Y = 10'd140;
-  localparam [9:0] SPRITE_W = 10'd192;   // 32 * 6
-  localparam [9:0] SPRITE_H = 10'd192;
+  localparam [9:0] SPRITE_W = 10'd256;   // 32 * 8
+  localparam [9:0] SPRITE_H = 10'd256;
  
   wire in_bounds = (x >= SPRITE_X) && (x < (SPRITE_X + SPRITE_W)) &&
                    (y >= SPRITE_Y) && (y < (SPRITE_Y + SPRITE_H));
  
-  wire [4:0] rel_x = in_bounds ? 5'((x - SPRITE_X) / 6) : 5'd0;
-  wire [4:0] rel_y = in_bounds ? 5'((y - SPRITE_Y) / 6) : 5'd0;
+  wire [9:0] div_x = (x - SPRITE_X) >> 3;
+  wire [9:0] div_y = (y - SPRITE_Y) >> 3;
+  wire [4:0] rel_x = in_bounds ? div_x[4:0] : 5'd0;
+  wire [4:0] rel_y = in_bounds ? div_y[4:0] : 5'd0;
   wire [9:0] addr  = {rel_y, rel_x};
  
   reg [2:0] rom [0:1023];
