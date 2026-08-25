@@ -38,7 +38,7 @@ module renderer (
     input  wire [8:0] chest_contents,  // {kist2, kist1, kist0}, 3 bits elk
     input  wire [9:0] pot,             // groot tonen, los van coins, hoeveel coins je hebt in minigame
     input  wire [3:0] round,           // teken round+1, wleke ronde je zit in mini game
-    input  wire [1:0] egg_frame,       // 0 heel, 1 barst, 2 open, 3 weg
+    input  wire [2:0] egg_frame,       // 0 heel, 1 barst, 2 open, 3 weg
 
     output reg  [1:0] R,
     output reg  [1:0] G,
@@ -65,6 +65,7 @@ localparam [2:0] M_TITLE    = 3'd0,
   localparam [9:0] HEARTS_X  = 10'd130, HEARTS_Y  = 10'd16;  // 304 x 24
   localparam [9:0] SATBAR_X  = 10'd85, SATBAR_Y  = 10'd370;  // 162 x 24
   localparam [9:0] COINBAR_X = 10'd24,  COINBAR_Y = 10'd80;  //  24 x 132
+  localparam [9:0] EGG_X = 10'd0,  EGG_Y = 10'd0;  //  24 x 132
 
   localparam DRAGON_X = 10'd0, DRAGON_Y = 10'd0;
   // localparam SATBAR_X = 10'd24,  SATBAR_Y = 10'd56;
@@ -87,6 +88,19 @@ localparam [2:0] M_TITLE    = 3'd0,
     .px_on(dragon_on), .px_code(dragon_code),
     .level(level),  .clk(clk), .rst_n(rst_n)
   );
+
+
+  wire        egg_on; //of er een pixel van draak is
+  wire [2:0]  egg_code;
+
+
+  egg_draw u_egg (
+    .x(px - EGG_X), .y(py - EGG_Y), .egg_frame(egg_frame),
+    .px_on(egg_on), .px_code(egg_code),
+    .clk(clk), .rst_n(rst_n)
+  );
+
+  
 
   // THREE CHESTS ---------------------------------
   // chest_frame: staat van box selected?
@@ -226,6 +240,15 @@ localparam [2:0] M_TITLE    = 3'd0,
 endcase
 end
 
+  wire [5:0] egg_rgb = (egg_code == 3'd1) ? 6'b00_00_00 :
+                       (egg_code == 3'd2) ? 6'b10_10_10 :
+                       (egg_code == 3'd3) ? 6'b00_11_00 :
+                       (egg_code == 3'd4) ? 6'b11_11_11 :
+                       (egg_code == 3'd5) ? 6'b00_10_00 :
+                       (egg_code == 3'd6) ? 6'b01_01_01 :
+                       (egg_code == 3'd7) ? 6'b10_11_01 :
+                                             6'b00_00_00;
+
   reg [5:0] chest_rgb;
   always @(*) case (chest_code)
     3'd1: chest_rgb = 6'b00_00_00;   // zwart / outline
@@ -327,6 +350,12 @@ end
   always @(*) begin
     if (!video_active)           rgb = 6'b000000;      // MUST stay black
     else if (mode == M_TITLE)    rgb = 6'b000110;      // TODO: title text
+    else if (mode == M_EGG) begin
+      if (egg_on)
+        rgb = egg_rgb;
+      else
+        rgb = bg_home_rgb; // of een eigen achtergrondkleur voor het ei-scherm
+    end
     else if (mode == M_GAMEOVER) begin
     if (gameover_text_on)
       rgb = 6'b00_00_00; // Zwarte letters "GAME OVER"

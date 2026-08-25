@@ -221,12 +221,11 @@ module egg1_generator (
     input  wire        rst_n,
     input  wire [9:0]  x,
     input  wire [9:0]  y,
-    input  wire [2:0]  mood_anim,
+    input wire [2:0]  egg_frame,
     output reg         px_on,
     output reg  [2:0]  px_code
 );
 
-    wire _unused = &{mood_anim, 1'b0};
 
     // Sprite startpositie op het scherm
     // Sprite blijft 256x256 op het scherm door 8x te schalen (ipv 4x)
@@ -255,7 +254,7 @@ module egg1_generator (
             px_on   <= 1'b0;
             px_code <= 3'd0;
         end else begin
-            if (in_bounds && (rom[addr] != 3'd0)) begin
+            if (in_bounds && (egg_frame == 3'd1) && (rom[addr] != 3'd0)) begin
                 px_on   <= 1'b1;
                 px_code <= rom[addr];
             end else begin
@@ -273,12 +272,11 @@ module egg2_generator (
     input  wire        rst_n,
     input  wire [9:0]  x,
     input  wire [9:0]  y,
-    input  wire [2:0]  mood_anim,
+    input  wire [2:0]  egg_frame,
     output reg         px_on,
     output reg  [2:0]  px_code
 );
 
-    wire _unused = &{mood_anim, 1'b0};
 
     // Sprite startpositie op het scherm
     // Sprite blijft 256x256 op het scherm door 8x te schalen (ipv 4x)
@@ -307,7 +305,7 @@ module egg2_generator (
             px_on   <= 1'b0;
             px_code <= 3'd0;
         end else begin
-            if (in_bounds && (rom[addr] != 3'd0)) begin
+            if (in_bounds && (egg_frame == 3'd2) && (rom[addr] != 3'd0)) begin
                 px_on   <= 1'b1;
                 px_code <= rom[addr];
             end else begin
@@ -325,12 +323,11 @@ module egg3_generator (
     input  wire        rst_n,
     input  wire [9:0]  x,
     input  wire [9:0]  y,
-    input  wire [2:0]  mood_anim,
+    input  wire [2:0]  egg_frame,
     output reg         px_on,
     output reg  [2:0]  px_code
 );
 
-    wire _unused = &{mood_anim, 1'b0};
 
     // Sprite startpositie op het scherm
     // Sprite blijft 256x256 op het scherm door 8x te schalen (ipv 4x)
@@ -359,7 +356,7 @@ module egg3_generator (
             px_on   <= 1'b0;
             px_code <= 3'd0;
         end else begin
-            if (in_bounds && (rom[addr] != 3'd0)) begin
+            if (in_bounds && (egg_frame == 3'd3) && (rom[addr] != 3'd0)) begin
                 px_on   <= 1'b1;
                 px_code <= rom[addr];
             end else begin
@@ -377,12 +374,11 @@ module egg4_generator (
     input  wire        rst_n,
     input  wire [9:0]  x,
     input  wire [9:0]  y,
-    input  wire [2:0]  mood_anim,
+    input  wire [2:0]  egg_frame,
     output reg         px_on,
     output reg  [2:0]  px_code
 );
 
-    wire _unused = &{mood_anim, 1'b0};
 
     // Sprite startpositie op het scherm
     // Sprite blijft 256x256 op het scherm door 8x te schalen (ipv 4x)
@@ -411,7 +407,7 @@ module egg4_generator (
             px_on   <= 1'b0;
             px_code <= 3'd0;
         end else begin
-            if (in_bounds && (rom[addr] != 3'd0)) begin
+            if (in_bounds && (egg_frame == 3'd4) && (rom[addr] != 3'd0)) begin
                 px_on   <= 1'b1;
                 px_code <= rom[addr];
             end else begin
@@ -429,12 +425,11 @@ module egg5_generator (
     input  wire        rst_n,
     input  wire [9:0]  x,
     input  wire [9:0]  y,
-    input  wire [2:0]  mood_anim,
+    input  wire [2:0]  egg_frame,
     output reg         px_on,
     output reg  [2:0]  px_code
 );
 
-    wire _unused = &{mood_anim, 1'b0};
 
     // Sprite startpositie op het scherm
     // Sprite blijft 256x256 op het scherm door 8x te schalen (ipv 4x)
@@ -463,7 +458,7 @@ module egg5_generator (
             px_on   <= 1'b0;
             px_code <= 3'd0;
         end else begin
-            if (in_bounds && (rom[addr] != 3'd0)) begin
+            if (in_bounds && (egg_frame == 3'd5) && (rom[addr] != 3'd0)) begin
                 px_on   <= 1'b1;
                 px_code <= rom[addr];
             end else begin
@@ -475,17 +470,16 @@ module egg5_generator (
 
 endmodule
 
-module dragon_l1_generator (
+module egg0_generator (
     input  wire        clk,
     input  wire        rst_n,
     input  wire [9:0]  x,
     input  wire [9:0]  y,
-    input  wire [2:0]  mood_anim,
+    input  wire [2:0]  egg_frame,
     output reg         px_on,
     output reg  [2:0]  px_code
 );
 
-    wire _unused = &{mood_anim, 1'b0};
 
     // Sprite startpositie op het scherm
     // Sprite blijft 256x256 op het scherm door 8x te schalen (ipv 4x)

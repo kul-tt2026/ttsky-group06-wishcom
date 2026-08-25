@@ -35,6 +35,7 @@ module home_tb;
   reg        flash;
   reg        flame_frame;
   reg        overflow;
+  reg  [2:0] egg_frame;
 
   // Output RGB van de renderer (2-bit per kleur)
   wire [1:0] R;
@@ -87,6 +88,7 @@ module home_tb;
     .flash            (flash),
     .flame_frame      (flame_frame),
     .overflow         (overflow),
+    .egg_frame        (egg_frame),
     .R                (R),
     .G                (G),
     .B                (B)
@@ -122,6 +124,7 @@ module home_tb;
     flash            = 1'b0;
     flame_frame      = 1'b0;
     overflow         = 1'b0;
+    egg_frame        = 3'd0;
 
     #100;
     rst_n = 1; // Reset loslaten (begint in M_TITLE)
