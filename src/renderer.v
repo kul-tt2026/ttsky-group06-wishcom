@@ -334,9 +334,10 @@ end
       rgb = 6'b01_00_00; // Donkerrode achtergrond
   end
     else if (show_hearts     && heartsinfo_on)    rgb = heartsinfo_rgb;
-    else if (show_hearts     && coin_on)          rgb = coin_rgb;
+    else if (show_coin       && coin_on)          rgb = coin_rgb;
     else if (show_satbar   && sat_on)                 rgb = sat_rgb;
     else if (show_buttons  && button_on)              rgb = buttons_rgb;
+    else if (show_menu     && menu_on)                rgb = menu_rgb;
     else if (show_chests && chest_on)                 rgb = chest_rgb;
     else if (show_dragon && dragon_on)                rgb = dragon_rgb;
     else rgb = (mode == M_CHEST) ? BG_CHEST : bg_home_rgb;

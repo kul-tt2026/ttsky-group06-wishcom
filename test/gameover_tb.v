@@ -143,6 +143,9 @@ module home_tb;
     @(posedge clk);
     frame_tick  = 1'b0;
 
+    force mode = 3'd4;
+    if (mode !== 3'd4) $fatal(1, "Verkeerde mode voor game-over-render: %0d", mode);
+    $display("Mode gezet op: %0d (4 = M_GAMEOVER)", mode);
     
     f = $fopen("frame.ppm", "w");
     $fwrite(f, "P3\n640 480\n255\n");

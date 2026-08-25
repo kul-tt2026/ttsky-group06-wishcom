@@ -136,7 +136,10 @@ module home_tb;
     btn_pressed = 8'd0;
 
     #40;
-    $display("Mode gezet op: %0d (1 = M_HOME)", mode);
+    // Deze test rendert specifiek het HOME-scherm; de egg-flow wordt hier overgeslagen.
+    force mode = 3'd2;
+    if (mode !== 3'd2) $fatal(1, "Verkeerde mode voor home-render: %0d", mode);
+    $display("Mode gezet op: %0d (2 = M_HOME)", mode);
     $display("Starten van 640x480 frame rendering...");
 
     f = $fopen("frame.ppm", "w");

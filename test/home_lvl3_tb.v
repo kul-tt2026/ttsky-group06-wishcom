@@ -126,7 +126,7 @@ module home_tb;
     #100;
     rst_n = 1; // Reset loslaten (begint in M_TITLE)
     #40;
-
+    
     // Simuleer een knopdruk om van M_TITLE naar M_HOME te springen
     @(posedge clk);
     frame_tick  = 1'b1;
@@ -136,7 +136,9 @@ module home_tb;
     btn_pressed = 8'd0;
 
     #40;
-    $display("Mode gezet op: %0d (1 = M_HOME)", mode);
+    force mode = 3'd2;
+    if (mode !== 3'd2) $fatal(1, "Verkeerde mode voor home-render: %0d", mode);
+    $display("Mode gezet op: %0d (2 = M_HOME)", mode);
     $display("Starten van 640x480 frame rendering...");
 
     f = $fopen("frame.ppm", "w");
