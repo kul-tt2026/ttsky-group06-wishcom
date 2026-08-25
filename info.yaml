@@ -38,6 +38,7 @@ project:
     - "dual_lfsr.v"
     - "chest_menu.v"
     - "egg_draw.v"
+    - "title_card.v"
 
 
 # The pinout of your project. Leave unused pins blank. DO NOT delete or add any pins.

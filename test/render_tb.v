@@ -28,20 +28,20 @@ module render_tb;
   // ---- satisfaction bar ----------------------------------------------------
   wire       sat_on;
   wire [2:0] sat_code;
-  satisfactionbar u_sat (
-    .x(px - SATBAR_X), .y(py - SATBAR_Y),
-    .sat(sat), .px_on(sat_on), .px_code(sat_code)
-  );
+  //satisfactionbar u_sat (
+  //  .x(px - SATBAR_X), .y(py - SATBAR_Y),
+  //  .sat(sat), .px_on(sat_on), .px_code(sat_code)
+ // );
 
   // --- coin bar ------------------------------
   wire       coin_on;
   wire [1:0] coin_code;
 
-  coinbar u_coin (
-    .x(px - COINBAR_X), .y(py - COINBAR_Y),
-    .coins(coins),
-    .px_on(coin_on), .px_code(coin_code)
-  );
+//  coinbar u_coin (
+//    .x(px - COINBAR_X), .y(py - COINBAR_Y),
+//    .coins(coins),
+//    .px_on(coin_on), .px_code(coin_code)
+//  );
 
   // --- hearts------------------------------
   reg  [2:0] hcount;
@@ -49,15 +49,33 @@ module render_tb;
   wire       h_on;
   wire [1:0] h_code;
 
-  hearts u_hearts (
-    .x(px - HEARTS_X), .y(py - HEARTS_Y),
-    .hearts(hcount), .overflow(ovf),
-    .px_on(h_on), .px_code(h_code)
+  //  hearts u_hearts (
+  //    .x(px - HEARTS_X), .y(py - HEARTS_Y),
+  //    .hearts(hcount), .overflow(ovf),
+  //    .px_on(h_on), .px_code(h_code)
+  //  );
+
+  // ---- title card ----------------------------------------------------------
+  wire       t_on;
+  wire [2:0] t_code;
+  title_card u_title (
+    .x(px), .y(py),
+    .px_on(t_on), .px_code(t_code)
   );
 
-  
-
   // ---- palet: exact zoals in renderer.v ------------------------------------
+
+
+  reg [5:0] title_rgb;
+  always @(*) case (t_code)
+    3'd1: title_rgb = 6'b00_01_00;
+    3'd2: title_rgb = 6'b01_11_01;
+    3'd3: title_rgb = 6'b00_01_00;
+    3'd4: title_rgb = 6'b01_11_01;
+    3'd5: title_rgb = 6'b00_10_00;
+    default: title_rgb = 6'b00_00_00;
+  endcase
+
   reg [5:0] sat_rgb;
   always @(*) case (sat_code)
     3'd1: sat_rgb = 6'b11_00_00;
@@ -89,6 +107,8 @@ module render_tb;
     else if      (sat_on)  rgb = sat_rgb;
     else if (coin_on) rgb = coin_rgb;
     else              rgb = BG_HOME;
+    if      (t_on)    rgb = title_rgb;
+    else if (h_on)    rgb = hearts_rgb;
   end
 
   integer f, xi, yi;
