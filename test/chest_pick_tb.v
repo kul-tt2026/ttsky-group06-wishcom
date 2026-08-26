@@ -150,7 +150,7 @@ module chest_pick_tb;
     mode             = R_M_CHEST;
     chest_frame      = 2'd0;
     chest_sel        = 2'd1;
-    chest_contents   = {O_BOMB, O_COIN, O_2X};   // {kist2, kist1, kist0}
+    chest_contents   = {O_CURSED, O_COIN, O_COIN};   // {kist2, kist1, kist0}
     chest_outcome    = O_COIN;                   // inhoud van kist 1
     pot              = 10'd100;
     round            = 4'd2;
