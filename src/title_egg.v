@@ -3,7 +3,7 @@
 // TITLE_EGG  --  grasstrook, hoppend ei en "PRESS ANY BUTTON".
 //
 //   * GRAS   : strook van GRASS_H px onderaan.
-//   * EI     : sprite uit egg_128s.hex (128x128), 2x geschaald -> 256 px.
+//   * EI     : PROCEDUREEL uit twee kleine tabellen, 2x geschaald -> 256 px.
 //              Het ei HOPT: een verticale verschuiving uit een tabel.  Geen
 //              shear meer -- die brak lijnen omdat een 2x vergrote sprite niet
 //              per halve bronpixel kan verschuiven.  Verticaal schuiven is
@@ -12,6 +12,25 @@
 //              Dat is de gangbare spelconventie: kleiner = verder van de grond.
 //              Wil je het andersom (groter in de lucht), zet SHADOW_GROW op 1.
 //   * TEKST  : "PRESS ANY BUTTON", knippert asymmetrisch (lang aan, kort uit).
+//
+// HET EI IS GEEN BITMAP MEER.  egg_128s.hex was 128x128x3 = 49152 bits en
+// kostte ~2400 cellen, terwijl er maar drie kleuren in zaten.  Je betaalde dus
+// per pixel voor informatie die er niet was.  Nu staan vorm en textuur apart:
+//
+//   egg_shape.hex : 128 regels {hw_out[5:0], hw_in[5:0]}, 3 hexcijfers.
+//                   Per BRONRIJ de halve breedte van de buitenrand en die van
+//                   de witte schaal.  Alles daartussen is zwarte rand, dus de
+//                   omtrek volgt de getekende vorm en sluit boven EN onder.
+//                   hw_in == 0 betekent "deze rij is volledig rand" -- zo zijn
+//                   de kapjes boven- en onderaan dicht.
+//   egg_spots.hex :  32 regels van 32 bits.  Elke bit = een blok van 4x4
+//                   bronpixels (8x8 op het scherm).  Bewust grof; de stippen
+//                   zijn textuur, geen lijnwerk, en blijven asymmetrisch.
+//
+// Samen ~2500 bits.  Beide worden gegenereerd door tools/egg_decompose.py uit
+// egg_128s.hex; die hex blijft in de repo als bron-art, maar wordt door de
+// hardware niet meer gelezen.  Wil je het ei wijzigen: pas de art aan en draai
+// het script opnieuw -- niet dit bestand.
 //
 // Uitgangen (de renderer kiest de kleuren):
 //   egg_on / egg_code : gebruik hetzelfde palet als dragon_rgb (codes 1..7)
@@ -27,7 +46,7 @@ module title_egg (
     input  wire       frame_tick,
     input  wire [9:0] x,             // portret-x  0..479
     input  wire [9:0] y,             // portret-y  0..639
-    input  wire [2:0] egg_frame,     // 0 heel .. 4 wijd open, 5 same 
+    input  wire [2:0] egg_frame,     // 0 heel .. 4 wijd open, 5 same
     input  wire [9:0] flash_r,       // straal van de flits; 0 = uit
 
     output wire       egg_on,
@@ -56,16 +75,30 @@ module title_egg (
 
   localparam SHADOW_GROW = 1'b0;         // 0 = krimpen (normaal), 1 = groeien
 
+  // --- kleurcodes van het ei (zelfde palet als dragon_rgb) ----------------
+  localparam [2:0] EGG_EDGE  = 3'd1;     // zwarte omtrek
+  localparam [2:0] EGG_SHELL = 3'd4;     // witte schaal
+  localparam [2:0] EGG_SPOT  = 3'd5;     // donkergroene vlek
+
   // --- hop: tabel van verticale offsets ------------------------------------
   // 96 frames = 1.6 s.  Twaalf stappen van 8 frames: omhoog, even hangen,
   // omlaag, dan rust.  Alle waarden EVEN, dus hele bronpixels.
-  reg [6:0] hop_cnt;
+  //
+  // Zodra het barsten begint MAAKT het ei zijn hop af en blijft dan liggen.
+  // Meteen stilzetten zou het ei mid-lucht naar de grond laten springen.
+  wire cracking = (egg_frame != 3'd0);
+
+  reg  [6:0] hop_cnt;
+  reg  [5:0] hop;                         // hoogte boven de grond, 0..20
+  reg        landed;
+  wire       hold = cracking && landed;
+
   always @(posedge clk) begin
-    if (!rst_n)          hop_cnt <= 7'd0;
-    else if (frame_tick) hop_cnt <= (hop_cnt == 7'd95) ? 7'd0 : hop_cnt + 7'd1;
+    if (!rst_n)                   hop_cnt <= 7'd0;
+    else if (frame_tick && !hold) hop_cnt <= (hop_cnt == 7'd95) ? 7'd0
+                                                                : hop_cnt + 7'd1;
   end
 
-  reg [5:0] hop;                          // hoogte boven de grond, 0..20
   always @(*) case (hop_cnt[6:3])
     4'd0:  hop = 6'd0;
     4'd1:  hop = 6'd8;
@@ -79,9 +112,15 @@ module title_egg (
     default: hop = 6'd0;                  // 9,10,11 = rust op de grond
   endcase
 
-  // zodra het barsten begint staat het ei stil
-  wire cracking = (egg_frame != 3'd0);
-  wire [9:0] foot_now = cracking ? EGG_FOOT : (EGG_FOOT - {4'b0, hop});
+  always @(posedge clk) begin
+    if (!rst_n)            landed <= 1'b0;
+    else if (frame_tick) begin
+      if      (!cracking)   landed <= 1'b0;   // terug op TITLE
+      else if (hop == 6'd0) landed <= 1'b1;   // hij staat op de grond
+    end
+  end
+
+  wire [9:0] foot_now = EGG_FOOT - {4'b0, hop};
   wire [9:0] EGG_Y    = foot_now - EGG_H;
 
   // --- knipperen: 3 s cyclus, lang aan / kort uit --------------------------
@@ -97,7 +136,7 @@ module title_egg (
     end
   end
 
-  // --- ei-sprite (128x128, 2x) ---------------------------------------------
+  // --- ei: procedureel uit vorm- en stippentabel (128x128 bron, 2x) -------
   wire in_egg_box = (x >= EGG_X) && (x < EGG_X + EGG_W) &&
                     (y >= EGG_Y) && (y < EGG_Y + EGG_H);
   wire [9:0] offx = x - EGG_X;
@@ -106,17 +145,38 @@ module title_egg (
   wire [9:0] scly = offy >> 1;
   wire [6:0] rel_x = in_egg_box ? sclx[6:0] : 7'd0;
   wire [6:0] rel_y = in_egg_box ? scly[6:0] : 7'd0;
-  wire [13:0] addr = {rel_y, rel_x};
 
-  reg [2:0] rom [0:16383];
-  initial $readmemh("egg_128s.hex", rom);
+  // Afstand tot de middenas.  De as ligt tussen kolom 63 en 64, dus de rechter
+  // helft krijgt er 1 bij -- exact dezelfde formule als egg_decompose.py, want
+  // anders staat de rand aan een kant een pixel scheef.
+  wire [6:0] dax = (rel_x > 7'd63) ? (rel_x - 7'd62) : (7'd63 - rel_x);
 
-  wire [2:0] code = rom[addr];
+  reg [11:0] shape [0:127];
+  initial $readmemh("egg_shape.hex", shape);
+  wire [11:0] srow   = shape[rel_y];
+  wire [5:0]  hw_out = srow[11:6];       // buitenrand van de schaal
+  wire [5:0]  hw_in  = srow[5:0];        // waar de witte schaal begint
+
+  // hw_out == 0 (lege rij) valt hier vanzelf af: dax < 0 is nooit waar.
+  wire in_shell = in_egg_box && (dax < {1'b0, hw_out});
+  wire on_edge  = in_shell && ((hw_in == 6'd0) || (dax >= {1'b0, hw_in}));
+
+  // stippen: 32x32 blokken van 4x4 bronpixels, NIET gespiegeld
+  reg [31:0] spots [0:31];
+  initial $readmemh("egg_spots.hex", spots);
+  wire [31:0] spot_row = spots[rel_y[6:2]];
+  wire        spot     = spot_row[rel_x[6:2]];
+
+  wire [2:0] code = !in_shell ? 3'd0      :
+                    on_edge   ? EGG_EDGE  :
+                    spot      ? EGG_SPOT  :
+                                EGG_SHELL;
+
   // Het ei blijft zichtbaar tot de flits het overneemt.  Zou je het bij
   // egg_frame 5 laten verdwijnen, dan zie je een frame lang leeg gras -- een
   // zichtbare "pop".  De flits groeit vanuit het midden van het ei naar buiten
   // en eet het als het ware van binnenuit op.
-  assign egg_on   = in_egg_box && (code != 3'd0);
+  assign egg_on   = in_shell;
   assign egg_code = code;
 
 
@@ -132,13 +192,18 @@ module title_egg (
   // Elke straal krijgt een driehoeksgolf-slingering.
   // REGEL: helling + slingering moet onder de lijndikte blijven, anders valt
   // de straal uiteen in losse stukjes.
+
+    // Alles hieronder rekent in 10-bit signed: de grootste tussenwaarde is
+  // EX0 - tE + wob = 382, ruim binnen -512..511.  Met 12 bits betaalde je
+  // twee overbodige bits op elke opteller, aftrekker en comparator, maal
+  // vijftien -- dat is honderden cellen voor niets.
   wire [9:0] lx = x - EGG_X;                     // lokaal 0..255
   wire [9:0] ly = y - EGG_Y;
-  wire signed [11:0] slx = $signed({2'b0, lx});
-  wire signed [11:0] sly = $signed({2'b0, ly});
+  wire signed [9:0] slx = $signed({2'b0, lx[7:0]});
+  wire signed [9:0] sly = $signed({2'b0, ly[7:0]});
 
-  localparam signed [11:0] OX = 12'sd128;        // oorsprong midden in het ei
-  localparam signed [11:0] OY = 12'sd112;
+  localparam signed [9:0] OX = 10'sd128;         // oorsprong midden in het ei
+  localparam signed [9:0] OY = 10'sd112;
 
   reg [9:0] grow;
   reg [2:0] cw;
@@ -151,68 +216,77 @@ module title_egg (
     default: begin grow = 10'd200; cw = 3'd4; end
   endcase
 
-  // slingering: driehoeksgolf, periode 16, amplitude 6 (helling 0.375)
-  function signed [11:0] wob;
-    input [9:0] t;
+  // slingering: driehoeksgolf, periode 16, amplitude 7
+  // Alleen de onderste vier bits doen mee, dus die geven we ook maar door.
+  function signed [9:0] wob;
+    input [3:0] t;
     reg [2:0] hlf;
     reg [3:0] trw;
     begin
       hlf = t[2:0];
       trw = t[3] ? (4'd7 - {1'b0,hlf}) : {1'b0,hlf};
-      wob = $signed({8'b0, trw[2:0], 1'b0}) - 12'sd7;
+      wob = $signed({6'b0, trw[2:0], 1'b0}) - 10'sd7;
     end
   endfunction
 
-  // Afstand tussen twee waarden.  BEIDE als argument meegeven: leest een
+  // |here - want| <= w, maar zonder de dubbele aftrekking van absdiff.
+  // (here - want + w) ligt in 0..2w precies als het verschil binnen w valt:
+  // is het verschil te negatief dan wordt de som negatief (unsigned: enorm),
+  // is het te positief dan wordt de som groter dan 2w.  Een aftrekking, een
+  // optelling en EEN vergelijking, in plaats van comparator + 2 aftrekkers +
+  // mux + vergelijking.  BEIDE waarden als argument meegeven -- leest een
   // functie een modulesignaal van binnenuit, dan wordt de continue toewijzing
   // daar niet gevoelig voor en tekent de straal nooit.  Stille fout.
-  function [9:0] absdiff;
-    input signed [11:0] here;
-    input signed [11:0] want;
+  function ok;
+    input signed [9:0] here;
+    input signed [9:0] want;
+    input        [2:0] w;
+    reg   signed [9:0] d;
     begin
-      absdiff = (here >= want) ? (here - want) : (want - here);
+      d  = here - want + $signed({7'b0, w});
+      ok = ($unsigned(d) <= {6'b0, w, 1'b0});     // {w,1'b0} = 2*w
     end
   endfunction
 
   // ---- hoofdstraal A: omhoog, licht naar rechts (offset: niet recht op) ---
-  wire signed [11:0] tA = OY - sly;
+  wire signed [9:0] tA = OY - sly;
   wire [9:0] lenA = (grow > 10'd104) ? 10'd104 : grow;
-  wire hitA = (tA >= 0) && (tA < $signed({2'b0,lenA})) &&
-              (absdiff(slx, OX + (tA >>> 2) + wob(tA[9:0])) <= {7'b0, cw});
+  wire hitA = (tA >= 0) && (tA < $signed({2'b0, lenA[7:0]})) &&
+              ok(slx, OX + (tA >>> 2) + wob(tA[3:0]), cw);
 
   // ---- hoofdstraal B: naar links, licht omlaag (120 graden van A) --------
   //      langs x geparametriseerd, want deze is bijna horizontaal
-  wire signed [11:0] tB = OX - slx;
+  wire signed [9:0] tB = OX - slx;
   wire [9:0] lenB = (grow > 10'd112) ? 10'd112 : grow;
-  wire hitB = (tB >= 0) && (tB < $signed({2'b0,lenB})) &&
-              (absdiff(sly, OY + (tB >>> 2) + wob(tB[9:0])) <= {7'b0, cw});
+  wire hitB = (tB >= 0) && (tB < $signed({2'b0, lenB[7:0]})) &&
+              ok(sly, OY + (tB >>> 2) + wob(tB[3:0]), cw);
 
   // ---- hoofdstraal C: omlaag naar rechts (120 graden van B) --------------
-  wire signed [11:0] tC = sly - OY;
+  wire signed [9:0] tC = sly - OY;
   wire [9:0] lenC = (grow > 10'd130) ? 10'd130 : grow;
-  wire hitC = (tC >= 0) && (tC < $signed({2'b0,lenC})) &&
-              (absdiff(slx, OX + tC + (tC >>> 2) + wob(tC[9:0])) <= {7'b0, cw});
+  wire hitC = (tC >= 0) && (tC < $signed({2'b0, lenC[7:0]})) &&
+              ok(slx, OX + tC + (tC >>> 2) + wob(tC[3:0]), cw);
 
   // ---- tak D: uit A op t=52, bijna HAAKS erop (naar rechts, licht omhoog) -
-  localparam signed [11:0] DX0 = OX + 12'sd13;   // 52 >> 2
-  localparam signed [11:0] DY0 = OY - 12'sd52;
-  wire signed [11:0] tD = slx - DX0;
+  localparam signed [9:0] DX0 = OX + 10'sd13;    // 52 >> 2
+  localparam signed [9:0] DY0 = OY - 10'sd52;
+  wire signed [9:0] tD = slx - DX0;
   wire [9:0] lenD = (grow > 10'd52) ?
                     ((grow - 10'd52 > 10'd70) ? 10'd70 : (grow - 10'd52)) : 10'd0;
-  wire hitD = (egg_frame >= 3'd2) && (tD >= 0) && (tD < $signed({2'b0,lenD})) &&
-              (absdiff(sly, DY0 - (tD >>> 2) + wob(tD[9:0])) <= 10'd2);
+  wire hitD = (egg_frame >= 3'd2) && (tD >= 0) && (tD < $signed({2'b0, lenD[7:0]})) &&
+              ok(sly, DY0 - (tD >>> 2) + wob(tD[3:0]), 3'd2);
 
   // ---- tak E: uit C op t=60, steil naar linksonder (~95 graden van C) ----
-  localparam signed [11:0] EX0 = OX + 12'sd75;   // 60 + 15
-  localparam signed [11:0] EY0 = OY + 12'sd60;
-  wire signed [11:0] tE = sly - EY0;
+  localparam signed [9:0] EX0 = OX + 10'sd75;    // 60 + 15
+  localparam signed [9:0] EY0 = OY + 10'sd60;
+  wire signed [9:0] tE = sly - EY0;
   wire [9:0] lenE = (grow > 10'd60) ?
                     ((grow - 10'd60 > 10'd60) ? 10'd60 : (grow - 10'd60)) : 10'd0;
-  wire hitE = (egg_frame >= 3'd3) && (tE >= 0) && (tE < $signed({2'b0,lenE})) &&
-              (absdiff(slx, EX0 - tE + wob(tE[9:0])) <= 10'd2);
+  wire hitE = (egg_frame >= 3'd3) && (tE >= 0) && (tE < $signed({2'b0, lenE[7:0]})) &&
+              ok(slx, EX0 - tE + wob(tE[3:0]), 3'd2);
 
-  assign crack_on = in_egg_box && (code != 3'd0) &&
-                    (hitA || hitB || hitC || hitD || hitE);
+  assign crack_on = in_shell && (hitA || hitB || hitC || hitD || hitE);
+  
 
   // ======================= FLITS ==========================================
   // Een groeiende schijf die het scherm overneemt.  Een echte cirkel kost twee
@@ -236,142 +310,14 @@ module title_egg (
                   (y >= PRESS_Y) && (y < PRESS_Y + PRESS_H);
   wire [5:0] tx = (x - PRESS_X) >> 2;   // 0..62
   wire [2:0] ty = (y - PRESS_Y) >> 2;   // 0..4
-  reg pon;
-  always @(*) begin
-    pon = 1'b0;
-    case ({ty, tx})
-      {3'd0,6'd0}: pon = 1'b1;
-      {3'd0,6'd1}: pon = 1'b1;
-      {3'd0,6'd4}: pon = 1'b1;
-      {3'd0,6'd5}: pon = 1'b1;
-      {3'd0,6'd8}: pon = 1'b1;
-      {3'd0,6'd9}: pon = 1'b1;
-      {3'd0,6'd10}: pon = 1'b1;
-      {3'd0,6'd13}: pon = 1'b1;
-      {3'd0,6'd14}: pon = 1'b1;
-      {3'd0,6'd17}: pon = 1'b1;
-      {3'd0,6'd18}: pon = 1'b1;
-      {3'd0,6'd25}: pon = 1'b1;
-      {3'd0,6'd28}: pon = 1'b1;
-      {3'd0,6'd30}: pon = 1'b1;
-      {3'd0,6'd32}: pon = 1'b1;
-      {3'd0,6'd34}: pon = 1'b1;
-      {3'd0,6'd40}: pon = 1'b1;
-      {3'd0,6'd41}: pon = 1'b1;
-      {3'd0,6'd44}: pon = 1'b1;
-      {3'd0,6'd46}: pon = 1'b1;
-      {3'd0,6'd48}: pon = 1'b1;
-      {3'd0,6'd49}: pon = 1'b1;
-      {3'd0,6'd50}: pon = 1'b1;
-      {3'd0,6'd52}: pon = 1'b1;
-      {3'd0,6'd53}: pon = 1'b1;
-      {3'd0,6'd54}: pon = 1'b1;
-      {3'd0,6'd56}: pon = 1'b1;
-      {3'd0,6'd57}: pon = 1'b1;
-      {3'd0,6'd58}: pon = 1'b1;
-      {3'd0,6'd60}: pon = 1'b1;
-      {3'd0,6'd62}: pon = 1'b1;
-      {3'd1,6'd0}: pon = 1'b1;
-      {3'd1,6'd2}: pon = 1'b1;
-      {3'd1,6'd4}: pon = 1'b1;
-      {3'd1,6'd6}: pon = 1'b1;
-      {3'd1,6'd8}: pon = 1'b1;
-      {3'd1,6'd12}: pon = 1'b1;
-      {3'd1,6'd16}: pon = 1'b1;
-      {3'd1,6'd24}: pon = 1'b1;
-      {3'd1,6'd26}: pon = 1'b1;
-      {3'd1,6'd28}: pon = 1'b1;
-      {3'd1,6'd29}: pon = 1'b1;
-      {3'd1,6'd30}: pon = 1'b1;
-      {3'd1,6'd32}: pon = 1'b1;
-      {3'd1,6'd34}: pon = 1'b1;
-      {3'd1,6'd40}: pon = 1'b1;
-      {3'd1,6'd42}: pon = 1'b1;
-      {3'd1,6'd44}: pon = 1'b1;
-      {3'd1,6'd46}: pon = 1'b1;
-      {3'd1,6'd49}: pon = 1'b1;
-      {3'd1,6'd53}: pon = 1'b1;
-      {3'd1,6'd56}: pon = 1'b1;
-      {3'd1,6'd58}: pon = 1'b1;
-      {3'd1,6'd60}: pon = 1'b1;
-      {3'd1,6'd61}: pon = 1'b1;
-      {3'd1,6'd62}: pon = 1'b1;
-      {3'd2,6'd0}: pon = 1'b1;
-      {3'd2,6'd1}: pon = 1'b1;
-      {3'd2,6'd4}: pon = 1'b1;
-      {3'd2,6'd5}: pon = 1'b1;
-      {3'd2,6'd8}: pon = 1'b1;
-      {3'd2,6'd9}: pon = 1'b1;
-      {3'd2,6'd13}: pon = 1'b1;
-      {3'd2,6'd17}: pon = 1'b1;
-      {3'd2,6'd24}: pon = 1'b1;
-      {3'd2,6'd25}: pon = 1'b1;
-      {3'd2,6'd26}: pon = 1'b1;
-      {3'd2,6'd28}: pon = 1'b1;
-      {3'd2,6'd30}: pon = 1'b1;
-      {3'd2,6'd33}: pon = 1'b1;
-      {3'd2,6'd40}: pon = 1'b1;
-      {3'd2,6'd41}: pon = 1'b1;
-      {3'd2,6'd44}: pon = 1'b1;
-      {3'd2,6'd46}: pon = 1'b1;
-      {3'd2,6'd49}: pon = 1'b1;
-      {3'd2,6'd53}: pon = 1'b1;
-      {3'd2,6'd56}: pon = 1'b1;
-      {3'd2,6'd58}: pon = 1'b1;
-      {3'd2,6'd60}: pon = 1'b1;
-      {3'd2,6'd62}: pon = 1'b1;
-      {3'd3,6'd0}: pon = 1'b1;
-      {3'd3,6'd4}: pon = 1'b1;
-      {3'd3,6'd6}: pon = 1'b1;
-      {3'd3,6'd8}: pon = 1'b1;
-      {3'd3,6'd14}: pon = 1'b1;
-      {3'd3,6'd18}: pon = 1'b1;
-      {3'd3,6'd24}: pon = 1'b1;
-      {3'd3,6'd26}: pon = 1'b1;
-      {3'd3,6'd28}: pon = 1'b1;
-      {3'd3,6'd30}: pon = 1'b1;
-      {3'd3,6'd33}: pon = 1'b1;
-      {3'd3,6'd40}: pon = 1'b1;
-      {3'd3,6'd42}: pon = 1'b1;
-      {3'd3,6'd44}: pon = 1'b1;
-      {3'd3,6'd46}: pon = 1'b1;
-      {3'd3,6'd49}: pon = 1'b1;
-      {3'd3,6'd53}: pon = 1'b1;
-      {3'd3,6'd56}: pon = 1'b1;
-      {3'd3,6'd58}: pon = 1'b1;
-      {3'd3,6'd60}: pon = 1'b1;
-      {3'd3,6'd62}: pon = 1'b1;
-      {3'd4,6'd0}: pon = 1'b1;
-      {3'd4,6'd4}: pon = 1'b1;
-      {3'd4,6'd6}: pon = 1'b1;
-      {3'd4,6'd8}: pon = 1'b1;
-      {3'd4,6'd9}: pon = 1'b1;
-      {3'd4,6'd10}: pon = 1'b1;
-      {3'd4,6'd12}: pon = 1'b1;
-      {3'd4,6'd13}: pon = 1'b1;
-      {3'd4,6'd16}: pon = 1'b1;
-      {3'd4,6'd17}: pon = 1'b1;
-      {3'd4,6'd24}: pon = 1'b1;
-      {3'd4,6'd26}: pon = 1'b1;
-      {3'd4,6'd28}: pon = 1'b1;
-      {3'd4,6'd30}: pon = 1'b1;
-      {3'd4,6'd33}: pon = 1'b1;
-      {3'd4,6'd40}: pon = 1'b1;
-      {3'd4,6'd41}: pon = 1'b1;
-      {3'd4,6'd44}: pon = 1'b1;
-      {3'd4,6'd45}: pon = 1'b1;
-      {3'd4,6'd46}: pon = 1'b1;
-      {3'd4,6'd49}: pon = 1'b1;
-      {3'd4,6'd53}: pon = 1'b1;
-      {3'd4,6'd56}: pon = 1'b1;
-      {3'd4,6'd57}: pon = 1'b1;
-      {3'd4,6'd58}: pon = 1'b1;
-      {3'd4,6'd60}: pon = 1'b1;
-      {3'd4,6'd62}: pon = 1'b1;
-      default: pon = 1'b0;
-    endcase
-  end
-  assign press_on = in_press && pon;
+
+  reg [63:0] press_rows [0:4];
+  initial $readmemh("title_press.hex", press_rows);
+
+  wire [2:0]  ty_c = in_press ? ty : 3'd0;
+  wire [63:0] prow = press_rows[ty_c];
+
+  assign press_on = in_press && prow[tx];
 
   // --- schaduw: vaste plek, krimpt als het ei omhoog gaat -----------------
   localparam [9:0] SH_Y = 10'd588;      // net onder de voet in rust

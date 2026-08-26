@@ -150,8 +150,15 @@ module draw_buttons (
   wire ell_o = (ady <= 10'd40) && ({3'b0, adx[6:0]} < {3'b0, ehw_o}) && (adx <= 10'd72);
   wire ell_i = (ady <= 10'd40) && ({3'b0, adx[6:0]} < {3'b0, ehw_i}) && (adx <= 10'd72);
 
-  // ======================= TEKST: 3x5 font op schaal 4 ====================
+   // ======================= TEKST: 3x5 font op schaal 4 ====================
   // lettercel 16 px breed (12 glyph + 4 spatie), 20 px hoog
+  //
+  // De vijf woorden staan op VIJF VERSCHILLENDE plekken van het paneel, dus
+  // er kan er hooguit een tegelijk actief zijn.  Daarom muxen we eerst de
+  // INVOER naar EEN enkele opzoeking.  Roep je frow() vijf keer aan, dan
+  // lijnt de synthese die tabel van zeventig ingangen ook vijf keer in --
+  // vier volledige kopieen die nooit tegelijk iets doen.  Zelfde reden
+  // waarom renderer.v maar EEN title_egg instantieert voor twee modes.
   function [2:0] frow; input [3:0] ch; input [2:0] row; begin
     case ({ch, row})
       {4'd0,3'd0}: frow = 3'b010;
@@ -228,6 +235,7 @@ module draw_buttons (
     endcase
   end endfunction
 
+  // ---- de vijf tekstvakken: alleen vak, positie en letterkeuze -----------
   // ---- DRINK ----
   wire wd_box = (lx>=10'd202)&&(lx<=10'd277)&&(ly>=10'd19)&&(ly<=10'd38);
   wire [9:0] wd_u = lx - 10'd202;
@@ -241,10 +249,7 @@ module draw_buttons (
       4'd4: wd_ch = 4'd5;
       default: wd_ch = 4'd0;
     endcase
-  wire [2:0] wd_r = frow(wd_ch, wd_v[4:2]);
-  wire wd_on = wd_box && (wd_u[3:2] != 2'b11) &&
-                  ( (wd_u[3:2]==2'b00) ? wd_r[2]
-                  : (wd_u[3:2]==2'b01) ? wd_r[1] : wd_r[0] );
+
   // ---- PLAY ----
   wire wp_box = (lx>=10'd210)&&(lx<=10'd269)&&(ly>=10'd161)&&(ly<=10'd180);
   wire [9:0] wp_u = lx - 10'd210;
@@ -257,10 +262,7 @@ module draw_buttons (
       4'd3: wp_ch = 4'd13;
       default: wp_ch = 4'd0;
     endcase
-  wire [2:0] wp_r = frow(wp_ch, wp_v[4:2]);
-  wire wp_on = wp_box && (wp_u[3:2] != 2'b11) &&
-                  ( (wp_u[3:2]==2'b00) ? wp_r[2]
-                  : (wp_u[3:2]==2'b01) ? wp_r[1] : wp_r[0] );
+
   // ---- EVOLVE ----
   wire we_box = (lx>=10'd194)&&(lx<=10'd285)&&(ly>=10'd96)&&(ly<=10'd115);
   wire [9:0] we_u = lx - 10'd194;
@@ -275,11 +277,8 @@ module draw_buttons (
       4'd5: we_ch = 4'd2;
       default: we_ch = 4'd0;
     endcase
-  wire [2:0] we_r = frow(we_ch, we_v[4:2]);
-  wire we_on = we_box && (we_u[3:2] != 2'b11) &&
-                  ( (we_u[3:2]==2'b00) ? we_r[2]
-                  : (we_u[3:2]==2'b01) ? we_r[1] : we_r[0] );
-  // ---- FEED ----
+
+  // ---- FEED (staand: u loopt langs y, v langs x) ----
   wire wf_box = (lx>=10'd114)&&(lx<=10'd133)&&(ly>=10'd70)&&(ly<=10'd129);
   wire [9:0] wf_u = 10'd129 - ly;
   wire [9:0] wf_v = lx - 10'd114;
@@ -291,11 +290,8 @@ module draw_buttons (
       4'd3: wf_ch = 4'd1;
       default: wf_ch = 4'd0;
     endcase
-  wire [2:0] wf_r = frow(wf_ch, wf_v[4:2]);
-  wire wf_on = wf_box && (wf_u[3:2] != 2'b11) &&
-                  ( (wf_u[3:2]==2'b00) ? wf_r[2]
-                  : (wf_u[3:2]==2'b01) ? wf_r[1] : wf_r[0] );
-  // ---- SLEEP ----
+
+  // ---- SLEEP (staand, andere kant op) ----
   wire ws_box = (lx>=10'd346)&&(lx<=10'd365)&&(ly>=10'd62)&&(ly<=10'd137);
   wire [9:0] ws_u = ly - 10'd62;
   wire [9:0] ws_v = 10'd365 - lx;
@@ -308,17 +304,28 @@ module draw_buttons (
       4'd4: ws_ch = 4'd9;
       default: ws_ch = 4'd0;
     endcase
-  wire [2:0] ws_r = frow(ws_ch, ws_v[4:2]);
-  wire ws_on = ws_box && (ws_u[3:2] != 2'b11) &&
-                  ( (ws_u[3:2]==2'b00) ? ws_r[2]
-                  : (ws_u[3:2]==2'b01) ? ws_r[1] : ws_r[0] );
+
+  // ---- EEN gedeelde opzoeking voor alle vijf -----------------------------
+  // De vakken sluiten elkaar uit, dus deze prioriteitsketen is gewoon een
+  // keuze -- geen van de takken kan met een andere botsen.
+  wire [3:0] f_ch  = wd_box ? wd_ch     : wp_box ? wp_ch     :
+                     we_box ? we_ch     : wf_box ? wf_ch     : ws_ch;
+  wire [2:0] f_row = wd_box ? wd_v[4:2] : wp_box ? wp_v[4:2] :
+                     we_box ? we_v[4:2] : wf_box ? wf_v[4:2] : ws_v[4:2];
+  wire [1:0] f_col = wd_box ? wd_u[3:2] : wp_box ? wp_u[3:2] :
+                     we_box ? we_u[3:2] : wf_box ? wf_u[3:2] : ws_u[3:2];
+
+  wire [2:0] f_bits = frow(f_ch, f_row);
+  wire       in_word = wd_box | wp_box | we_box | wf_box | ws_box;
+  wire       word_on = in_word && (f_col != 2'b11) &&
+                       ( (f_col == 2'b00) ? f_bits[2]
+                       : (f_col == 2'b01) ? f_bits[1] : f_bits[0] );
 
   // ---- pijl omhoog boven EVOLVE ------------------------------------------
   wire arr_head = (ly>=10'd71) && (ly<=10'd81) && (adx <= ly - 10'd71);
   wire arr_stem = (ly>=10'd82) && (ly<=10'd91) && (adx <= 10'd4);
 
-  // ======================= samenstellen ===================================
-  wire any_text = wd_on | wp_on | we_on | wf_on | ws_on | arr_head | arr_stem;
+  wire any_text = word_on | arr_head | arr_stem;
   wire any_fill_dark = top_i | bot_i | lft_i | rgt_i;
   wire any_out  = (top_o|bot_o|lft_o|rgt_o|ell_o) & ~(any_fill_dark|ell_i);
 
