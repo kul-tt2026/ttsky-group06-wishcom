@@ -1,13 +1,18 @@
 `default_nettype none
 // ---------------------------------------------------------------------------
-// HEARTS + OVERFLOW-LABEL.
+// HEARTS -- een rij van vijf hartjes.
 //
-// Links het woord "OVERFLOW" (alleen zichtbaar als overflow==1), rechts een
-// rij van vijf hartjes: altijd vijf zwarte omtrekken, rood gevuld tot aan
-// `hearts`.  De rij staat op een VASTE plek en springt dus niet heen en weer.
+// Altijd vijf zwarte omtrekken, rood gevuld tot aan `hearts`.  De rij staat
+// op een VASTE plek en springt dus niet heen en weer als je er een verliest.
+//
+// GEEN TEKST MEER.  Hier stond ooit het woord "OVERFLOW" links van de rij,
+// met een eigen alfabet (glyph_rom) dat verder nergens voor diende.  Vijf
+// rode hartjes zeggen al dat je vol zit; nu worden ze bij overflow wit in
+// plaats van rood en is het alfabet verdwenen.  Scheelt ~200 cellen.
+// Zie de git-historie als je de tekst terug wilt.
 //
 // Het hartje is wiskundig, net als coinbar/satisfactionbar: geen sprite-ROM.
-// Twee cirkels bovenop een ruit (een 45 graden gedraaid vierkant):
+// Twee bollen bovenop een ruit (een 45 graden gedraaid vierkant):
 //
 //        (o o)      <- twee bollen
 //         \ /       <- onderste helft van de ruit
@@ -24,7 +29,7 @@
 //     halfbreedte+1, zodat 0 netjes "niets op deze rij" betekent en we met
 //     "<" kunnen testen in plaats van "<=".
 //
-// px_code: 0 = zwarte rand | 1 = rood gevuld | 2 = witte tekst
+// px_code: 0 = zwarte omtrek | 1 = rood gevuld | 2 = gevuld bij overflow
 // px_on is 0 buiten de vormen: dit is een transparante overlay, geen blok.
 //
 // LOKALE COORDINATEN.  Plaatsing hoort in renderer.v (HEARTS_X/HEARTS_Y).
@@ -33,7 +38,7 @@ module hearts (
     input  wire [9:0] x,            // local (px - HEARTS_X)
     input  wire [9:0] y,            // local (py - HEARTS_Y)
     input  wire [2:0] hearts,       // 0..5, uit dragon_state
-    input  wire       overflow,     // toont het label
+    input  wire       overflow,     // vol: kleurt de gevulde hartjes anders
     output wire       px_on,
     output wire [1:0] px_code
 );
@@ -43,52 +48,28 @@ module hearts (
   localparam [9:0] ROW_W   = 10'd200;  // NHEART * HPITCH -- houd deze in sync
   localparam [9:0] BLOCK_H = 10'd32;
 
-  localparam [9:0] TEXT_W  = 10'd128;  // 8 letters * 16
-  localparam [9:0] TEXT_Y  = 10'd8;
-  localparam [9:0] HEART_X0 = TEXT_W + 10'd16;   // 144: start van de rij
-
   // Boven/links van de origin wrapt de local coord naar ~1023, dus "< H"
   // test meteen ook de boven- en linkerrand.  Geen signed compare nodig.
   wire in_block = (y < BLOCK_H);
-
-  // ======================= de tekst =======================================
-  wire [9:0] ty = y - TEXT_Y;
-  wire       in_text_band = in_block && overflow && (x < TEXT_W) && (ty < 10'd16);
-
-  wire [2:0] cidx = x[6:4];            // welke letter (CPITCH = 16)
-  wire [3:0] cx   = x[3:0];
-  wire [3:0] cy   = ty[3:0];
-
-  wire [2:0] gcol = cx[3:1];           // 2x vergroot: 6x8 glyph -> 12x16
-  wire [2:0] grow = cy[3:1];
-  wire       in_glyph = (cx < 4'd12);
-
-  wire [5:0] grow_bits;
-  glyph_rom u_glyph (.chr(cidx), .row(grow), .bits(grow_bits));
-
-  wire text_px = in_text_band && in_glyph && grow_bits[3'd5 - gcol];
+  wire in_row   = in_block && (x < ROW_W);
 
   // ======================= welk hartjesslot ===============================
-  // Vijf vaste grenzen in plaats van hx/40 en hx%40.  hbase is het begin van
-  // het slot; sx = hx - hbase is de positie binnen dit hartje (0..39).
-  wire [9:0] hx     = x - HEART_X0;
-  wire       in_row = in_block && (hx < ROW_W);
-
+  // Vijf vaste grenzen in plaats van x/40 en x%40.  hbase is het begin van
+  // het slot; sx = x - hbase is de positie binnen dit hartje (0..39).
   reg [2:0] hidx;
   reg [9:0] hbase;
   always @(*) begin
-    if      (hx < 10'd40)  begin hidx = 3'd0; hbase = 10'd0;   end
-    else if (hx < 10'd80)  begin hidx = 3'd1; hbase = 10'd40;  end
-    else if (hx < 10'd120) begin hidx = 3'd2; hbase = 10'd80;  end
-    else if (hx < 10'd160) begin hidx = 3'd3; hbase = 10'd120; end
-    else                   begin hidx = 3'd4; hbase = 10'd160; end
+    if      (x < 10'd40)  begin hidx = 3'd0; hbase = 10'd0;   end
+    else if (x < 10'd80)  begin hidx = 3'd1; hbase = 10'd40;  end
+    else if (x < 10'd120) begin hidx = 3'd2; hbase = 10'd80;  end
+    else if (x < 10'd160) begin hidx = 3'd3; hbase = 10'd120; end
+    else                  begin hidx = 3'd4; hbase = 10'd160; end
   end
-  wire [9:0] sxw = hx - hbase;
+  wire [9:0] sxw = x - hbase;
   wire [5:0] sx  = sxw[5:0];           // 0..39
 
-  wire [2:0] hearts_c = (hearts > 3'd5) ? 3'd5 : hearts;   // nooit meer dan er passen
-  wire slot_exists = in_row;
-  wire heart_filled = slot_exists && (hidx < hearts_c);
+  wire [2:0] hearts_c   = (hearts > 3'd5) ? 3'd5 : hearts;  // nooit meer dan er passen
+  wire       heart_full = in_row && (hidx < hearts_c);
 
   // ======================= de ruit ========================================
   // Hartje gecentreerd op sx = 20.  Buitenruit |sx-20| + |y-17| <= 14,
@@ -130,18 +111,12 @@ module hearts (
   wire lobe_r_i = (axr < {2'b0, lw_i});
 
   // ======================= samenstellen ===================================
-  wire heart_outer = slot_exists && (diamond_o || lobe_l_o || lobe_r_o);
-  wire heart_inner = slot_exists && (diamond_i || lobe_l_i || lobe_r_i);
+  wire heart_outer = in_row && (diamond_o || lobe_l_o || lobe_r_o);
+  wire heart_inner = in_row && (diamond_i || lobe_l_i || lobe_r_i);
 
   wire heart_edge = heart_outer && !heart_inner;   // zwarte contour
-  wire heart_core = heart_inner && heart_filled;   // rode kern
-  // overflow: de gevulde hartjes worden wit in plaats van rood.  Dat zegt
-  // hetzelfde als het woord OVERFLOW, kost geen enkele cel extra, en scheelt
-  // een compleet alfabet dat verder nergens voor dient.
+  wire heart_core = heart_inner && heart_full;     // gevulde kern
 
-  assign px_on   = text_px || heart_edge || heart_core;
+  assign px_on   = heart_edge || heart_core;
   assign px_code = heart_core ? (overflow ? 2'd2 : 2'd1) : 2'd0;
 endmodule
-
-
-
