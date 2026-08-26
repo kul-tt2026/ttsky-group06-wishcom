@@ -1,134 +1,125 @@
 `default_nettype none
 `timescale 1ns/1ps
 // ---------------------------------------------------------------------------
-// Zuiver-Verilog render test: sweep over 640x480, schrijf een PPM.
-// Geen cocotb nodig -> loopt in een seconde.
-// commandos: dos2unix render_tb.v ../src/*.v
-//cd /mnt/c/Users/annab/tinytapeout/ttsky-group06-wishcom/test
-//iverilog -g2012 -o sim render_tb.v ../src/satisfactionbar.v ../src/coinbar.v ../src/hearts.v
-//vvp sim
-//python3 -c "from PIL import Image; Image.open('frame.ppm').save('frame.png')"
-// python3 -c "
-// from PIL import Image
-// Image.open('frame.ppm').transpose(Image.ROTATE_90).save('frame.png')"
+// RENDER_TB -- fotohokje voor de HELE renderer.
+//
+// Instantieert renderer.v zelf, dus wat je hier ziet is exact wat op het
+// scherm komt.  Geen gedupliceerde paletten meer die uit de pas gaan lopen.
+//
+//   cd src
+//   iverilog -g2012 -s render_tb -o ../sim ../test/render_tb.v *.v
+//   vvp ../sim
+//   python3 -c "from PIL import Image; Image.open('frame.ppm').save('frame.png')"
+//
+// De PPM wordt AL IN PORTRET weggeschreven (480 x 640), dus je hoeft niet
+// meer te roteren in PIL.
+//
+// Er is een klok (title_egg hopt, dragon_draw heeft geregistreerde uitgangen)
+// maar frame_tick blijft laag: alle tellers staan op hun resetwaarde, dus je
+// krijgt een reproduceerbaar stilstaand beeld.  Animatie testen doe je met
+// egg_tb.v.
 // ---------------------------------------------------------------------------
 module render_tb;
 
-  // ---- zet hier wat je wil testen -----------------------------------------
-  localparam [9:0] HEARTS_X  = 10'd168, HEARTS_Y  = 10'd16;  // 304 x 24
-  localparam [9:0] SATBAR_X  = 10'd294, SATBAR_Y  = 10'd48;  // 162 x 24
-  localparam [9:0] COINBAR_X = 10'd24,  COINBAR_Y = 10'd80;  //  24 x 132
+  // ======================= WAT WIL JE ZIEN ================================
+  localparam [2:0] MODE = 3'd5;    // 0 TITLE  1 EGG  2 HOME  3 CHEST
+                                   // 4 GAMEOVER  5 YOU_WIN
+  localparam       STEP = 1;       // 1 = vol, 2 of 4 = snel itereren
 
-  reg  [9:0] pix_x, pix_y;
-  wire [9:0] px = pix_y;
-  wire [9:0] py = 10'd639 - pix_x;
-  reg  [2:0] sat;
-  reg  [9:0] coins;
+  // stand van het spel (alleen relevant voor de gekozen mode)
+  localparam [2:0] SET_HEARTS  = 3'd3;
+  localparam [2:0] SET_SAT     = 3'd2;
+  localparam [9:0] SET_COINS   = 10'd347;
+  localparam [2:0] SET_LEVEL   = 3'd2;
+  localparam       SET_OVERFL  = 1'b0;
+  localparam       SET_EVOLVE  = 1'b1;   // evolve_now: knop mag oplichten
 
-  // ---- satisfaction bar ----------------------------------------------------
-  wire       sat_on;
-  wire [2:0] sat_code;
-  //satisfactionbar u_sat (
-  //  .x(px - SATBAR_X), .y(py - SATBAR_Y),
-  //  .sat(sat), .px_on(sat_on), .px_code(sat_code)
- // );
+  // minigame
+  localparam [1:0] SET_CSTATE  = 2'd0;   // 0 PICK  1 OPEN  2 RESULT  3 MENU
+  localparam [1:0] SET_CSEL    = 2'd1;
+  localparam [8:0] SET_CONTENT = 9'b010_001_100;   // {kist2, kist1, kist0}
+  localparam [9:0] SET_POT     = 10'd160;
+  localparam [3:0] SET_ROUND   = 4'd2;
 
-  // --- coin bar ------------------------------
-  wire       coin_on;
-  wire [1:0] coin_code;
+  // ei / flits (alleen zichtbaar in mode EGG)
+  localparam [2:0] SET_EGGFR   = 3'd3;   // 0 heel .. 4 wijd open
+  localparam [9:0] SET_FLASHR  = 10'd0;  // 0 = flits uit
 
-//  coinbar u_coin (
-//    .x(px - COINBAR_X), .y(py - COINBAR_Y),
-//    .coins(coins),
-//    .px_on(coin_on), .px_code(coin_code)
-//  );
+  // ======================= aandrijving ====================================
+  reg clk = 1'b0;
+  reg rst_n = 1'b0;
+  always #20 clk = ~clk;               // 25 MHz
 
-  // --- hearts------------------------------
-  reg  [2:0] hcount;
-  reg        ovf;
-  wire       h_on;
-  wire [1:0] h_code;
+  reg [9:0] pix_x = 10'd0, pix_y = 10'd0;
 
-  //  hearts u_hearts (
-  //    .x(px - HEARTS_X), .y(py - HEARTS_Y),
-  //    .hearts(hcount), .overflow(ovf),
-  //    .px_on(h_on), .px_code(h_code)
-  //  );
+  wire [1:0] R, G, B;
 
-  // ---- title card ----------------------------------------------------------
-  wire       t_on;
-  wire [2:0] t_code;
-  title_card u_title (
-    .x(px), .y(py),
-    .px_on(t_on), .px_code(t_code)
+  renderer dut (
+    .clk            (clk),
+    .rst_n          (rst_n),
+    .pix_x          (pix_x),
+    .pix_y          (pix_y),
+    .video_active   (1'b1),
+
+    .mode           (MODE),
+    .menu_sel       (3'd0),
+    .hearts         (SET_HEARTS),
+    .satisfaction   (SET_SAT),
+    .coins          (SET_COINS),
+    .level          (SET_LEVEL),
+
+    .evolve_now     (SET_EVOLVE),
+    .combo_len      (2'd0),
+
+    .chest_frame    (2'd0),
+    .chest_state    (SET_CSTATE),
+    .chest_sel      (SET_CSEL),
+    .chest_outcome  (3'd0),
+
+    .dragon_mood_anim (3'd0),
+    .flash          (1'b0),
+    .flame_frame    (1'b0),
+    .evolve_blink   (1'b1),
+
+    .frame_tick     (1'b0),           // geen animatie: stilstaand frame
+
+    .overflow       (SET_OVERFL),
+    .chest_contents (SET_CONTENT),
+    .pot            (SET_POT),
+    .round          (SET_ROUND),
+    .egg_frame      (SET_EGGFR),
+    .flash_r        (SET_FLASHR),
+
+    .R(R), .G(G), .B(B)
   );
 
-  // ---- palet: exact zoals in renderer.v ------------------------------------
+  // ======================= afvegen ========================================
+  // Het scherm is fysiek 640x480 liggend, maar wij tekenen in portret.
+  // De renderer rekent px = pix_y en py = 639 - pix_x, dus om portret-pixel
+  // (px, py) te raken zetten we pix_y = px en pix_x = 639 - py.
+  integer f, ppx, ppy;
 
-
-  reg [5:0] title_rgb;
-  always @(*) case (t_code)
-    3'd1: title_rgb = 6'b00_01_00;
-    3'd2: title_rgb = 6'b01_11_01;
-    3'd3: title_rgb = 6'b00_01_00;
-    3'd4: title_rgb = 6'b01_11_01;
-    3'd5: title_rgb = 6'b00_10_00;
-    default: title_rgb = 6'b00_00_00;
-  endcase
-
-  reg [5:0] sat_rgb;
-  always @(*) case (sat_code)
-    3'd1: sat_rgb = 6'b11_00_00;
-    3'd2: sat_rgb = 6'b11_01_00;
-    3'd3: sat_rgb = 6'b11_11_00;
-    3'd4: sat_rgb = 6'b10_11_00;
-    3'd5: sat_rgb = 6'b00_11_00;
-    3'd6: sat_rgb = 6'b11_11_11;
-    3'd7: sat_rgb = 6'b01_01_01;
-    default: sat_rgb = 6'b00_00_00;
-  endcase
-
-  reg [5:0] coin_rgb;
-  always @(*) case (coin_code)
-    2'd0: coin_rgb = 6'b00_00_00;   // frame + schotjes, donker
-    2'd1: coin_rgb = 6'b01_01_01;   // leeg vakje, donkergrijs
-    2'd2: coin_rgb = 6'b11_11_00;   // vol vakje, geel
-    default: coin_rgb = 6'b00_00_00;
-  endcase
-
-  wire [5:0] hearts_rgb = (h_code == 2'd1) ? 6'b11_00_00 : 6'b11_11_11;
-
-
-  localparam [5:0] BG_HOME = 6'b01_10_11;
-
-  reg [5:0] rgb;
-  always @(*) begin
-    if      (h_on) rgb = hearts_rgb;
-    else if      (sat_on)  rgb = sat_rgb;
-    else if (coin_on) rgb = coin_rgb;
-    else              rgb = BG_HOME;
-    if      (t_on)    rgb = title_rgb;
-    else if (h_on)    rgb = hearts_rgb;
-  end
-
-  integer f, xi, yi;
   initial begin
-    sat  = 3'd0;      // 0-5
-    coins = 10'd700; // 0-1000
-    hcount = 3'd2;      // 0..5
-    ovf    = 1'b1;      // label aan
+    repeat (4) @(posedge clk);
+    rst_n = 1'b1;
+    repeat (4) @(posedge clk);
+
     f = $fopen("frame.ppm", "w");
-    $fwrite(f, "P3\n640 480\n255\n");
-    for (yi = 0; yi < 480; yi = yi + 1) begin
-      for (xi = 0; xi < 640; xi = xi + 1) begin
-        pix_x = xi[9:0];
-        pix_y = yi[9:0];
+    $fwrite(f, "P3\n%0d %0d\n255\n", 480/STEP, 640/STEP);
+
+    for (ppy = 0; ppy < 640; ppy = ppy + STEP) begin
+      for (ppx = 0; ppx < 480; ppx = ppx + STEP) begin
+        pix_y = ppx[9:0];
+        pix_x = 10'd639 - ppy[9:0];
+        @(posedge clk);        // geregistreerde drawables (draak) bijwerken
         #1;
-        $fwrite(f, "%0d %0d %0d\n", rgb[5:4]*85, rgb[3:2]*85, rgb[1:0]*85);
+        $fwrite(f, "%0d %0d %0d\n", R*85, G*85, B*85);
       end
+      if (ppy % 64 == 0) $display("rij %0d / 640", ppy);
     end
+
     $fclose(f);
-    $display("klaar -> frame.ppm");
+    $display("klaar -> frame.ppm  (mode %0d)", MODE);
     $finish;
   end
 endmodule
