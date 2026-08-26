@@ -6,8 +6,8 @@
 // en rechthoeken.  Scheelt geheugen op de chip.
 //
 // LOKALE COORDINATEN: identiek aan chest_draw.v -- (0,0) is de linkerbovenhoek
-// van het 128 x 128 vakje van die kist.  De plaatsing (CHEST_X / c_top) hoort
-// in renderer.v, niet hier.
+// van het 192 x 192 vakje van die kist (32 x 32 sprite, x6 geschaald).  De
+// plaatsing (CHEST_X / c_top) hoort in renderer.v, niet hier.
 //
 // LAAG: dit hoort in de cascade van renderer.v TUSSEN bak en deksel:
 //
@@ -15,9 +15,14 @@
 //        icoon   (deze module)
 //        deksel  (chest_lid_on)
 //
-// Daardoor is er GEEN clipping nodig: alles onder y = 64 valt vanzelf achter
-// de bak.  De iconen zijn zo geplaatst dat het grootste deel BOVEN die grens
-// zit, dus je ziet ze bijna volledig zodra het deksel open is.
+// Daardoor is er GEEN clipping nodig: alles onder y = 96 (sprite-rij 16, waar
+// de bak begint) valt vanzelf achter de bak.  De iconen staan zo dat het
+// grootste deel BOVEN die grens zit, dus je ziet ze bijna volledig zodra het
+// deksel open is.
+//
+// LET OP: alle getallen hieronder horen bij BOX = 192.  Verander je de schaal
+// in chest_draw.v, dan moeten deze mee -- ze staan vast, er wordt hier niet
+// geschaald (dat zou een extra vermenigvuldiger kosten).
 //
 // px_code (zie icon_color in renderer.v):
 //   1 = zwarte outline        5 = gifgroen
@@ -26,8 +31,8 @@
 //   4 = wit (glans / glas)
 // ---------------------------------------------------------------------------
 module icon_draw (
-    input  wire [9:0] x,          // lokaal, 0..127
-    input  wire [9:0] y,          // lokaal, 0..127
+    input  wire [9:0] x,          // lokaal, 0..191
+    input  wire [9:0] y,          // lokaal, 0..191
     input  wire [2:0] icon,       // zelfde codering als chest_game.v
 
     output reg        px_on,
@@ -43,56 +48,56 @@ module icon_draw (
                    I_BOMB2  = 3'd4;
 
   // Boven/links van de origin wrapt de lokale coordinaat naar ~1023, dus een
-  // enkele "< 128" test vangt meteen ook de linker- en bovenrand af.
-  wire in_box = (x < 10'd128) && (y < 10'd128);
+  // enkele "< 192" test vangt meteen ook de linker- en bovenrand af.
+  wire in_box = (x < 10'd192) && (y < 10'd192);
 
-  wire is_coin   = (icon == I_COIN);
-  wire is_cursed = (icon == I_CURSED);
+  wire is_coin = (icon == I_COIN);
 
   // ======================= gedeelde afstandsberekening ====================
   // Munt en flesbuik zijn allebei een cirkel, alleen met een ander middelpunt
   // en een andere straal.  Er is er altijd maar EEN tegelijk zichtbaar, dus we
-  // rekenen ook maar EEN afstand uit -- dat scheelt een tweede vermenigvuldiger.
+  // rekenen ook maar EEN afstand uit -- dat scheelt een tweede paar
+  // vermenigvuldigers.
   //
-  //   munt : middelpunt (64, 46)
-  //   fles : middelpunt (64, 52)   <- de buik
-  wire [6:0] cy = is_coin ? 7'd46 : 7'd52;
+  //   munt : middelpunt (96, 69)
+  //   fles : middelpunt (96, 78)   <- de buik
+  wire [7:0] cy = is_coin ? 8'd69 : 8'd78;
 
-  wire [6:0] dx = (x[6:0] >= 7'd64) ? (x[6:0] - 7'd64) : (7'd64 - x[6:0]);
-  wire [6:0] dy = (y[6:0] >= cy)    ? (y[6:0] - cy)    : (cy - y[6:0]);
+  wire [7:0] dx = (x[7:0] >= 8'd96) ? (x[7:0] - 8'd96) : (8'd96 - x[7:0]);
+  wire [7:0] dy = (y[7:0] >= cy)    ? (y[7:0] - cy)    : (cy - y[7:0]);
 
-  wire [13:0] d2 = (dx * dx) + (dy * dy);
+  wire [15:0] d2 = (dx * dx) + (dy * dy);
 
   // ======================= MUNT ===========================================
-  wire coin_outer = (d2 <= 14'd676);            // r = 26, buitenrand
-  wire coin_gold  = (d2 <= 14'd484);            // r = 22, gouden vlak
-  wire coin_ring  = (d2 >= 14'd196) && (d2 <= 14'd289);  // r 14..17, reliefring
+  wire coin_outer = (d2 <= 16'd1521);           // r = 39, buitenrand
+  wire coin_gold  = (d2 <= 16'd1089);           // r = 33, gouden vlak
+  wire coin_ring  = (d2 >= 16'd441) && (d2 <= 16'd625);  // r 21..25, reliefring
 
   // Glans linksboven.  Bewust een RUITJE en geen cirkel: een tweede cirkel
-  // zou een tweede vermenigvuldiger kosten, een ruit alleen twee optellingen.
-  wire [6:0] gx = (x[6:0] >= 7'd55) ? (x[6:0] - 7'd55) : (7'd55 - x[6:0]);
-  wire [6:0] gy = (y[6:0] >= 7'd37) ? (y[6:0] - 7'd37) : (7'd37 - y[6:0]);
-  wire coin_glint = ((gx + gy) <= 7'd6);
+  // zou een tweede paar vermenigvuldigers kosten, een ruit alleen optellingen.
+  wire [7:0] gx = (x[7:0] >= 8'd82) ? (x[7:0] - 8'd82) : (8'd82 - x[7:0]);
+  wire [7:0] gy = (y[7:0] >= 8'd55) ? (y[7:0] - 8'd55) : (8'd55 - y[7:0]);
+  wire coin_glint = ((gx + gy) <= 8'd8);
 
   // ======================= GIFDRANKJE =====================================
   // Kurk, hals en buik, elk met een buiten- en een binnenvorm.  Het verschil
   // tussen buiten en binnen IS de zwarte omtrek -- geen aparte randlogica.
-  wire cork_out = (x >= 10'd56) && (x < 10'd72) && (y >= 10'd4)  && (y < 10'd18);
-  wire cork_in  = (x >= 10'd59) && (x < 10'd69) && (y >= 10'd7)  && (y < 10'd18);
+  wire cork_out = (x >= 10'd84) && (x < 10'd108) && (y >= 10'd6)  && (y < 10'd27);
+  wire cork_in  = (x >= 10'd88) && (x < 10'd104) && (y >= 10'd10) && (y < 10'd27);
 
-  wire bulb_out = (d2 <= 14'd400);              // r = 20
-  wire bulb_in  = (d2 <= 14'd225);              // r = 15
+  wire bulb_out = (d2 <= 16'd900);              // r = 30
+  wire bulb_in  = (d2 <= 16'd484);              // r = 22
 
-  wire neck_out = (x >= 10'd57) && (x < 10'd71) && (y >= 10'd14) && (y < 10'd54);
-  wire neck_in  = (x >= 10'd61) && (x < 10'd67) && (y >= 10'd16) && (y < 10'd54);
+  wire neck_out = (x >= 10'd85) && (x < 10'd107) && (y >= 10'd21) && (y < 10'd81);
+  wire neck_in  = (x >= 10'd91) && (x < 10'd101) && (y >= 10'd24) && (y < 10'd81);
 
   wire flask_out = bulb_out || neck_out;
   wire flask_in  = bulb_in  || neck_in;
 
-  // Vloeistofniveau: alles onder y = 48 in de fles is drank, met een iets
-  // donkerder bandje van 4 px als oppervlak.
-  wire liquid  = flask_in && (y >= 10'd48);
-  wire surface = liquid   && (y <  10'd52);
+  // Vloeistofniveau: alles onder y = 72 in de fles is drank, met een iets
+  // donkerder bandje van 6 px als oppervlak.
+  wire liquid  = flask_in && (y >= 10'd72);
+  wire surface = liquid   && (y <  10'd78);
 
   // ======================= uitgangen ======================================
   always @(*) begin
@@ -136,6 +141,6 @@ module icon_draw (
     end
   end
 
-  wire _unused = &{is_cursed, I_2X, I_BOMB, I_BOMB2, x[9:7], y[9:7], 1'b0};
+  wire _unused = &{I_2X, I_BOMB, I_BOMB2, x[9:8], y[9:8], 1'b0};
 
 endmodule

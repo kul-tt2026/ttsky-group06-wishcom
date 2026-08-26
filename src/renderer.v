@@ -72,10 +72,10 @@ localparam [2:0] M_TITLE    = 3'd0,
   localparam DRAGON_X = 10'd0, DRAGON_Y = 10'd0;
   // localparam SATBAR_X = 10'd24,  SATBAR_Y = 10'd56;
   // localparam COINBAR_X  = 10'd24,  COINBAR_Y  = 10'd80;
-  localparam [9:0] CHEST_X     = 10'd176;
-  localparam [9:0] CHEST_Y0    = 10'd60;
-  localparam [9:0] CHEST_PITCH = 10'd192;
-  localparam [9:0] CHEST_BOX   = 10'd128;
+  localparam [9:0] CHEST_X     = 10'd144;
+  localparam [9:0] CHEST_Y0    = 10'd52;
+  localparam [9:0] CHEST_PITCH = 10'd194;
+  localparam [9:0] CHEST_BOX   = 10'd192;
  
   localparam [1:0] C_PICK = 2'd0, C_OPEN = 2'd1, C_RESULT = 2'd2;
   // localparam HEARTS_X = 10'd168, HEARTS_Y = 10'd16;
@@ -182,9 +182,9 @@ localparam [2:0] M_TITLE    = 3'd0,
     end else if (py >= CHEST_Y0 + CHEST_PITCH &&
                  py <  CHEST_Y0 + CHEST_PITCH + CHEST_BOX) begin
       c_slot = 2'd1;  c_top = CHEST_Y0 + CHEST_PITCH;      c_inrow = 1'b1;
-    end else if (py >= CHEST_Y0 + 10'd384 &&
-                 py <  CHEST_Y0 + 10'd384 + CHEST_BOX) begin
-      c_slot = 2'd2;  c_top = CHEST_Y0 + 10'd384;          c_inrow = 1'b1;
+    end else if (py >= CHEST_Y0 + (CHEST_PITCH << 1) &&
+                 py <  CHEST_Y0 + (CHEST_PITCH << 1) + CHEST_BOX) begin
+      c_slot = 2'd2;  c_top = CHEST_Y0 + (CHEST_PITCH << 1);  c_inrow = 1'b1;
     end else begin
       c_slot = 2'd0;  c_top = CHEST_Y0;                    c_inrow = 1'b0;
     end
