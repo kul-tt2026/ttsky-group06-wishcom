@@ -275,43 +275,9 @@ module background (
                 (pix_x >= 10'd460 && pix_x < 10'd520 && pix_y >= 10'd350 && pix_y < 10'd370));
   wire is_cloud = wolk1 || wolk2;
 
-  // ---- parabool zonder vermenigvuldiger ----------------------------------
-  // hill_curve(dy) ~= (dy*dy) >> 7, met i = dy >> 2  =>  waarde = (i*i) >> 3
-  function [9:0] hill_curve;
-    input [8:0] dy;
-    reg [6:0] i;
-    begin
-      i = dy[8:2];
-      case (i)
-        7'd0 : hill_curve = 10'd0;   7'd1 : hill_curve = 10'd0;
-        7'd2 : hill_curve = 10'd0;   7'd3 : hill_curve = 10'd1;
-        7'd4 : hill_curve = 10'd2;   7'd5 : hill_curve = 10'd3;
-        7'd6 : hill_curve = 10'd4;   7'd7 : hill_curve = 10'd6;
-        7'd8 : hill_curve = 10'd8;   7'd9 : hill_curve = 10'd10;
-        7'd10: hill_curve = 10'd12;  7'd11: hill_curve = 10'd15;
-        7'd12: hill_curve = 10'd18;  7'd13: hill_curve = 10'd21;
-        7'd14: hill_curve = 10'd24;  7'd15: hill_curve = 10'd28;
-        7'd16: hill_curve = 10'd32;  7'd17: hill_curve = 10'd36;
-        7'd18: hill_curve = 10'd40;  7'd19: hill_curve = 10'd45;
-        7'd20: hill_curve = 10'd50;  7'd21: hill_curve = 10'd55;
-        7'd22: hill_curve = 10'd60;  7'd23: hill_curve = 10'd66;
-        7'd24: hill_curve = 10'd72;  7'd25: hill_curve = 10'd78;
-        7'd26: hill_curve = 10'd84;  7'd27: hill_curve = 10'd91;
-        7'd28: hill_curve = 10'd98;  7'd29: hill_curve = 10'd105;
-        7'd30: hill_curve = 10'd112; 7'd31: hill_curve = 10'd120;
-        7'd32: hill_curve = 10'd128; 7'd33: hill_curve = 10'd136;
-        7'd34: hill_curve = 10'd144; 7'd35: hill_curve = 10'd153;
-        7'd36: hill_curve = 10'd162; 7'd37: hill_curve = 10'd171;
-        7'd38: hill_curve = 10'd180; 7'd39: hill_curve = 10'd190;
-        7'd40: hill_curve = 10'd200; 7'd41: hill_curve = 10'd210;
-        7'd42: hill_curve = 10'd220; 7'd43: hill_curve = 10'd231;
-        7'd44: hill_curve = 10'd242; 7'd45: hill_curve = 10'd253;
-        7'd46: hill_curve = 10'd264; 7'd47: hill_curve = 10'd276;
-        default: hill_curve = 10'd320;      // ver voorbij de heuvelvoet
-      endcase
-    end
-  endfunction
-
+  // ======================= 2. ZACHTE GLOOIENDE BERGEN =====================
+  // We maken 2 mooie heuveltoppen: één op y=140 en één op y=340
+  // Heuvel 1 (top rond y = 140, raakt x = 285)
   wire [8:0] dy1 = (pix_y > 10'd140) ? (pix_y[8:0] - 9'd140) : (9'd140 - pix_y[8:0]);
   wire [8:0] dy2 = (pix_y > 10'd340) ? (pix_y[8:0] - 9'd340) : (9'd340 - pix_y[8:0]);
 
