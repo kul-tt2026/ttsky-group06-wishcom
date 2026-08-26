@@ -420,17 +420,6 @@ end
     default: sat_rgb = 6'b00_00_00; // frame + schotjes
   endcase
 
-  // Dynamische achtergrond voor M_HOME: Lucht + Grasvloer
-  reg [5:0] bg_home_dynamic;
-  always @(*) begin
-    if (py < 10'd500)
-      bg_home_dynamic = 6'b01_10_11; // Hemelsblauw
-    else if (py < 10'd540)
-      bg_home_dynamic = 6'b00_11_00; // Grasstrook onder de draak
-    else
-      bg_home_dynamic = 6'b01_01_00; // Aarde / onderlaag
-  end
-
   // heartsinfo: juist kleuren nog aanpassen: rood: wit (denk ik)
   // ======================= 4. COLOUR (heartsinfo) ========================
   reg [5:0] heartsinfo_rgb;
@@ -444,10 +433,10 @@ end
   wire [5:0] bg_home_rgb;
 
   background u_bg (
-    .pix_x(pix_x),
-    .pix_y(pix_y),
+    .x(px), .y(py),
     .bg_rgb(bg_home_rgb)
   );
+
   //buttons_rgb
 
   // ======================= 3. STACK =======================================
@@ -455,7 +444,6 @@ end
   // GAME: bars > chests > background: show_coin_hearts > show_chests 
   // HOME: bars > dragon >  background: show_coin_hearts > show_satbar > show_buttons > show_dragon
 
-  localparam [5:0] BG_HOME  = 6'b011011; // background home (lichtblauw)
   localparam [5:0] BG_CHEST = 6'b100000; //background game (rood)
 
   reg [5:0] rgb;

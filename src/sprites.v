@@ -256,53 +256,87 @@ endmodule
 
 
 // ===========================================================================
-// BACKGROUND -- lucht, twee wolkjes en twee glooiende heuvels.
+// BACKGROUND -- het thuisscherm: lucht, zon, twee wolkjes, gras en aarde.
 //
-// De heuvelrand was (dy*dy) >> 7: twee echte 9x9-vermenigvuldigers, per pixel.
-// Nu een tabel op dy in stappen van 4 px.  Zelfde vorm, alleen wordt de rand
-// in blokjes van 4 px getrapt.  Is dat zichtbaar, gebruik dan dy[8:1] en een
-// tabel van 96 ingangen.
+// PORTRET-coordinaten (px, py), net als alle andere drawables.
+//
+//   y <  GRASS_Y            lucht, met zon en wolkjes
+//   y in [GRASS_Y, +50)     grasstrook -- zelfde groen als het titelscherm
+//   y in [SOIL_Y,  +4)      donkere aardrand, scheidt gras van grond
+//   y >= SOIL_Y + 4         aarde
+//
+// GRASS_Y AFSTELLEN: de draak moet er met zijn onderkant op rusten.  De drie
+// sprite-vakken eindigen op y = 340 (l2), 336 (l3) en 360 (l4), dus 344 laat
+// de kleine draken erop staan en de grote er net iets in zakken.  Zie je na
+// een render dat het niet klopt, dan is dit de enige regel die je aanraakt.
+//
+// GEEN VERMENIGVULDIGINGEN: de zon is een tabel van halfbreedtes per rij
+// (zoals draw_buttons), de wolkjes en de horizon zijn vergelijkingen.
 // ===========================================================================
 module background (
-    input  wire [9:0] pix_x,
-    input  wire [9:0] pix_y,
+    input  wire [9:0] x,          // portret-x  0..479
+    input  wire [9:0] y,          // portret-y  0..639
     output reg  [5:0] bg_rgb
 );
-  // ---- wolkjes -----------------------------------------------------------
-  wire wolk1 = ((pix_x >= 10'd490 && pix_x < 10'd530 && pix_y >= 10'd110 && pix_y < 10'd120) ||
-                (pix_x >= 10'd480 && pix_x < 10'd540 && pix_y >= 10'd120 && pix_y < 10'd140));
-  wire wolk2 = ((pix_x >= 10'd470 && pix_x < 10'd510 && pix_y >= 10'd340 && pix_y < 10'd350) ||
-                (pix_x >= 10'd460 && pix_x < 10'd520 && pix_y >= 10'd350 && pix_y < 10'd370));
-  wire is_cloud = wolk1 || wolk2;
+  // ---- horizon -----------------------------------------------------------
+  localparam [9:0] GRASS_Y = 10'd344;            // bovenkant gras
+  localparam [9:0] GRASS_H = 10'd50;             // dikte grasstrook
+  localparam [9:0] SOIL_Y  = GRASS_Y + GRASS_H;  // 394
+  localparam [9:0] EDGE_H  = 10'd4;              // donkere scheidingslijn
 
-  // ======================= 2. ZACHTE GLOOIENDE BERGEN =====================
-  // We maken 2 mooie heuveltoppen: één op y=140 en één op y=340
-  // Heuvel 1 (top rond y = 140, raakt x = 285)
-  wire [8:0] dy1 = (pix_y > 10'd140) ? (pix_y[8:0] - 9'd140) : (9'd140 - pix_y[8:0]);
-  wire [8:0] dy2 = (pix_y > 10'd340) ? (pix_y[8:0] - 9'd340) : (9'd340 - pix_y[8:0]);
-
-  wire [9:0] curve1 = hill_curve(dy1);
-  wire [9:0] curve2 = hill_curve(dy2);
-
-  wire [9:0] hill1_x = (10'd285 > curve1) ? (10'd285 - curve1) : 10'd0;
-  wire [9:0] hill2_x = (10'd270 > curve2) ? (10'd270 - curve2) : 10'd0;
-
-  wire in_front_hill = (pix_x <= hill1_x);
-  wire in_back_hill  = (pix_x <= hill2_x);
+  // ---- zon: rechtsboven, onder de hartjes --------------------------------
+  localparam [9:0] SUN_CX = 10'd404;
+  localparam [9:0] SUN_CY = 10'd104;
+  localparam [9:0] SUN_R  = 10'd36;
 
   // ---- kleuren -----------------------------------------------------------
+  localparam [5:0] C_SKY   = 6'b01_10_11;   // hemelsblauw, zoals het titelscherm
+  localparam [5:0] C_SUN   = 6'b11_11_00;   // geel
+  localparam [5:0] C_CLOUD = 6'b11_11_11;   // wit
+  localparam [5:0] C_GRASS = 6'b00_10_00;   // ZELFDE groen als title_egg's gras
+  localparam [5:0] C_EDGE  = 6'b01_00_00;   // donkerbruine rand
+  localparam [5:0] C_SOIL  = 6'b10_01_00;   // aarde
+
+  // ---- zon ---------------------------------------------------------------
+  // Halfbreedte per rij uit een tabel: sqrt(R^2 - dy^2) zou twee
+  // vermenigvuldigingen per pixel kosten.  Index in stappen van 2 px; bij een
+  // straal van 36 is dat niet te zien.
+  wire [9:0] sdx = (x >= SUN_CX) ? (x - SUN_CX) : (SUN_CX - x);
+  wire [9:0] sdy = (y >= SUN_CY) ? (y - SUN_CY) : (SUN_CY - y);
+
+  reg [5:0] sun_hw;
+  always @(*) case (sdy[5:1])              // sdy >> 1, geldig zolang sdy <= 36
+    5'd0:  sun_hw = 6'd36;  5'd1:  sun_hw = 6'd36;
+    5'd2:  sun_hw = 6'd36;  5'd3:  sun_hw = 6'd35;
+    5'd4:  sun_hw = 6'd35;  5'd5:  sun_hw = 6'd35;
+    5'd6:  sun_hw = 6'd34;  5'd7:  sun_hw = 6'd33;
+    5'd8:  sun_hw = 6'd32;  5'd9:  sun_hw = 6'd31;
+    5'd10: sun_hw = 6'd30;  5'd11: sun_hw = 6'd28;
+    5'd12: sun_hw = 6'd27;  5'd13: sun_hw = 6'd25;
+    5'd14: sun_hw = 6'd23;  5'd15: sun_hw = 6'd20;
+    5'd16: sun_hw = 6'd16;  5'd17: sun_hw = 6'd12;
+    default: sun_hw = 6'd0;
+  endcase
+
+  wire sun = (sdy <= SUN_R) && (sdx < {4'd0, sun_hw});
+
+  // ---- twee wolkjes ------------------------------------------------------
+  // Elk twee rechthoeken: een smalle bovenop een brede.  Links naast de draak
+  // en rechts eronder, zodat ze niet achter de sprite verdwijnen.
+  wire cloud1 = (y >= 10'd205 && y < 10'd215 && x >= 10'd91  && x < 10'd139) ||
+                (y >= 10'd215 && y < 10'd227 && x >= 10'd75  && x < 10'd155);
+
+  wire cloud2 = (y >= 10'd265 && y < 10'd275 && x >= 10'd406 && x < 10'd454) ||
+                (y >= 10'd275 && y < 10'd287 && x >= 10'd390 && x < 10'd470);
+
+  // ---- stapelen ----------------------------------------------------------
   always @(*) begin
-    if (in_front_hill) begin
-      if (pix_x + 10'd8 >= hill1_x) bg_rgb = 6'b10_11_01;  // lichtgroene rand
-      else                          bg_rgb = 6'b00_11_00;  // grasgroen
-    end else if (in_back_hill) begin
-      if (pix_x + 10'd8 >= hill2_x) bg_rgb = 6'b00_11_00;
-      else                          bg_rgb = 6'b00_10_00;  // bosgroen
-    end else if (is_cloud) begin
-      bg_rgb = 6'b11_11_11;
-    end else begin
-      bg_rgb = 6'b01_10_11;                                // hemelsblauw
-    end
+    if      (y >= SOIL_Y + EDGE_H) bg_rgb = C_SOIL;
+    else if (y >= SOIL_Y)          bg_rgb = C_EDGE;
+    else if (y >= GRASS_Y)         bg_rgb = C_GRASS;
+    else if (sun)                  bg_rgb = C_SUN;
+    else if (cloud1 || cloud2)     bg_rgb = C_CLOUD;
+    else                           bg_rgb = C_SKY;
   end
 endmodule
 
