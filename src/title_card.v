@@ -57,6 +57,7 @@ module title_card (
   localparam [9:0] W_W    = 10'd264;    // 33 native * 8
   localparam [9:0] W_H    = 10'd152;    // 19 native * 8
   localparam [9:0] W_SINK = 10'd40;     // hoeveel vleugel achter het kader zakt
+  localparam       WINGS  = 1'b0;
 
   // --- basis-rechthoek van het kader --------------------------------------
   wire [9:0] O_X = T_X - PAD - 2*BORDER;
@@ -94,12 +95,14 @@ module title_card (
   // --- vleugels: gecentreerd, onderkant W_SINK diep achter het kader -------
   wire [9:0] W_X = O_X + (O_W >> 1) - (W_W >> 1);
   wire [9:0] W_Y = O_Y - W_H + W_SINK;
-  wire in_wing = (x >= W_X) && (x < W_X + W_W) &&
+  wire in_wing = WINGS && (x >= W_X) && (x < W_X + W_W) &&
                  (y >= W_Y) && (y < W_Y + W_H);
 
   // --- letter-ROM: 37 rijen van 200 bits, 2x geschaald (>>1) --------------
-  wire [7:0] rx = (x - T_X) >> 1;       // 0..199
-  wire [5:0] ry = (y - T_Y) >> 1;       // 0..36
+  wire [9:0] tdx = x - T_X;
+  wire [9:0] tdy = y - T_Y;
+  wire [7:0] rx  = tdx[8:1];   // 0..199
+  wire [5:0] ry  = tdy[6:1];   // 0..36
 
   reg [199:0] letter_rows [0:36];
   initial $readmemh("title_letters.hex", letter_rows);
@@ -111,8 +114,10 @@ module title_card (
   wire letter = in_text && lrow[rx];
 
   // --- vleugel-ROM: 19 rijen, 33 pixels van 2 bits, 8x geschaald (>>3) ----
-  wire [5:0] wx = (x - W_X) >> 3;       // 0..32
-  wire [4:0] wy = (y - W_Y) >> 3;       // 0..18
+  wire [9:0] wdx = x - W_X;
+  wire [9:0] wdy = y - W_Y;
+  wire [5:0] wx  = wdx[8:3];   // 0..32
+  wire [4:0] wy  = wdy[7:3];   // 0..18
 
   reg [71:0] wing_rows [0:18];
   initial $readmemh("title_wings.hex", wing_rows);

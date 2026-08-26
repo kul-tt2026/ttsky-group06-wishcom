@@ -24,7 +24,6 @@ module anim (
     output reg        flame_frame       // flame flicker
 );
   reg [8:0] slow;                       // free-running frame counter
-  reg evolve_now_d;
   reg [7:0] blink_cnt;
 
   always @(posedge clk) begin

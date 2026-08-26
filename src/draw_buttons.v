@@ -241,7 +241,7 @@ module draw_buttons (
   wire [9:0] wd_u = lx - 10'd202;
   wire [9:0] wd_v = ly - 10'd19;
   reg [3:0] wd_ch;
-  always @(*) case (wd_u[9:4])
+  always @(*) case (wd_u[7:4])
       4'd0: wd_ch = 4'd1;
       4'd1: wd_ch = 4'd10;
       4'd2: wd_ch = 4'd4;
@@ -255,7 +255,7 @@ module draw_buttons (
   wire [9:0] wp_u = lx - 10'd210;
   wire [9:0] wp_v = ly - 10'd161;
   reg [3:0] wp_ch;
-  always @(*) case (wp_u[9:4])
+  always @(*) case (wp_u[7:4])
       4'd0: wp_ch = 4'd9;
       4'd1: wp_ch = 4'd6;
       4'd2: wp_ch = 4'd0;
@@ -268,7 +268,7 @@ module draw_buttons (
   wire [9:0] we_u = lx - 10'd194;
   wire [9:0] we_v = ly - 10'd96;
   reg [3:0] we_ch;
-  always @(*) case (we_u[9:4])
+  always @(*) case (we_u[7 :4])
       4'd0: we_ch = 4'd2;
       4'd1: we_ch = 4'd12;
       4'd2: we_ch = 4'd8;
@@ -283,7 +283,7 @@ module draw_buttons (
   wire [9:0] wf_u = 10'd129 - ly;
   wire [9:0] wf_v = lx - 10'd114;
   reg [3:0] wf_ch;
-  always @(*) case (wf_u[9:4])
+  always @(*) case (wf_u[7:4])
       4'd0: wf_ch = 4'd3;
       4'd1: wf_ch = 4'd2;
       4'd2: wf_ch = 4'd2;
@@ -296,7 +296,7 @@ module draw_buttons (
   wire [9:0] ws_u = ly - 10'd62;
   wire [9:0] ws_v = 10'd365 - lx;
   reg [3:0] ws_ch;
-  always @(*) case (ws_u[9:4])
+  always @(*) case (ws_u[7:4])
       4'd0: ws_ch = 4'd11;
       4'd1: ws_ch = 4'd6;
       4'd2: ws_ch = 4'd2;

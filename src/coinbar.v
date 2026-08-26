@@ -3,8 +3,8 @@
 // COINBAR -- VERTICAAL.  8 vakjes, vult van ONDER naar BOVEN, met het
 // muntbedrag als drie cijfers eronder.
 //
-// GEEN DELINGEN.  Alles gaat via vermenigvuldigen met een constante en
-// shiften; yosys maakt daar shift-adds van.
+// GEEN DELINGEN.  Alles via vermenigvuldigen met een constante en shiften;
+// yosys maakt daar shift-adds van.
 //     n / 3   ==  (n * 683) >> 11     exact voor n < 2048
 //     n / 10  ==  (n * 205) >> 11     exact voor n < 1024
 //     n / 100 ==  (n *  41) >> 12     exact voor n < 1024
@@ -14,17 +14,22 @@
 // wordt en niet op COINS_MAX.  Het bovenste vakje gaat aan bij 896; bij
 // coins >= COINS_MAX zetten we alles aan zodat de balk echt vol staat.
 //
-// DE CIJFERS KOMEN UIT digit_rom (sprites.v), hetzelfde 4x6 font dat
-// chest_menu voor de pot en het rondenummer gebruikt.  Er stond hier ooit
-// een eigen 3x5 bitmap; die is weg zodat elk getal op het scherm er
-// hetzelfde uitziet.  Zie de git-historie als je hem terug wilt.
+// DE CIJFERS komen uit de gedeelde digit_rom, via de renderer: deze module
+// zegt met q_digit/q_row wat hij wil opzoeken en krijgt het antwoord in
+// q_bits terug.  Er stond hier ooit een eigen 3x5 bitmap; die is weg zodat
+// elk getal op het scherm er hetzelfde uitziet en de tabel maar een keer op
+// de chip staat.
 //
 // px_code: 0 = frame + schotjes   1 = leeg vakje   2 = vol vakje + cijfers
 // ---------------------------------------------------------------------------
 module coinbar (
-    input  wire [9:0] x,            // lokaal (pix_x - COINBAR_X)
-    input  wire [9:0] y,            // lokaal (pix_y - COINBAR_Y)
+    input  wire [9:0] x,            // lokaal (px - COINBAR_X)
+    input  wire [9:0] y,            // lokaal (py - COINBAR_Y)
     input  wire [9:0] coins,        // 0..1000, uit dragon_state
+    output wire [3:0] q_digit,
+    output wire [2:0] q_row,
+    input  wire [3:0] q_bits,
+    output wire       q_on,
     output wire       px_on,
     output wire [1:0] px_code
 );
@@ -133,11 +138,11 @@ module coinbar (
                       (col_in_digit < 6'd6) ? 2'd1 :
                       (col_in_digit < 6'd9) ? 2'd2 : 2'd3;
 
-  // Het gedeelde 4x6 font; bits[3] is de linkerkolom.
-  wire [3:0] bits;
-  digit_rom u_dig (.digit(cur_digit), .row(font_y), .bits(bits));
+  assign q_digit = cur_digit;
+  assign q_row   = font_y;
+  assign q_on    = in_txt_box && valid_col;
 
-  wire font_px = in_txt_box && valid_col && bits[2'd3 - font_x];
+  wire font_px = in_txt_box && valid_col && q_bits[2'd3 - font_x];
 
   // ======================= output =========================================
   assign px_on   = in_bar || font_px;

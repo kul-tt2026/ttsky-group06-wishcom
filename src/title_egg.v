@@ -283,11 +283,14 @@ module title_egg (
   assign flash_rim = flash_on && (fd + RIM > flash_r);
 
   // --- PRESS ANY BUTTON (3x5 font, 4x geschaald) --------------------------
-  wire in_press = blink &&
+  localparam PRESS = 1'b0;
+  wire in_press = PRESS && blink &&
                   (x >= PRESS_X) && (x < PRESS_X + PRESS_W) &&
                   (y >= PRESS_Y) && (y < PRESS_Y + PRESS_H);
-  wire [5:0] tx = (x - PRESS_X) >> 2;   // 0..62
-  wire [2:0] ty = (y - PRESS_Y) >> 2;   // 0..4
+  wire [9:0] pdx = x - PRESS_X;
+  wire [9:0] pdy = y - PRESS_Y;
+  wire [5:0] tx  = pdx[7:2];   // 0..62, was (x - PRESS_X) >> 2
+  wire [2:0] ty  = pdy[4:2];   // 0..4,  was (y - PRESS_Y) >> 2
 
   reg [63:0] press_rows [0:4];
   initial $readmemh("title_press.hex", press_rows);

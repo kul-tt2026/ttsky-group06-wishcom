@@ -6,10 +6,12 @@
 //   3. STACK things: the layer cascade (first visible layer wins)
 //   4. COLOUR things: map each drawable's px_code to real RGB
 //
-// GEDEELDE PALETTEN.  Waar twee drawables hetzelfde palet gebruiken en elkaar
-// per pixel uitsluiten, staat er nu EEN opzoektabel met gemuxte invoer in
-// plaats van twee kopieen.  Dat geldt voor de draak en het titel-ei (andere
-// modes) en voor de kistbodem en het deksel (de STACK kiest er altijd een).
+// GEDEELDE TABELLEN.  Waar twee dingen dezelfde tabel gebruiken en elkaar per
+// pixel uitsluiten, staat er EEN opzoeking met gemuxte invoer in plaats van
+// twee of vier kopieen.  Dat geldt voor:
+//   * het palet van de draak en het titel-ei (andere modes)
+//   * de kleur van de kistbodem en het deksel (de STACK kiest er altijd een)
+//   * digit_rom, gedeeld door het menu, de munten en het level
 // ---------------------------------------------------------------------------
 module renderer (
     input  wire       clk,
@@ -71,9 +73,10 @@ module renderer (
   // Every position is a constant HERE, in one file.  Moving anything on
   // screen is a one-line edit.
 
-  localparam [9:0] HEARTS_X  = 10'd130, HEARTS_Y  = 10'd16;  // 304 x 24
-  localparam [9:0] SATBAR_X  = 10'd85,  SATBAR_Y  = 10'd370; // 162 x 24
-  localparam [9:0] COINBAR_X = 10'd24,  COINBAR_Y = 10'd80;  //  24 x 132
+  localparam [9:0] HEARTS_X  = 10'd270, HEARTS_Y  = 10'd16;  // 304 x 24
+  localparam [9:0] SATBAR_X  = 10'd85,  SATBAR_Y  = 10'd358; // 162 x 24
+  localparam [9:0] COINBAR_X = 10'd24,  COINBAR_Y = 10'd80;  //  40 x 220
+  localparam [9:0] LEVEL_X   = 10'd24,   LEVEL_Y   = 10'd24;   //  48 x 18
 
   localparam DRAGON_X = 10'd0, DRAGON_Y = 10'd0;
   localparam [9:0] CHEST_X     = 10'd144;
@@ -201,11 +204,35 @@ module renderer (
 
   wire chest_icon_on = show_chests && c_inrow && c_show_icon && c_icon_on;
 
+  // ======================= EEN GEDEELDE CIJFERTABEL =======================
+  // Vier getallen op het scherm -- het rondenummer en de pot in het menu, de
+  // munten, en het level -- en ze staan alle vier op plekken die elkaar
+  // nergens overlappen.  Dus EEN digit_rom met gemuxte invoer, in plaats van
+  // vier kopieen van 74 cellen waarvan er altijd drie niets doen.
+  //
+  // Dit ZIET eruit als een combinatorische lus (bits gaan omlaag, digit komt
+  // omhoog) maar is het niet: q_digit en q_on hangen alleen van de positie en
+  // de waarde af, nooit van q_bits.  Niet "repareren".
+  //
+  // LET OP: de mux is een prioriteitsketen, geen echte keuze.  Verplaats je
+  // een van de vier zo dat ze elkaar wel raken, dan wint stilzwijgend de
+  // eerste en tekent de andere het verkeerde cijfer.
+  wire [3:0] menu_d, coin_d, lvl_d;
+  wire [2:0] menu_r, coin_r, lvl_r;
+  wire       menu_q, coin_q, lvl_q;
+
+  wire [3:0] dig_digit = menu_q ? menu_d : lvl_q ? lvl_d : coin_d;
+  wire [2:0] dig_row   = menu_q ? menu_r : lvl_q ? lvl_r : coin_r;
+
+  wire [3:0] dig_bits;
+  digit_rom u_digit (.digit(dig_digit), .row(dig_row), .bits(dig_bits));
+
   // MINI GAME MENU PAGE ----------------------------------------------------
   wire       menu_on;
   wire [2:0] menu_code;
   chest_menu u_menu (
     .x(px), .y(py), .pot(pot), .round(round),
+    .q_digit(menu_d), .q_row(menu_r), .q_bits(dig_bits), .q_on(menu_q),
     .px_on(menu_on), .px_code(menu_code)
   );
 
@@ -217,14 +244,24 @@ module renderer (
     .sat(satisfaction),
     .px_on(sat_on), .px_code(sat_code)
   );
-  // LEVEL moet hier ook nog bij, best apart want de bits zitten vol
 
   wire       coin_on;
   wire [1:0] coin_code;
   coinbar u_coinbar (
     .x(px - COINBAR_X), .y(py - COINBAR_Y),
     .coins(coins),
+    .q_digit(coin_d), .q_row(coin_r), .q_bits(dig_bits), .q_on(coin_q),
     .px_on(coin_on), .px_code(coin_code)
+  );
+
+  // LEVEL ------------------------------------------------------------------
+  // "LVL n" helemaal linksboven.  De letters zijn een vaste minibitmap in de
+  // module zelf; alleen het cijfer komt uit de gedeelde tabel hierboven.
+  wire lvl_on;
+  level_box u_level (
+    .x(px - LEVEL_X), .y(py - LEVEL_Y), .level(level),
+    .q_digit(lvl_d), .q_row(lvl_r), .q_bits(dig_bits), .q_on(lvl_q),
+    .on(lvl_on)
   );
 
   wire gameover_text_on;
@@ -233,7 +270,7 @@ module renderer (
     .text_on(gameover_text_on)
   );
 
-  // HEARTS + OVERFLOW ------------------------------------------------------
+  // HEARTS -----------------------------------------------------------------
   wire       heartsinfo_on;
   wire [1:0] heartsinfo_code;
   hearts u_heartsinfo (
@@ -265,7 +302,7 @@ module renderer (
   wire show_buttons = (mode == M_HOME);
 
   wire show_hearts  = (mode == M_HOME) || (mode == M_CHEST);
-  wire show_coin    = (mode == M_HOME);   // niet bij de minigame
+  wire show_coin    = (mode == M_HOME);   // munten en level: niet bij de minigame
 
   // ======================= 4. COLOUR ======================================
 
@@ -394,13 +431,13 @@ module renderer (
   always @(*) case (heartsinfo_code)
     2'd0:    heartsinfo_rgb = 6'b00_00_00;   // zwarte omtrek
     2'd1:    heartsinfo_rgb = 6'b11_00_00;   // rood gevuld hartje
-    2'd2:    heartsinfo_rgb = 6'b11_11_11;   // witte hartjes bij overflow 
+    2'd2:    heartsinfo_rgb = 6'b11_11_11;   // hartje bij overflow
     default: heartsinfo_rgb = 6'b00_00_00;
   endcase
 
   // ======================= 3. STACK =======================================
   // TITEL/EI : flits > titel > barst > ei > press > grond > lucht
-  // HOME     : hartjes > munten > satbar > knoppen > draak > achtergrond
+  // HOME     : hartjes > level > munten > satbar > knoppen > draak > achtergrond
   // KIST     : hartjes > menu > kist > pictogram > deksel > achtergrond
   localparam [5:0] BG_CHEST = 6'b10_00_00;   // achtergrond minigame (rood)
 
@@ -422,6 +459,7 @@ module renderer (
     end
     else if (mode == M_YOU_WIN)                    rgb = 6'b11_11_00;  // placeholder
     else if (show_hearts   && heartsinfo_on)       rgb = heartsinfo_rgb;
+    else if (show_coin     && lvl_on)              rgb = 6'b11_11_11;  // LVL n
     else if (show_coin     && coin_on)             rgb = coin_rgb;
     else if (show_satbar   && sat_on)              rgb = sat_rgb;
     else if (show_buttons  && button_on)           rgb = buttons_rgb;
@@ -434,6 +472,9 @@ module renderer (
     {R, G, B} = rgb;
   end
 
+  // coin_q hangt onderaan de prioriteitsketen en hoeft dus niet gelezen te
+  // worden -- coin_d is de laatste tak.  Wel aangesloten laten, anders zie je
+  // niet meer dat coinbar hem uitgeeft.
   wire _unused = &{menu_sel, chest_outcome, chest_frame,
-                   flame_frame, combo_len, flash, 1'b0};
+                   flame_frame, combo_len, flash, coin_q, 1'b0};
 endmodule

@@ -1,53 +1,24 @@
-`default_nettype none
-// ---------------------------------------------------------------------------
-// CHEST_MENU -- het tussenscherm van de minigame (chest_state == C_MENU).
-//
-// Toont:  ROUND <n>            welke ronde je nu speelt (round + 1)
-//         een geldpot          met daaronder het bedrag in de pot
-//         CONTINUE  (knop 6)   doorspelen, nieuwe ronde
-//         CASH OUT  (knop 7)   bank de pot en verlaat de minigame
-//
-// Er is GEEN cursor: de twee knoppen zijn vaste toetsen, precies zoals
-// chest_game.v ze al afhandelt.  De knoppen op het scherm zijn dus puur
-// een label, geen selecteerbaar element.
-//
-// EEN GEDEELDE LABEL-INSTANTIE.  Dit stond hier ooit als drie losse `label`
-// instanties, een per woord.  Elke instantie sleept zijn eigen font_rom (196
-// cellen) en word_rom (66) mee, en de drie woorden staan op volstrekt
-// disjuncte y-banden -- er kan er dus nooit meer dan een tegelijk tekenen.
-// Twee van de drie kopieen deden op elk moment niets.  Nu muxen we eerst de
-// INVOER en gebruiken we een instantie: ~700 cellen goedkoper, zelfde beeld.
-// Zelfde reden waarom renderer.v maar EEN title_egg instantieert voor twee
-// modes, en waarom draw_buttons zijn font maar een keer opzoekt.
-//
-// ABSOLUTE portret-coordinaten (px, py), net als draw_buttons.
-//
-// px_code (3 bits) -- gedeeld met de sprite in pot.hex:
-//   1 = zwart / outline      5 = dof goud
-//   2 = bruin (de pot)       6 = fel geel (de munten)
-//   3 = oranje highlight     7 = groen (CONTINUE)
-//   4 = wit (tekst)
-// ---------------------------------------------------------------------------
 module chest_menu (
     input  wire [9:0] x,            // absolute portret-x, 0..479
     input  wire [9:0] y,            // absolute portret-y, 0..639
     input  wire [9:0] pot,          // 0..999, uit chest_game
     input  wire [3:0] round,        // 0..15, wordt als round+1 getoond
+    output wire [3:0] q_digit,      // gedeelde digit_rom: wat wil ik opzoeken
+    output wire [2:0] q_row,
+    input  wire [3:0] q_bits,       // ... en het antwoord
+    output wire       q_on,
     output wire       px_on,
     output wire [2:0] px_code
 );
 
   // ======================= 1. de drie woorden =============================
-  // ROUND    op y  80..111
-  // CONTINUE op y 469..500
-  // CASH OUT op y 559..590
-  //
+  // ROUND op y 80..111, CONTINUE op 469..500, CASH OUT op 559..590.
   // De keuze hangt ALLEEN van y af, dus we hoeven de uitkomst niet extra te
   // gaten: valt y buiten alle drie de banden, dan blijft de mux op CASH OUT
   // staan en zorgt de eigen bandtest van `label` (ly < 32) ervoor dat er
-  // niets verschijnt.  Voor y in 559..590 IS dat ook precies het juiste woord.
-  wire in_lbl_r  = (y >= 10'd80)  && (y < 10'd112);   // ROUND
-  wire in_lbl_c1 = (y >= 10'd469) && (y < 10'd501);   // CONTINUE
+  // niets verschijnt.
+  wire in_lbl_r  = (y >= 10'd80)  && (y < 10'd112);
+  wire in_lbl_c1 = (y >= 10'd469) && (y < 10'd501);
 
   wire [9:0] lbl_X0 = in_lbl_r ? 10'd120 : 10'd112;
   wire [9:0] lbl_Y0 = in_lbl_r ? 10'd80  : in_lbl_c1 ? 10'd469 : 10'd559;
@@ -61,34 +32,40 @@ module chest_menu (
     .on(lbl_on)
   );
 
-  // ======================= 2. het rondenummer =============================
-  // round telt vanaf 0, de speler telt vanaf 1
-  wire [4:0] round_disp = {1'b0, round} + 5'd1;
+  // ======================= 2 en 4. de twee getallen =======================
+  // Het rondenummer staat op y 80..103, het bedrag op y 400..447 -- ze
+  // sluiten elkaar uit, dus er hoeft er maar een tegelijk op te zoeken.
+  // Beide kinderen krijgen dezelfde bits binnen; wie niet in zijn vak zit
+  // maskeert het antwoord zelf al weg.
+  wire [3:0] n2_d, n3_d;
+  wire [2:0] n2_r, n3_r;
+  wire       n2_q, n3_q;
+
+  assign q_digit = n2_q ? n2_d : n3_d;
+  assign q_row   = n2_q ? n2_r : n3_r;
+  assign q_on    = n2_q || n3_q;
+
+  wire [4:0] round_disp = {1'b0, round} + 5'd1;   // round telt vanaf 0
   wire       num_round;
   number2 u_num_round (
     .x(x), .y(y), .X0(10'd300), .Y0(10'd80),
     .val(round_disp),
+    .q_digit(n2_d), .q_row(n2_r), .q_bits(q_bits), .q_on(n2_q),
     .on(num_round)
   );
 
-  // ======================= 3. de geldpot ==================================
-  // Sprite uit pot.hex (32x32, 6x geschaald -> 192x192 op het scherm).
-  wire       pot_on;
-  wire [2:0] pot_code;
-  pot_sprite u_pot (.x(x), .y(y), .px_on(pot_on), .px_code(pot_code));
-
-  // ======================= 4. het bedrag ==================================
-  // Groot, direct onder de pot.  Voorloopnullen worden weggelaten.
   wire num_pot;
   number3 u_num_pot (
     .x(x), .y(y), .X0(10'd144), .Y0(10'd400),
     .val(pot),
+    .q_digit(n3_d), .q_row(n3_r), .q_bits(q_bits), .q_on(n3_q),
     .on(num_pot)
   );
-  // Kan nog: number2 en number3 hebben elk hun eigen digit_rom (74 cellen) en
-  // staan ook op disjuncte plekken, dus dezelfde truc werkt daar.  Dat vraagt
-  // wel dat beide modules hun digit + rij naar buiten brengen en de bits weer
-  // binnen -- minder zelfstandige modules voor 74 cellen.  Nu niet gedaan.
+
+  // ======================= 3. de geldpot ==================================
+  wire       pot_on;
+  wire [2:0] pot_code;
+  pot_sprite u_pot (.x(x), .y(y), .px_on(pot_on), .px_code(pot_code));
 
   // ======================= 5. de twee knoppen =============================
   localparam [9:0] BTN_X0 = 10'd60,  BTN_X1 = 10'd420;
@@ -114,6 +91,104 @@ module chest_menu (
                    in_b1                ? 3'd7     :   // CONTINUE = groen
                                           3'd5;        // CASH OUT = dof goud
 endmodule
+
+// ---------------------------------------------------------------------------
+// NUMBER3 -- drie cijfers, schaal 8 (32x48 per cijfer, pitch 64).
+// Voorloopnullen worden weggelaten: 40 leest als "40", niet als "040".
+// ---------------------------------------------------------------------------
+module number3 (
+    input  wire [9:0] x,
+    input  wire [9:0] y,
+    input  wire [9:0] X0,
+    input  wire [9:0] Y0,
+    input  wire [9:0] val,
+    output wire [3:0] q_digit,
+    output wire [2:0] q_row,
+    input  wire [3:0] q_bits,
+    output wire       q_on,
+    output wire       on
+);
+  wire [3:0] d100, d10, d1;
+  bin2bcd u_bcd (.bin(val), .d100(d100), .d10(d10), .d1(d1));
+
+  wire [9:0] lx = x - X0;
+  wire [9:0] ly = y - Y0;
+  wire in_band = (ly < 10'd48) && (lx < 10'd192);
+
+  wire [1:0] pos  = lx[7:6];                   // 0, 1 of 2
+  wire [5:0] cx   = lx[5:0];
+  wire [5:0] cy   = ly[5:0];
+  wire       in_g = (cx < 6'd32) && (cy < 6'd48);
+
+  // bits telt vier posities, dus twee indexbits.  Met drie klaagde verilator
+  // (WIDTHTRUNC); de bovenste bit was toch altijd nul.
+  wire [1:0] gcol = cx[4:3];                   // 0..3
+  wire [2:0] grow = cy[5:3];                   // 0..5
+
+  reg  [3:0] digit;
+  reg        visible;
+  always @(*) case (pos)
+    2'd0:    begin digit = d100; visible = (d100 != 4'd0); end
+    2'd1:    begin digit = d10;  visible = (d100 != 4'd0) || (d10 != 4'd0); end
+    default: begin digit = d1;   visible = 1'b1; end
+  endcase
+
+ 
+  assign q_digit = digit;
+  assign q_row   = grow;
+  assign q_on    = in_band && in_g;
+  assign on      = in_band && in_g && visible && q_bits[2'd3 - gcol];
+endmodule
+
+
+// ---------------------------------------------------------------------------
+// NUMBER2 -- twee cijfers, schaal 4 (16x24 per cijfer, pitch 32).
+// Alleen voor het rondenummer, dus 0..31 volstaat.
+// ---------------------------------------------------------------------------
+module number2 (
+    input  wire [9:0] x,
+    input  wire [9:0] y,
+    input  wire [9:0] X0,
+    input  wire [9:0] Y0,
+    input  wire [4:0] val,
+    output wire [3:0] q_digit,
+    output wire [2:0] q_row,
+    input  wire [3:0] q_bits,
+    output wire       q_on,
+    output wire       on
+);
+  wire [3:0] tens = (val >= 5'd30) ? 4'd3 : (val >= 5'd20) ? 4'd2 :
+                    (val >= 5'd10) ? 4'd1 : 4'd0;
+  // tens * 10 = (tens << 3) + (tens << 1)
+  wire [4:0] tens10 = {tens[1:0], 3'd0} + {1'b0, tens[2:0], 1'b0};
+  wire [4:0] rest   = val - tens10;
+  wire [3:0] ones   = rest[3:0];
+
+  wire [9:0] lx = x - X0;
+  wire [9:0] ly = y - Y0;
+  wire in_band = (ly < 10'd24) && (lx < 10'd64);
+
+  wire       pos  = lx[5];
+  wire [4:0] cx   = lx[4:0];
+  wire [4:0] cy   = ly[4:0];
+  wire       in_g = (cx < 5'd16) && (cy < 5'd24);
+
+  wire [1:0] gcol = cx[3:2];                   // 0..3, twee bits volstaan
+  wire [2:0] grow = cy[4:2];                   // 0..5
+
+  wire [3:0] digit   = pos ? ones : tens;
+  wire       visible = pos || (tens != 4'd0);
+
+  assign q_digit = digit;
+  assign q_row   = grow;
+  assign q_on    = in_band && in_g;
+  assign on      = in_band && in_g && visible && q_bits[2'd3 - gcol];
+
+
+endmodule
+
+
+
 
 
 // ---------------------------------------------------------------------------
@@ -155,92 +230,6 @@ module label (
   // bits is vijf breed, dus hier is een index van drie bits wel correct
   assign on = in_band && in_g && bits[3'd4 - gcol];
 endmodule
-
-
-// ---------------------------------------------------------------------------
-// NUMBER3 -- drie cijfers, schaal 8 (32x48 per cijfer, pitch 64).
-// Voorloopnullen worden weggelaten: 40 leest als "40", niet als "040".
-// ---------------------------------------------------------------------------
-module number3 (
-    input  wire [9:0] x,
-    input  wire [9:0] y,
-    input  wire [9:0] X0,
-    input  wire [9:0] Y0,
-    input  wire [9:0] val,
-    output wire       on
-);
-  wire [3:0] d100, d10, d1;
-  bin2bcd u_bcd (.bin(val), .d100(d100), .d10(d10), .d1(d1));
-
-  wire [9:0] lx = x - X0;
-  wire [9:0] ly = y - Y0;
-  wire in_band = (ly < 10'd48) && (lx < 10'd192);
-
-  wire [1:0] pos  = lx[7:6];                   // 0, 1 of 2
-  wire [5:0] cx   = lx[5:0];
-  wire [5:0] cy   = ly[5:0];
-  wire       in_g = (cx < 6'd32) && (cy < 6'd48);
-
-  // bits telt vier posities, dus twee indexbits.  Met drie klaagde verilator
-  // (WIDTHTRUNC); de bovenste bit was toch altijd nul.
-  wire [1:0] gcol = cx[4:3];                   // 0..3
-  wire [2:0] grow = cy[5:3];                   // 0..5
-
-  reg  [3:0] digit;
-  reg        visible;
-  always @(*) case (pos)
-    2'd0:    begin digit = d100; visible = (d100 != 4'd0); end
-    2'd1:    begin digit = d10;  visible = (d100 != 4'd0) || (d10 != 4'd0); end
-    default: begin digit = d1;   visible = 1'b1; end
-  endcase
-
-  wire [3:0] bits;
-  digit_rom u_dig (.digit(digit), .row(grow), .bits(bits));
-
-  assign on = in_band && in_g && visible && bits[2'd3 - gcol];
-endmodule
-
-
-// ---------------------------------------------------------------------------
-// NUMBER2 -- twee cijfers, schaal 4 (16x24 per cijfer, pitch 32).
-// Alleen voor het rondenummer, dus 0..31 volstaat.
-// ---------------------------------------------------------------------------
-module number2 (
-    input  wire [9:0] x,
-    input  wire [9:0] y,
-    input  wire [9:0] X0,
-    input  wire [9:0] Y0,
-    input  wire [4:0] val,
-    output wire       on
-);
-  wire [3:0] tens = (val >= 5'd30) ? 4'd3 : (val >= 5'd20) ? 4'd2 :
-                    (val >= 5'd10) ? 4'd1 : 4'd0;
-  // tens * 10 = (tens << 3) + (tens << 1)
-  wire [4:0] tens10 = {tens[1:0], 3'd0} + {1'b0, tens[2:0], 1'b0};
-  wire [4:0] rest   = val - tens10;
-  wire [3:0] ones   = rest[3:0];
-
-  wire [9:0] lx = x - X0;
-  wire [9:0] ly = y - Y0;
-  wire in_band = (ly < 10'd24) && (lx < 10'd64);
-
-  wire       pos  = lx[5];
-  wire [4:0] cx   = lx[4:0];
-  wire [4:0] cy   = ly[4:0];
-  wire       in_g = (cx < 5'd16) && (cy < 5'd24);
-
-  wire [1:0] gcol = cx[3:2];                   // 0..3, twee bits volstaan
-  wire [2:0] grow = cy[4:2];                   // 0..5
-
-  wire [3:0] digit   = pos ? ones : tens;
-  wire       visible = pos || (tens != 4'd0);
-
-  wire [3:0] bits;
-  digit_rom u_dig (.digit(digit), .row(grow), .bits(bits));
-
-  assign on = in_band && in_g && visible && bits[2'd3 - gcol];
-endmodule
-
 
 // ---------------------------------------------------------------------------
 // BIN2BCD -- double dabble, 10 bits -> drie decimale cijfers.

@@ -104,10 +104,14 @@ module digit_rom (
   end
 endmodule
 
-
 // ===========================================================================
-// DRAGON L2 -- 32x32 sprite, 5x geschaald -> 160x160.
-// De schaling /5 gaat via (n * 205) >> 10, niet via een deler.
+// DRAGON L2 -- 32x32 sprite, 4x geschaald -> 128x128.
+//
+// Schaal 4 en niet 5: /4 is een bitselectie en kost nul cellen, terwijl /5
+// via (n * 205) >> 10 twee optelbomen van vijf termen kostte -- samen zo'n
+// 280 cellen voor deze module alleen.  De draak wordt daardoor 160 -> 128 px.
+// De ONDERKANT staat nog op y = 340, zodat hij op het gras blijft staan
+// (background.v zet GRASS_Y op 344); alleen de bovenkant zakt mee.
 // ===========================================================================
 module dragon_l2_generator (
     input  wire        clk,
@@ -120,20 +124,21 @@ module dragon_l2_generator (
 );
     wire _unused = &{mood_anim, 1'b0};
 
-    localparam [9:0] SPRITE_X = 10'd170;
-    localparam [9:0] SPRITE_Y = 10'd180;
-    localparam [9:0] SPRITE_W = 10'd160;
-    localparam [9:0] SPRITE_H = 10'd160;
+    localparam [9:0] SPRITE_X = 10'd186;   // midden blijft 250
+    localparam [9:0] SPRITE_Y = 10'd212;   // onderkant blijft 340
+    localparam [9:0] SPRITE_W = 10'd128;   // 32 * 4
+    localparam [9:0] SPRITE_H = 10'd128;
 
     wire in_bounds = (x >= SPRITE_X) && (x < (SPRITE_X + SPRITE_W)) &&
                      (y >= SPRITE_Y) && (y < (SPRITE_Y + SPRITE_H));
 
-    wire [9:0]  ox = x - SPRITE_X;
-    wire [9:0]  oy = y - SPRITE_Y;
-    wire [19:0] mx = {10'd0, ox} * 20'd205;      // /5
-    wire [19:0] my = {10'd0, oy} * 20'd205;
-    wire [4:0]  rel_x = in_bounds ? mx[14:10] : 5'd0;
-    wire [4:0]  rel_y = in_bounds ? my[14:10] : 5'd0;
+    wire [9:0] ox = x - SPRITE_X;          // 0..127 binnen in_bounds
+    wire [9:0] oy = y - SPRITE_Y;
+
+    // /4 als bitselectie.  Buiten het vak wrapt ox naar ~1023, dus de
+    // in_bounds-gate blijft nodig om nooit buiten de ROM te indexeren.
+    wire [4:0] rel_x = in_bounds ? ox[6:2] : 5'd0;   // 0..31
+    wire [4:0] rel_y = in_bounds ? oy[6:2] : 5'd0;
 
     wire [9:0] addr = {rel_y, rel_x};
 
@@ -156,8 +161,11 @@ endmodule
 
 
 // ===========================================================================
-// DRAGON L3 -- 32x32 sprite, 6x geschaald -> 192x192.
-// /6 via (n * 683) >> 12.
+// DRAGON L3 -- 32x32 sprite, 4x geschaald -> 128x128.
+//
+// Was 6x (192 px) via (n * 683) >> 12; dat waren twee optelbomen.  Nu 4x,
+// dus een bitselectie.  Dit is de grootste stap in formaat van de drie:
+// 192 -> 128.  Onderkant blijft op y = 336.
 // ===========================================================================
 module dragon_l3_generator (
     input  wire        clk,
@@ -170,20 +178,19 @@ module dragon_l3_generator (
 );
     wire _unused = &{mood_anim, 1'b0};
 
-    localparam [9:0] SPRITE_X = 10'd190;
-    localparam [9:0] SPRITE_Y = 10'd144;
-    localparam [9:0] SPRITE_W = 10'd192;
-    localparam [9:0] SPRITE_H = 10'd192;
+    localparam [9:0] SPRITE_X = 10'd222;   // midden blijft 286
+    localparam [9:0] SPRITE_Y = 10'd208;   // onderkant blijft 336
+    localparam [9:0] SPRITE_W = 10'd128;   // 32 * 4
+    localparam [9:0] SPRITE_H = 10'd128;
 
     wire in_bounds = (x >= SPRITE_X) && (x < (SPRITE_X + SPRITE_W)) &&
                      (y >= SPRITE_Y) && (y < (SPRITE_Y + SPRITE_H));
 
-    wire [9:0]  ox = x - SPRITE_X;
-    wire [9:0]  oy = y - SPRITE_Y;
-    wire [19:0] mx = {10'd0, ox} * 20'd683;      // /6
-    wire [19:0] my = {10'd0, oy} * 20'd683;
-    wire [4:0]  rel_x = in_bounds ? mx[16:12] : 5'd0;
-    wire [4:0]  rel_y = in_bounds ? my[16:12] : 5'd0;
+    wire [9:0] ox = x - SPRITE_X;
+    wire [9:0] oy = y - SPRITE_Y;
+
+    wire [4:0] rel_x = in_bounds ? ox[6:2] : 5'd0;   // 0..31
+    wire [4:0] rel_y = in_bounds ? oy[6:2] : 5'd0;
 
     wire [9:0] addr = {rel_y, rel_x};
 
@@ -206,8 +213,11 @@ endmodule
 
 
 // ===========================================================================
-// DRAGON L4 -- 48x48 sprite, 5x geschaald -> 240x240.
-// /5 via (n * 205) >> 10.  Adres = rel_y*48 + rel_x = (y<<5)+(y<<4)+x.
+// DRAGON L4 -- 48x48 sprite, 4x geschaald -> 192x192.
+//
+// Was 5x (240 px).  Adres = rel_y*48 + rel_x = (rel_y<<5) + (rel_y<<4) + rel_x;
+// dat is een constante maal een variabele en blijft dus gewoon twee shifts en
+// een optelling -- daar zat het probleem niet.  Onderkant blijft op y = 360.
 // ===========================================================================
 module dragon_l4_generator (
     input  wire        clk,
@@ -220,20 +230,19 @@ module dragon_l4_generator (
 );
     wire _unused = &{mood_anim, 1'b0};
 
-    localparam [9:0] SPRITE_X = 10'd165;
-    localparam [9:0] SPRITE_Y = 10'd120;
-    localparam [9:0] SPRITE_W = 10'd240;
-    localparam [9:0] SPRITE_H = 10'd240;
+    localparam [9:0] SPRITE_X = 10'd189;   // midden blijft 285
+    localparam [9:0] SPRITE_Y = 10'd168;   // onderkant blijft 360
+    localparam [9:0] SPRITE_W = 10'd192;   // 48 * 4
+    localparam [9:0] SPRITE_H = 10'd192;
 
     wire in_bounds = (x >= SPRITE_X) && (x < (SPRITE_X + SPRITE_W)) &&
                      (y >= SPRITE_Y) && (y < (SPRITE_Y + SPRITE_H));
 
-    wire [9:0]  ox = x - SPRITE_X;
-    wire [9:0]  oy = y - SPRITE_Y;
-    wire [19:0] mx = {10'd0, ox} * 20'd205;      // /5
-    wire [19:0] my = {10'd0, oy} * 20'd205;
-    wire [5:0]  rel_x = in_bounds ? mx[15:10] : 6'd0;
-    wire [5:0]  rel_y = in_bounds ? my[15:10] : 6'd0;
+    wire [9:0] ox = x - SPRITE_X;          // 0..191 binnen in_bounds
+    wire [9:0] oy = y - SPRITE_Y;
+
+    wire [5:0] rel_x = in_bounds ? ox[7:2] : 6'd0;   // 0..47
+    wire [5:0] rel_y = in_bounds ? oy[7:2] : 6'd0;
 
     wire [11:0] addr = ({6'd0, rel_y} << 5) + ({6'd0, rel_y} << 4) + {6'd0, rel_x};
 
@@ -253,7 +262,6 @@ module dragon_l4_generator (
         end
     end
 endmodule
-
 
 // ===========================================================================
 // BACKGROUND -- het thuisscherm: lucht, zon, twee wolkjes, gras en aarde.
@@ -510,4 +518,90 @@ module chest_body_rom (
 
   wire [8:0] addr = {row, col};
   assign code = rom[addr];
+endmodule
+
+// ---------------------------------------------------------------------------
+// LEVEL_BOX -- "LVL n" linksboven op het homescherm.
+//
+// De drie letters zijn een vaste minibitmap van 3x5, geen font.  LVL verandert
+// nooit, dus een opzoektabel plus woordindex zou meer logica kosten dan de
+// twee case-blokjes hieronder -- L en V zijn zo simpel dat er bijna niets van
+// overblijft.  Zelfde afweging als PRESS ANY BUTTON in title_egg.v.
+//
+// Het CIJFER komt wel uit de gedeelde digit_rom, via de renderer: dit vakje
+// zegt met q_digit/q_row wat het wil opzoeken en krijgt het antwoord in
+// q_bits terug.  Zo staat die tabel maar een keer op de chip in plaats van
+// vier keer (menu, pot, munten, level).
+//
+// Alles op schaal 3: letters 9x15, cijfer 12x18.  Vak is 48 x 18.
+// ---------------------------------------------------------------------------
+module level_box (
+    input  wire [9:0] x,            // lokaal (px - LEVEL_X)
+    input  wire [9:0] y,            // lokaal (py - LEVEL_Y)
+    input  wire [2:0] level,        // 0..7, wordt als level+1 getoond
+    output wire [3:0] q_digit,
+    output wire [2:0] q_row,
+    input  wire [3:0] q_bits,
+    output wire       q_on,
+    output wire       on
+);
+  // ======================= "LVL" ==========================================
+  // Letterslots: 0..8, 11..19, 22..30.  Twee px lager dan het cijfer, zodat
+  // de 15 hoge letters tegen het 18 hoge cijfer gecentreerd staan.
+  localparam [9:0] TXT_Y0 = 10'd2;
+
+  wire in_txt = (x < 10'd31) && (y >= TXT_Y0) && (y < TXT_Y0 + 10'd15);
+  wire [9:0] tdy = y - TXT_Y0;                 // 0..14
+
+  reg [1:0] lslot;                             // 0 = L, 1 = V, 2 = L
+  reg [9:0] lbase;
+  reg       lvalid;
+  always @(*) begin
+    if      (x <= 10'd8)                 begin lslot=2'd0; lbase=10'd0;  lvalid=1'b1; end
+    else if (x >= 10'd11 && x <= 10'd19) begin lslot=2'd1; lbase=10'd11; lvalid=1'b1; end
+    else if (x >= 10'd22 && x <= 10'd30) begin lslot=2'd2; lbase=10'd22; lvalid=1'b1; end
+    else                                 begin lslot=2'd0; lbase=10'd0;  lvalid=1'b0; end
+  end
+  wire [9:0] lcx = x - lbase;                  // 0..8
+
+  // /3 met vergelijkingen: de bereiken zijn te klein voor een deeltruc.
+  wire [1:0] lgx = (lcx < 10'd3) ? 2'd0 : (lcx < 10'd6) ? 2'd1 : 2'd2;
+  wire [2:0] lgy = (tdy < 10'd3)  ? 3'd0 : (tdy < 10'd6)  ? 3'd1 :
+                   (tdy < 10'd9)  ? 3'd2 : (tdy < 10'd12) ? 3'd3 : 3'd4;
+
+  // L = 100 100 100 100 111 ,  V = 101 101 101 101 010
+  reg [2:0] lrow;
+  always @(*) begin
+    if (lslot == 2'd1)
+      case (lgy)                               // V
+        3'd4:    lrow = 3'b010;
+        default: lrow = 3'b101;
+      endcase
+    else
+      case (lgy)                               // L
+        3'd4:    lrow = 3'b111;
+        default: lrow = 3'b100;
+      endcase
+  end
+
+  wire txt_px = in_txt && lvalid &&
+                ((lgx == 2'd0) ? lrow[2] : (lgx == 2'd1) ? lrow[1] : lrow[0]);
+
+  // ======================= het cijfer =====================================
+  wire in_dig = (x >= 10'd36) && (x < 10'd48) && (y < 10'd18);
+  wire [9:0] ddx = x - 10'd36;                 // 0..11
+
+  wire [1:0] dgx = (ddx < 10'd3) ? 2'd0 : (ddx < 10'd6) ? 2'd1 :
+                   (ddx < 10'd9) ? 2'd2 : 2'd3;
+  wire [2:0] dgy = (y < 10'd3)  ? 3'd0 : (y < 10'd6)  ? 3'd1 :
+                   (y < 10'd9)  ? 3'd2 : (y < 10'd12) ? 3'd3 :
+                   (y < 10'd15) ? 3'd4 : 3'd5;
+
+  assign q_digit = {1'b0, level} + 4'd1;       // level telt vanaf 0, de speler vanaf 1
+  assign q_row   = dgy;
+  assign q_on    = in_dig;
+
+  wire dig_px = in_dig && q_bits[2'd3 - dgx];
+
+  assign on = txt_px || dig_px;
 endmodule

@@ -1,138 +1,152 @@
 `default_nettype none
 // ---------------------------------------------------------------------------
-// SATISFACTION
+// SATISFACTIONBAR -- vijf vakjes met een smiley, van chagrijnig naar blij.
+//
+// Het actieve vakje krijgt een witte rand.  Alle vijf houden hun kleur, zodat
+// je de hele schaal blijft zien (CURSOR_MODE).  Zet CURSOR_MODE op 0 en de
+// vakjes boven `sat` gaan uit; dat leest sneller van een afstand maar je
+// verliest zicht op de bovenkant van de schaal.
+//
+// GEEN DELER, GEEN MODULO.  PITCH is 62 en dus geen macht van twee; diff_x/62
+// en diff_x%62 kostten samen honderden cellen.  Met vijf vakjes is een
+// vergelijkingsketen goedkoper dan welke deeltruc ook -- zelfde aanpak als in
+// hearts.v en coinbar.v.
+//
+// DE SMILEY kost weinig omdat hij in elk vakje op dezelfde plek staat: de
+// cirkel en de ogen hangen alleen van (sx, sy) af, en alleen de MONDHOOGTE
+// komt uit een tabel op idx.  Dat is een tabel van 25 ingangen, geen vijf
+// aparte gezichten.  Zet SMILEY op 0 als je de vakjes leeg wilt.
+//
+// px_code: 0 = zwart (frame, schotjes, en de lijnen van de smiley)
+//          1..5 = kleur van vakje 0..4
+//          6 = witte selectierand
+//          7 = onverlicht (alleen in FILL-modus)
 // ---------------------------------------------------------------------------
-// module satisfactionbar (
-//     input  wire [9:0] x,            // local
-//     input  wire [9:0] y,
-//     input  wire [2:0] sat,         // how many of the 5 segments are lit
-//     output wire       px_on,
-//     output wire [2:0] px_code        // 0     = frame + dividers
-//                                     // 1..5  = segment 0..4, ramp colour
-//                                     // 6     = highlight ring on the selected
-//                                     // 7     = dark / unlit segment
-// );
-//   // satisfaction: 5 levels an satisfaction, wordt gwn meegegeven via aantal bit (5 vakjes nodig) 
-//   // ======================= mode ===========================================
-//   // 1 = CURSOR : all five keep their colour, a white ring marks `sat`.
-//   // 0 = FILL   : segments 0..sat are coloured, the rest go dark (code 7),
-//   //              no ring.  Reads faster from a distance; you lose sight of
-//   //              the top of the scale.  Flip this one bit and re-render.
-//   localparam CURSOR_MODE = 1'b1;
- 
-//   // ======================= geometry =======================================
-//   localparam [9:0] NSEG  = 10'd5;
-//   localparam [9:0] FRAME = 10'd3;      // border thickness
-//   localparam [9:0] PITCH = 10'd32;     // segment stride -- MUST be a power of 2
-//   localparam [9:0] SEG_W = 10'd28;     // segment body; PITCH-SEG_W = 4px divider
-//   localparam [9:0] SEG_H = 10'd18;     // segment height
-//   localparam [9:0] RING  = 10'd2;      // thickness of the selection ring
- 
-//   // Outer size.  The last segment needs no divider after it, hence the -gap.
-//   localparam [9:0] BAR_W = FRAME + (NSEG * PITCH) - (PITCH - SEG_W) + FRAME;
-//   localparam [9:0] BAR_H = FRAME + SEG_H + FRAME;
- 
-//   // ======================= where are we ===================================
-//   // Local coords wrap to ~1023 left of / above the origin, so an unsigned
-//   // "< BAR_W" doubles as the left/top edge test.  No signed compare needed.
-//   wire in_bar = (x < BAR_W) && (y < BAR_H);
- 
-//   wire in_inner = (x >= FRAME) && (x < BAR_W - FRAME) &&
-//                   (y >= FRAME) && (y < BAR_H - FRAME);
- 
-//   // In satisfactionbar.v regel 43:
-//   wire [9:0] diff_x = x - FRAME;
-//   wire [7:0] rx     = diff_x[7:0];
-//   wire [2:0] idx = rx[7:5];            // which segment: rx / PITCH, as a slice
-//   wire [4:0] sx  = rx[4:0];            // position within this segment's pitch
- 
-//   wire in_seg = in_inner && (sx < SEG_W[4:0]) && (idx < NSEG[2:0]);
- 
-//   // ======================= selection ======================================
-//   wire selected = (idx == sat);
- 
-//   // White inset ring around the selected segment.
-//   wire ring = CURSOR_MODE && in_seg && selected &&
-//               ((sx < RING[4:0]) || (sx >= SEG_W[4:0] - RING[4:0]) ||
-//                (y  < FRAME + RING) || (y >= BAR_H - FRAME - RING));
- 
-//   // In CURSOR mode every segment shows its colour; in FILL mode only up to
-//   // and including the current level.
-//   wire coloured = CURSOR_MODE ? 1'b1 : (idx <= sat);
- 
-//   // ======================= output =========================================
-//   // The whole rectangle is opaque: frame and dividers share code 0, so the
-//   // bar reads as one solid object instead of showing the background through.
-//   assign px_on   = in_bar;
-//   assign px_code = !in_seg  ? 3'd0             :   // frame + dividers
-//                    ring     ? 3'd6             :   // selection ring
-//                    coloured ? (idx + 3'd1)     :   // ramp colour 1..5
-//                               3'd7;                // dark / unlit
-// endmodule
-
- 
-`default_nettype none
-
-// ---------------------------------------------------------------------------
-// SATISFACTION (Schoon wit vlak, geen kleurdoorloop aan de randen)
-// ---------------------------------------------------------------------------
-`default_nettype none
-
-`default_nettype none
-
 module satisfactionbar (
     input  wire [9:0] x,             // local (px - SATBAR_X)
     input  wire [9:0] y,             // local (py - SATBAR_Y)
     input  wire [2:0] sat,           // 0..4: actieve segment
     output wire       px_on,
-    output wire [2:0] px_code        // 0: zwart frame
-                                     // 1..5: kleur van segment
-                                     // 6: witte selectierand
-                                     // 7: onverlicht
+    output wire [2:0] px_code
 );
-
   localparam CURSOR_MODE = 1'b1;
+  localparam SMILEY      = 1'b1;
 
   // ======================= geometrie =======================================
   localparam [9:0] NSEG  = 10'd5;
-  localparam [9:0] FRAME = 10'd2;       // Zwarte buitenrand 2 px
-  localparam [9:0] PITCH = 10'd62;      // Afstand per segment
-  localparam [9:0] SEG_W = 10'd60;      // Lengte van het vakje (op scherm verticaal)
-  localparam [9:0] SEG_H = 10'd20;      // Breedte van het vakje (op scherm horizontaal)
+  localparam [9:0] FRAME = 10'd2;       // zwarte buitenrand
+  localparam [9:0] PITCH = 10'd62;      // afstand per segment
+  localparam [9:0] SEG_W = 10'd60;      // vakje langs x
+  localparam [9:0] SEG_H = 10'd20;      // vakje langs y
 
-  // Aparte randdiktes voor een perfect symmetrisch ogende rand:
-  localparam [9:0] RING_X = 10'd2;      // Dikte op de lange as (kopse kanten)
-  localparam [9:0] RING_Y = 10'd1;      // Dikte op de korte as (zijkanten)
+  localparam [9:0] RING_X = 10'd2;      // randdikte op de lange as
+  localparam [9:0] RING_Y = 10'd1;      // randdikte op de korte as
 
-  localparam [9:0] BAR_W = FRAME + (NSEG * PITCH) - (PITCH - SEG_W) + FRAME; // 310 px
-  localparam [9:0] BAR_H = FRAME + SEG_H + FRAME;                             // 24 px
+  localparam [9:0] BAR_W = FRAME + (NSEG * PITCH) - (PITCH - SEG_W) + FRAME; // 312
+  localparam [9:0] BAR_H = FRAME + SEG_H + FRAME;                            //  24
 
   // ======================= coordinaten =====================================
+  // Links/boven van de origin wrapt de lokale coordinaat naar ~1023, dus
+  // "< BAR_W" vangt meteen de linker- en bovenrand af.  Geen signed compare.
   wire in_bar   = (x < BAR_W) && (y < BAR_H);
   wire in_inner = (x >= FRAME) && (x < BAR_W - FRAME) &&
                   (y >= FRAME) && (y < BAR_H - FRAME);
 
-  wire [9:0] diff_x = x - FRAME;
-  wire [2:0] idx    = diff_x / PITCH;
-  wire [9:0] sx     = diff_x % PITCH;   // 0..59
-  wire [9:0] sy     = y - FRAME;        // 0..19
+  wire [9:0] diff_x = x - FRAME;        // 0..307 binnen in_inner
+  wire [9:0] diff_y = y - FRAME;        // 0..19
+  wire [4:0] sy     = diff_y[4:0];
 
-  wire in_seg = in_inner && (sx < SEG_W) && (idx < NSEG);
+  // Vijf vaste grenzen in plaats van diff_x/62 en diff_x%62.
+  reg [2:0] idx;
+  reg [9:0] sbase;
+  always @(*) begin
+    if      (diff_x < 10'd62)  begin idx = 3'd0; sbase = 10'd0;   end
+    else if (diff_x < 10'd124) begin idx = 3'd1; sbase = 10'd62;  end
+    else if (diff_x < 10'd186) begin idx = 3'd2; sbase = 10'd124; end
+    else if (diff_x < 10'd248) begin idx = 3'd3; sbase = 10'd186; end
+    else                       begin idx = 3'd4; sbase = 10'd248; end
+  end
+  wire [9:0] sxw = diff_x - sbase;
+  wire [5:0] sx  = sxw[5:0];            // 0..61
+
+  // idx is door de keten hierboven altijd 0..4, dus een "idx < NSEG" test
+  // zou niets meer doen -- die is eruit.
+  wire in_seg = in_inner && (sx < 6'd60);
 
   // ======================= selectie =======================================
   wire selected = (idx == sat);
 
-  // Strakke rand die aan de zijkanten niet meer overheerst:
   wire ring = CURSOR_MODE && in_seg && selected &&
-              ((sx < RING_X) || (sx >= SEG_W - RING_X) ||
-               (sy < RING_Y) || (sy >= SEG_H - RING_Y));
+              ((sx < 6'd2) || (sx >= 6'd58) ||
+               (sy < 5'd1) || (sy >= 5'd19));
 
   wire coloured = CURSOR_MODE ? 1'b1 : (idx <= sat);
 
+  // ======================= de smiley ======================================
+  // Gezicht met straal 8 rond (30, 10) binnen het vakje.  De tabel geeft per
+  // rij de halve breedte PLUS EEN, uit floor(sqrt(64 - ay^2)) + 1, zodat 0
+  // netjes "deze rij raakt de cirkel niet" betekent -- zelfde patroon als de
+  // bollen in hearts.v en de ellips in draw_buttons.v.
+  wire [5:0] fdx = (sx >= 6'd30) ? (sx - 6'd30) : (6'd30 - sx);
+  wire [4:0] ay  = (sy >= 5'd10) ? (sy - 5'd10) : (5'd10 - sy);
+
+  reg [4:0] fw;
+  always @(*) case (ay)
+    5'd0:    fw = 5'd9;
+    5'd1:    fw = 5'd8;
+    5'd2:    fw = 5'd8;
+    5'd3:    fw = 5'd8;
+    5'd4:    fw = 5'd7;
+    5'd5:    fw = 5'd7;
+    5'd6:    fw = 5'd6;
+    5'd7:    fw = 5'd4;
+    5'd8:    fw = 5'd1;
+    default: fw = 5'd0;
+  endcase
+
+  wire in_face   = (fdx < {1'b0, fw});
+  wire face_ring = in_face && (fdx + 6'd2 >= {1'b0, fw});
+
+  // Twee ogen van 2x3.
+  wire eye = in_face && (sy >= 5'd6) && (sy <= 5'd8) &&
+             (((sx >= 6'd26) && (sx <= 6'd27)) ||
+              ((sx >= 6'd33) && (sx <= 6'd34)));
+
+  // De mond: per segment en per kolom een rij.  Bij een chagrijnig gezicht
+  // liggen de hoeken LAGER dan het midden, bij een blij gezicht hoger.
+  // 31 betekent "hier geen mond".
+  reg [4:0] mrow;
+  always @(*) case ({idx, fdx[2:0]})
+    {3'd0,3'd0}: mrow = 5'd12;  {3'd0,3'd1}: mrow = 5'd12;
+    {3'd0,3'd2}: mrow = 5'd13;  {3'd0,3'd3}: mrow = 5'd14;
+    {3'd0,3'd4}: mrow = 5'd15;
+    {3'd1,3'd0}: mrow = 5'd13;  {3'd1,3'd1}: mrow = 5'd13;
+    {3'd1,3'd2}: mrow = 5'd13;  {3'd1,3'd3}: mrow = 5'd14;
+    {3'd1,3'd4}: mrow = 5'd14;
+    {3'd2,3'd0}: mrow = 5'd14;  {3'd2,3'd1}: mrow = 5'd14;
+    {3'd2,3'd2}: mrow = 5'd14;  {3'd2,3'd3}: mrow = 5'd14;
+    {3'd2,3'd4}: mrow = 5'd14;
+    {3'd3,3'd0}: mrow = 5'd15;  {3'd3,3'd1}: mrow = 5'd15;
+    {3'd3,3'd2}: mrow = 5'd14;  {3'd3,3'd3}: mrow = 5'd14;
+    {3'd3,3'd4}: mrow = 5'd13;
+    {3'd4,3'd0}: mrow = 5'd16;  {3'd4,3'd1}: mrow = 5'd16;
+    {3'd4,3'd2}: mrow = 5'd15;  {3'd4,3'd3}: mrow = 5'd14;
+    {3'd4,3'd4}: mrow = 5'd13;
+    default:     mrow = 5'd31;
+  endcase
+
+  wire mouth = in_face && (fdx <= 6'd4) &&
+               ((sy == mrow) || (sy == mrow + 5'd1));
+
+  wire smiley = SMILEY && in_seg && (face_ring || eye || mouth);
+
   // ======================= output =========================================
+  // Het hele blok is dekkend: frame en schotjes delen code 0, zodat de balk
+  // als een object leest in plaats van de achtergrond door te laten schijnen.
   assign px_on   = in_bar;
-  assign px_code = !in_seg  ? 3'd0 :             // Zwart frame + tussenschotjes
-                   ring     ? 3'd6 :             // Strakke witte rand
-                   coloured ? (idx + 3'd1) :     // Geel/oranje/etc.
-                              3'd7;              // Onverlicht
+  assign px_code = !in_seg  ? 3'd0         :   // frame + schotjes
+                   ring     ? 3'd6         :   // witte selectierand
+                   smiley   ? 3'd0         :   // de lijnen van het gezichtje
+                   coloured ? (idx + 3'd1) :   // kleur 1..5
+                              3'd7;            // onverlicht
 endmodule
