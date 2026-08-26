@@ -4,7 +4,7 @@ set -e
 # Zorg ervoor dat de map test/figures bestaat
 mkdir -p figures
 echo ""
-iverilog -g2012 -o sim_egg home_lvl1_tb.v ../src/dragon_draw.v ../src/sprites.v ../src/home.v ../src/renderer.v ../src/chest_draw.v ../src/chest_menu.v ../src/satisfactionbar.v ../src/coinbar.v ../src/hearts.v ../src/draw_buttons.v
+iverilog -g2012 -o sim_egg home_lvl1_tb.v ../src/dragon_draw.v ../src/sprites.v ../src/home.v ../src/renderer.v ../src/chest_draw.v ../src/chest_menu.v ../src/satisfactionbar.v ../src/coinbar.v ../src/hearts.v ../src/draw_buttons.v ../src/egg_draw.v
 vvp sim_egg
 python3 -c "from PIL import Image; Image.open('frame.ppm').save('figures/home_lvl1_render.png')"
 echo "✓ Opslaan voltooid: figures/home_render.png"
@@ -12,7 +12,7 @@ echo "✓ Opslaan voltooid: figures/home_render.png"
 # Zorg ervoor dat de map test/figures bestaat
 mkdir -p figures
 echo ""
-iverilog -g2012 -o sim_egg home_lvl2_tb.v ../src/dragon_draw.v ../src/sprites.v ../src/home.v ../src/renderer.v ../src/chest_draw.v ../src/chest_menu.v ../src/satisfactionbar.v ../src/coinbar.v ../src/hearts.v ../src/draw_buttons.v
+iverilog -g2012 -o sim_egg home_lvl2_tb.v ../src/dragon_draw.v ../src/sprites.v ../src/home.v ../src/renderer.v ../src/chest_draw.v ../src/chest_menu.v ../src/satisfactionbar.v ../src/coinbar.v ../src/hearts.v ../src/draw_buttons.v ../src/egg_draw.v
 vvp sim_egg
 python3 -c "from PIL import Image; Image.open('frame.ppm').save('figures/home_lvl2_render.png')"
 echo "✓ Opslaan voltooid: figures/home_render.png"
@@ -21,7 +21,7 @@ echo "✓ Opslaan voltooid: figures/home_render.png"
 # Zorg ervoor dat de map test/figures bestaat
 mkdir -p figures
 echo ""
-iverilog -g2012 -o sim_egg home_lvl3_tb.v ../src/dragon_draw.v ../src/sprites.v ../src/home.v ../src/renderer.v ../src/chest_draw.v ../src/chest_menu.v ../src/satisfactionbar.v ../src/coinbar.v ../src/hearts.v ../src/draw_buttons.v
+iverilog -g2012 -o sim_egg home_lvl3_tb.v ../src/dragon_draw.v ../src/sprites.v ../src/home.v ../src/renderer.v ../src/chest_draw.v ../src/chest_menu.v ../src/satisfactionbar.v ../src/coinbar.v ../src/hearts.v ../src/draw_buttons.v ../src/egg_draw.v 
 vvp sim_egg
 python3 -c "from PIL import Image; Image.open('frame.ppm').save('figures/home_lvl3_render.png')"
 echo "✓ Opslaan voltooid: figures/home_render.png"
@@ -29,28 +29,27 @@ echo "✓ Opslaan voltooid: figures/home_render.png"
 # Zorg ervoor dat de map test/figures bestaat
 mkdir -p figures
 echo ""
-iverilog -g2012 -o sim_egg gameover_tb.v ../src/dragon_draw.v ../src/sprites.v ../src/home.v ../src/renderer.v ../src/chest_draw.v ../src/satisfactionbar.v ../src/coinbar.v ../src/hearts.v ../src/draw_buttons.v ../src/chest_menu.v
+iverilog -g2012 -o sim_egg gameover_tb.v ../src/dragon_draw.v ../src/sprites.v ../src/home.v ../src/renderer.v ../src/chest_draw.v ../src/satisfactionbar.v ../src/coinbar.v ../src/hearts.v ../src/draw_buttons.v ../src/chest_menu.v ../src/egg_draw.v
 vvp sim_egg
 python3 -c "from PIL import Image; Image.open('frame.ppm').save('figures/gameover_render.png')"
 echo "✓ Opslaan voltooid: figures/gameover_render.png"
 
-# Opruimen van tijdelijke bestanden
-rm -f sim_egg sim_render frame.ppm
 
-iverilog -g2012 -o sim_egg dragon_lvl1_tb.v ../src/dragon_draw.v ../src/sprites.v
+
+iverilog -g2012 -o sim_egg dragon_lvl2_tb.v ../src/dragon_draw.v ../src/sprites.v ../src/egg_draw.v
 vvp sim_egg
-python3 -c "from PIL import Image; Image.open('frame.ppm').save('figures/egg_render.png')"
-echo "✓ Opslaan voltooid: figures/egg_render.png"
+python3 -c "from PIL import Image; Image.open('frame.ppm').save('figures/lvl2_render.png')"
+echo "✓ Opslaan voltooid: figures/lvl2_render.png"
 
 echo ""
 
-iverilog -g2012 -o sim_egg dragon_lvl2_tb.v ../src/dragon_draw.v ../src/sprites.v
+iverilog -g2012 -o sim_egg dragon_lvl2_tb.v ../src/dragon_draw.v ../src/sprites.v ../src/egg_draw.v
 vvp sim_egg
 python3 -c "from PIL import Image; Image.open('frame.ppm').save('figures/lvl2_render.png')"
 echo "✓ Opslaan voltooid: figures/lvl2_render.png"
 
 
-iverilog -g2012 -o sim_chest chest_menu_tb.v ../src/dragon_draw.v ../src/sprites.v ../src/home.v ../src/renderer.v ../src/chest_draw.v ../src/chest_menu.v ../src/satisfactionbar.v ../src/coinbar.v ../src/hearts.v ../src/draw_buttons.v
+iverilog -g2012 -o sim_chest chest_menu_tb.v ../src/dragon_draw.v ../src/sprites.v ../src/home.v ../src/renderer.v ../src/chest_draw.v ../src/chest_menu.v ../src/satisfactionbar.v ../src/coinbar.v ../src/hearts.v ../src/draw_buttons.v ../src/egg_draw.v
 vvp sim_chest
 python3 -c "from PIL import Image; Image.open('frame.ppm').save('figures/chest_menu_render.png')"
 
@@ -58,7 +57,7 @@ python3 -c "from PIL import Image; Image.open('frame.ppm').save('figures/chest_m
 rm -f sim_egg sim_render frame.ppm
 
 echo ""
-iverilog -g2012 -o sim_egg dragon_lvl3_tb.v ../src/dragon_draw.v ../src/sprites.v
+iverilog -g2012 -o sim_egg dragon_lvl3_tb.v ../src/dragon_draw.v ../src/sprites.v ../src/egg_draw.v
 vvp sim_egg
 python3 -c "from PIL import Image; Image.open('frame.ppm').save('figures/lvl3_render.png')"
 echo "✓ Opslaan voltooid: figures/lvl3_render.png"
@@ -67,11 +66,20 @@ echo "✓ Opslaan voltooid: figures/lvl3_render.png"
 rm -f sim_egg sim_render frame.ppm
 
 echo ""
-iverilog -g2012 -o sim_egg dragon_lvl4_tb.v ../src/dragon_draw.v ../src/sprites.v
+iverilog -g2012 -o sim_egg dragon_lvl4_tb.v ../src/dragon_draw.v ../src/sprites.v ../src/egg_draw.v
 vvp sim_egg
 python3 -c "from PIL import Image; Image.open('frame.ppm').save('figures/lvl4_render.png')"
 echo "✓ Opslaan voltooid: figures/lvl4_render.png"
 
 # Opruimen van tijdelijke bestanden
 rm -f sim_egg sim_render frame.ppm
+
+echo ""
+iverilog -g2012 -o sim_egg_frames egg_frames_tb.v ../src/dragon_draw.v ../src/sprites.v ../src/home.v ../src/renderer.v ../src/chest_draw.v ../src/chest_menu.v ../src/satisfactionbar.v ../src/coinbar.v ../src/hearts.v ../src/draw_buttons.v ../src/egg_draw.v
+vvp sim_egg_frames
+python3 -c "from PIL import Image; [Image.open(f'egg_frame_{i}.ppm').save(f'figures/egg_frame_{i}.png') for i in range(0, 6)]"
+echo "✓ Opgeslagen: figures/egg_frame_0.png t/m figures/egg_frame_5.png"
+
+# Opruimen van tijdelijke bestanden
+rm -f sim_egg_frames egg_frame_*.ppm
 echo "Klaar! Alle afbeeldingen staan in de map figures/."

@@ -34,11 +34,13 @@ module renderer (
     input  wire       flame_frame,
     input  wire       evolve_blink,
 
+    input             frame_tick, // voor animatie van ei
+
     input             overflow, // als hartjes vol of geld vol
     input  wire [8:0] chest_contents,  // {kist2, kist1, kist0}, 3 bits elk
     input  wire [9:0] pot,             // groot tonen, los van coins, hoeveel coins je hebt in minigame
     input  wire [3:0] round,           // teken round+1, wleke ronde je zit in mini game
-    input  wire [1:0] egg_frame,       // 0 heel, 1 barst, 2 open, 3 weg
+    input  wire [2:0] egg_frame,       // 0 heel, 1 barst, 2 open, 3 weg
 
     output reg  [1:0] R,
     output reg  [1:0] G,
@@ -65,6 +67,7 @@ localparam [2:0] M_TITLE    = 3'd0,
   localparam [9:0] HEARTS_X  = 10'd130, HEARTS_Y  = 10'd16;  // 304 x 24
   localparam [9:0] SATBAR_X  = 10'd85, SATBAR_Y  = 10'd370;  // 162 x 24
   localparam [9:0] COINBAR_X = 10'd24,  COINBAR_Y = 10'd80;  //  24 x 132
+  localparam [9:0] EGG_X = 10'd0,  EGG_Y = 10'd0;  //  24 x 132
 
   localparam DRAGON_X = 10'd0, DRAGON_Y = 10'd0;
   // localparam SATBAR_X = 10'd24,  SATBAR_Y = 10'd56;
@@ -78,6 +81,25 @@ localparam [2:0] M_TITLE    = 3'd0,
   // localparam HEARTS_X = 10'd168, HEARTS_Y = 10'd16;
 
   // ======================= drawable instances =============================
+
+
+  // TITELKAART -------------------------------------------------------------
+  wire       title_on;
+  wire [2:0] title_code;
+  title_card u_title (
+    .x(px), .y(py),
+    .px_on(title_on), .px_code(title_code)
+  );
+
+  // WIEGEND EI OP GRAS (alleen titelscherm) --------------------------------
+  wire       tegg_on, tground_on, tground_shadow;
+  wire [2:0] tegg_code;
+  title_egg u_title_egg (
+    .clk(clk), .rst_n(rst_n), .frame_tick(frame_tick),
+    .x(px), .y(py),
+    .egg_on(tegg_on), .egg_code(tegg_code),
+    .ground_on(tground_on), .ground_shadow(tground_shadow)
+  );
   // DRAGON -----------------------------------------------------------------
   // uiterlijk draak hangt af van dragon_state
   // als in toekomst genoeg tijd, beinvloed mood ook uiterlijk van draak (houden we momenteel achterwegen)
@@ -91,6 +113,19 @@ localparam [2:0] M_TITLE    = 3'd0,
     .px_on(dragon_on), .px_code(dragon_code),
     .level(level),  .clk(clk), .rst_n(rst_n)
   );
+
+
+  wire        egg_on; //of er een pixel van draak is
+  wire [2:0]  egg_code;
+
+
+  egg_draw u_egg (
+    .x(px - EGG_X), .y(py - EGG_Y), .egg_frame(egg_frame),
+    .px_on(egg_on), .px_code(egg_code),
+    .clk(clk), .rst_n(rst_n)
+  );
+
+  
 
   // THREE CHESTS ---------------------------------
   // chest_frame: staat van box selected?
@@ -243,8 +278,32 @@ wire c_is_sel = (c_slot == chest_sel);
     3'd6: dragon_rgb = 6'b01_01_01; // Donkergrijs (Hoorns schaduw)
     3'd7: dragon_rgb = 6'b10_11_01; // Lichtgroen / Geelgroen (Nekje & Buikje)
     default: dragon_rgb = 6'b00_00_00;
-  endcase
-  end
+
+endcase
+end
+
+wire [5:0] egg_rgb = (egg_code == 3'd1) ? 6'b00_00_00 :
+                      (egg_code == 3'd2) ? 6'b10_10_10 :
+                      (egg_code == 3'd3) ? 6'b00_11_00 :
+                      (egg_code == 3'd4) ? 6'b11_11_11 :
+                      (egg_code == 3'd5) ? 6'b00_10_00 :
+                      (egg_code == 3'd6) ? 6'b01_01_01 :
+                      (egg_code == 3'd7) ? 6'b10_11_01 :
+                                            6'b00_00_00;
+
+reg [5:0] chest_rgb;
+always @(*) begin 
+  case (chest_code)
+  3'd1: chest_rgb = 6'b00_00_00;   // zwart / outline
+  3'd2: chest_rgb = 6'b10_01_00;   // hout
+  3'd3: chest_rgb = 6'b11_10_00;   // goud
+  3'd4: chest_rgb = 6'b11_11_11;   // wit
+  3'd5: chest_rgb = 6'b11_00_00;   // rood
+  3'd6: chest_rgb = 6'b01_00_00;   // donkere binnenkant
+  default: chest_rgb = 6'b10_01_00;
+
+endcase
+end
 
   function [5:0] chest_color;
     input [2:0] code;
@@ -282,6 +341,28 @@ wire c_is_sel = (c_slot == chest_sel);
     3'd6: menu_rgb = 6'b11_11_00;   // fel geel, munten
     3'd7: menu_rgb = 6'b001000;   // groen (CONTINUE)
     default: menu_rgb = 6'b10_01_00;
+  endcase
+
+    reg [5:0] tegg_rgb;
+  always @(*) case (tegg_code)
+    3'd1: tegg_rgb = 6'b00_00_00;
+    3'd2: tegg_rgb = 6'b10_10_10;
+    3'd3: tegg_rgb = 6'b00_11_00;
+    3'd4: tegg_rgb = 6'b11_11_11;
+    3'd5: tegg_rgb = 6'b00_10_00;
+    3'd6: tegg_rgb = 6'b01_01_01;
+    3'd7: tegg_rgb = 6'b10_11_01;
+    default: tegg_rgb = 6'b00_00_00;
+  endcase
+
+  reg [5:0] title_rgb;
+  always @(*) case (title_code)
+    3'd1: title_rgb = 6'b00_01_00;   // letters + vleugel-omtrek
+    3'd2: title_rgb = 6'b01_11_01;   // vulling + vleugel-vlak
+    3'd3: title_rgb = 6'b00_01_00;   // donkere rand
+    3'd4: title_rgb = 6'b01_11_01;   // lichte rand
+    3'd5: title_rgb = 6'b00_10_00;   // vleugel-aders
+    default: title_rgb = 6'b00_00_00;
   endcase
 
   reg [5:0] coin_rgb;
@@ -361,7 +442,19 @@ wire c_is_sel = (c_slot == chest_sel);
   reg [5:0] rgb;
   always @(*) begin
     if (!video_active)           rgb = 6'b000000;      // MUST stay black
-    else if (mode == M_TITLE)    rgb = 6'b000110;      // TODO: title text
+    else if (mode == M_TITLE)   begin
+      if      (title_on)   rgb = title_rgb;
+      else if (tegg_on)    rgb = tegg_rgb;
+      else if (tground_on) rgb = tground_shadow ? 6'b00_01_00 : 6'b00_10_00;
+      else                 rgb = 6'b01_10_11;      // hemelsblauw
+    end
+
+    else if (mode == M_EGG) begin
+      if (egg_on)
+        rgb = egg_rgb;
+      else
+        rgb = bg_home_rgb; // of een eigen achtergrondkleur voor het ei-scherm
+    end
     else if (mode == M_GAMEOVER) begin
     if (gameover_text_on)
       rgb = 6'b00_00_00; // Zwarte letters "GAME OVER"
