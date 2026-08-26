@@ -69,8 +69,12 @@ localparam [2:0] M_TITLE    = 3'd0,
   localparam DRAGON_X = 10'd0, DRAGON_Y = 10'd0;
   // localparam SATBAR_X = 10'd24,  SATBAR_Y = 10'd56;
   // localparam COINBAR_X  = 10'd24,  COINBAR_Y  = 10'd80;
-  localparam CHEST0_X = 10'd80,  CHEST1_X = 10'd272, CHEST2_X = 10'd464;
-  localparam CHEST_Y  = 10'd300; // moet x niet hetzelfde? 
+  localparam [9:0] CHEST_X     = 10'd176;
+  localparam [9:0] CHEST_Y0    = 10'd60;
+  localparam [9:0] CHEST_PITCH = 10'd192;
+  localparam [9:0] CHEST_BOX   = 10'd128;
+ 
+  localparam [1:0] C_PICK = 2'd0, C_OPEN = 2'd1, C_RESULT = 2'd2;
   // localparam HEARTS_X = 10'd168, HEARTS_Y = 10'd16;
 
   // ======================= drawable instances =============================
@@ -101,40 +105,56 @@ localparam [2:0] M_TITLE    = 3'd0,
   // maal 2 van geld ( X 2 pictogram) 
   // - rest tonen: alle 3 chests open
   // 
-  wire       c0_on, c1_on, c2_on;
-  wire [2:0] c0_code, c1_code, c2_code;
+  reg  [1:0] c_slot;      // 0, 1 of 2
+  reg  [9:0] c_top;       // bovenkant van die rij
+  reg        c_inrow;
+ 
+  always @(*) begin
+    if (py >= CHEST_Y0 && py < CHEST_Y0 + CHEST_BOX) begin
+      c_slot = 2'd0;  c_top = CHEST_Y0;                    c_inrow = 1'b1;
+    end else if (py >= CHEST_Y0 + CHEST_PITCH &&
+                 py <  CHEST_Y0 + CHEST_PITCH + CHEST_BOX) begin
+      c_slot = 2'd1;  c_top = CHEST_Y0 + CHEST_PITCH;      c_inrow = 1'b1;
+    end else if (py >= CHEST_Y0 + 10'd384 &&
+                 py <  CHEST_Y0 + 10'd384 + CHEST_BOX) begin
+      c_slot = 2'd2;  c_top = CHEST_Y0 + 10'd384;          c_inrow = 1'b1;
+    end else begin
+      c_slot = 2'd0;  c_top = CHEST_Y0;                    c_inrow = 1'b0;
+    end
+  end
 
-  // deksel nu hardcoded frame, kan nog animatie van gemaakt worden 
-  // deksel => chest_state: 0 PICK == toe, 1 OPEN (animatie) == open
 
-  // gekozen kist
-  wire [1:0] cframe_sel = (chest_state == 2'd0) ? 2'd0 :   // PICK   dicht
-                          (chest_state == 2'd1) ? 2'd1 :   // OPEN   op een kier
-                                                  2'd2;    // RESULT/MENU open
-  // andere kisten 
-  wire [1:0] cframe_oth = (chest_state == 2'd1) ? 2'd0 : cframe_sel;
-
-  chest_draw u_chest0 (
-    .x(px - CHEST0_X), .y(py - CHEST_Y),
-    .highlighted(chest_sel==2'd0),
-    .frame(chest_sel == 2'd0 ? cframe_sel : cframe_oth),
-    .px_on(c0_on), .px_code(c0_code)
+wire c_is_sel = (c_slot == chest_sel);
+ 
+  // De gekozen kist gaat open zodra we uit PICK zijn.  De andere twee pas
+  // in RESULT.
+  wire c_frame = c_is_sel ? (chest_state != C_PICK)
+                          : (chest_state == C_RESULT);
+ 
+  // In RESULT worden de niet-gekozen kisten doffer, zodat de aandacht naar
+  // de gekozen kist gaat.
+  wire c_dim = (chest_state == C_RESULT) && !c_is_sel;
+ 
+  wire       c_body_on, c_lid_on;
+  wire [2:0] c_body_code, c_lid_code;
+ 
+  chest_draw u_chest (
+    .x           (px - CHEST_X),
+    .y           (py - c_top),
+    .frame       (c_frame),
+    .highlighted (c_is_sel && (chest_state == C_PICK)),
+    .body_on     (c_body_on),
+    .body_code   (c_body_code),
+    .lid_on      (c_lid_on),
+    .lid_code    (c_lid_code)
   );
-  chest_draw u_chest1 (
-    .x(px - CHEST1_X), .y(py - CHEST_Y),
-    .highlighted(chest_sel==2'd1),
-    .frame(chest_sel == 2'd1 ? cframe_sel : cframe_oth),
-    .px_on(c1_on), .px_code(c1_code)
-  );
-  chest_draw u_chest2 (
-    .x(px - CHEST2_X), .y(py - CHEST_Y),
-    .highlighted(chest_sel==2'd2),
-    .frame(chest_sel == 2'd2 ? cframe_sel : cframe_oth),
-    .px_on(c2_on), .px_code(c2_code)
-  );
+ 
+  wire chest_body_on = show_chests && c_inrow && c_body_on;
+  wire chest_lid_on  = show_chests && c_inrow && c_lid_on;
 
-  wire       chest_on   = c0_on | c1_on | c2_on;
-  wire [2:0] chest_code = c0_on ? c0_code : c1_on ? c1_code : c2_code; // moet derde niet? 
+
+
+
 
   // MINI GAME MENU PAGE 
   wire menu_on;
@@ -223,19 +243,34 @@ localparam [2:0] M_TITLE    = 3'd0,
     3'd6: dragon_rgb = 6'b01_01_01; // Donkergrijs (Hoorns schaduw)
     3'd7: dragon_rgb = 6'b10_11_01; // Lichtgroen / Geelgroen (Nekje & Buikje)
     default: dragon_rgb = 6'b00_00_00;
-endcase
-end
-
-  reg [5:0] chest_rgb;
-  always @(*) case (chest_code)
-    3'd1: chest_rgb = 6'b00_00_00;   // zwart / outline
-    3'd2: chest_rgb = 6'b10_01_00;   // hout
-    3'd3: chest_rgb = 6'b11_10_00;   // goud
-    3'd4: chest_rgb = 6'b11_11_11;   // wit
-    3'd5: chest_rgb = 6'b11_00_00;   // rood
-    3'd6: chest_rgb = 6'b01_00_00;   // donkere binnenkant
-    default: chest_rgb = 6'b10_01_00;
   endcase
+  end
+
+  function [5:0] chest_color;
+    input [2:0] code;
+    begin
+      case (code)
+        3'd1:    chest_color = 6'b00_00_00;   // donker / outline  (39,24,1)
+        3'd2:    chest_color = 6'b01_00_00;   // hout              (77,48,1)
+        3'd3:    chest_color = 6'b11_10_00;   // goud              (227,143,8)
+        3'd4:    chest_color = 6'b11_11_11;   // wit (highlight)
+        default: chest_color = 6'b00_00_00;
+      endcase
+    end
+  endfunction
+
+  function [5:0] dim_color;
+    input [5:0] c;
+    begin
+      dim_color = {1'b0, c[5], 1'b0, c[3], 1'b0, c[1]};
+    end
+  endfunction
+ 
+  wire [5:0] body_raw_rgb = chest_color(c_body_code);
+  wire [5:0] lid_raw_rgb  = chest_color(c_lid_code);
+ 
+  wire [5:0] body_rgb = c_dim ? dim_color(body_raw_rgb) : body_raw_rgb;
+  wire [5:0] lid_rgb  = c_dim ? dim_color(lid_raw_rgb)  : lid_raw_rgb;
 
   reg [5:0] menu_rgb;
   always @(*) case (menu_code)
@@ -338,7 +373,9 @@ end
     else if (show_satbar   && sat_on)                 rgb = sat_rgb;
     else if (show_buttons  && button_on)              rgb = buttons_rgb;
     else if (show_menu     && menu_on)                rgb = menu_rgb;
-    else if (show_chests && chest_on)                 rgb = chest_rgb;
+    else if (chest_body_on)                           rgb = body_rgb;
+    else if (icon_on)                                 rgb = icon_rgb;
+    else if (chest_lid_on)                            rgb = lid_rgb; 
     else if (show_dragon && dragon_on)                rgb = dragon_rgb;
     else rgb = (mode == M_CHEST) ? BG_CHEST : bg_home_rgb;
     {R, G, B} = rgb;

@@ -637,3 +637,33 @@ module pot_sprite (
   assign px_code = in_bounds ? rom[addr] : 3'd0;
   assign px_on   = (px_code != 3'd0);        // code 0 = transparant
 endmodule
+
+module chest_lid_rom (
+    input  wire       frame,      // 0 dicht, 1 open
+    input  wire [3:0] row,        // 0..15 binnen het deksel
+    input  wire [4:0] col,        // 0..31
+    output wire [1:0] code
+);
+  reg [1:0] rom [0:1023];
+  initial begin
+    $readmemh("chest_lid.hex", rom);
+  end
+ 
+  wire [9:0] addr = {frame, row, col};
+  assign code = rom[addr];
+endmodule
+ 
+
+module chest_body_rom (
+    input  wire [3:0] row,        // 0..15 binnen de bak
+    input  wire [4:0] col,        // 0..31
+    output wire [1:0] code
+);
+  reg [1:0] rom [0:511];
+  initial begin
+    $readmemh("chest_body.hex", rom);
+  end
+ 
+  wire [8:0] addr = {row, col};
+  assign code = rom[addr];
+endmodule
