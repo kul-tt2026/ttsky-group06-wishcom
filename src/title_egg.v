@@ -27,9 +27,14 @@ module title_egg (
     input  wire       frame_tick,
     input  wire [9:0] x,             // portret-x  0..479
     input  wire [9:0] y,             // portret-y  0..639
+    input  wire [2:0] egg_frame,     // 0 heel .. 4 wijd open, 5 weg
+    input  wire [9:0] flash_r,       // straal van de flits; 0 = uit
 
     output wire       egg_on,
     output wire [2:0] egg_code,
+    output wire       crack_on,      // teken deze donker, BOVEN het ei
+    output wire       flash_on,      // schijf, BOVEN alles
+    output wire       flash_rim,     // 1 = buitenste bies (rood), 0 = kern (oranje)
     output wire       press_on,
     output wire       ground_on,
     output wire       ground_shadow
@@ -74,7 +79,9 @@ module title_egg (
     default: hop = 6'd0;                  // 9,10,11 = rust op de grond
   endcase
 
-  wire [9:0] foot_now = EGG_FOOT - {4'b0, hop};
+  // zodra het barsten begint staat het ei stil
+  wire cracking = (egg_frame != 3'd0);
+  wire [9:0] foot_now = cracking ? EGG_FOOT : (EGG_FOOT - {4'b0, hop});
   wire [9:0] EGG_Y    = foot_now - EGG_H;
 
   // --- knipperen: 3 s cyclus, lang aan / kort uit --------------------------
@@ -105,8 +112,123 @@ module title_egg (
   initial $readmemh("egg_128s.hex", rom);
 
   wire [2:0] code = rom[addr];
+  // Het ei blijft zichtbaar tot de flits het overneemt.  Zou je het bij
+  // egg_frame 5 laten verdwijnen, dan zie je een frame lang leeg gras -- een
+  // zichtbare "pop".  De flits groeit vanuit het midden van het ei naar buiten
+  // en eet het als het ware van binnenuit op.
   assign egg_on   = in_egg_box && (code != 3'd0);
   assign egg_code = code;
+
+
+  // ======================= BARST ==========================================
+  // Geen extra sprites: alles wiskundig.
+  //
+  // DRIE hoofdstralen vanuit een punt midden in het ei, 120 graden uit elkaar
+  // (een echte drieslag-breuk) en met een offset gedraaid, zodat geen enkele
+  // recht omhoog of recht opzij wijst.  Daarna TWEE vertakkingen die halverwege
+  // een hoofdstraal vertrekken onder een grote hoek (~90 graden), want een tak
+  // die bijna evenwijdig loopt leest niet als een tak.
+  //
+  // Elke straal krijgt een driehoeksgolf-slingering.
+  // REGEL: helling + slingering moet onder de lijndikte blijven, anders valt
+  // de straal uiteen in losse stukjes.
+  wire [9:0] lx = x - EGG_X;                     // lokaal 0..255
+  wire [9:0] ly = y - EGG_Y;
+  wire signed [11:0] slx = $signed({2'b0, lx});
+  wire signed [11:0] sly = $signed({2'b0, ly});
+
+  localparam signed [11:0] OX = 12'sd128;        // oorsprong midden in het ei
+  localparam signed [11:0] OY = 12'sd112;
+
+  reg [9:0] grow;
+  reg [2:0] cw;
+  always @(*) case (egg_frame)
+    3'd0: begin grow = 10'd0;   cw = 3'd0; end
+    3'd1: begin grow = 10'd45;  cw = 3'd2; end
+    3'd2: begin grow = 10'd90;  cw = 3'd2; end
+    3'd3: begin grow = 10'd140; cw = 3'd2; end
+    3'd4: begin grow = 10'd200; cw = 3'd4; end
+    default: begin grow = 10'd200; cw = 3'd4; end
+  endcase
+
+  // slingering: driehoeksgolf, periode 16, amplitude 6 (helling 0.375)
+  function signed [11:0] wob;
+    input [9:0] t;
+    reg [2:0] hlf;
+    reg [3:0] trw;
+    begin
+      hlf = t[2:0];
+      trw = t[3] ? (4'd7 - {1'b0,hlf}) : {1'b0,hlf};
+      wob = $signed({8'b0, trw[2:0], 1'b0}) - 12'sd7;
+    end
+  endfunction
+
+  // Afstand tussen twee waarden.  BEIDE als argument meegeven: leest een
+  // functie een modulesignaal van binnenuit, dan wordt de continue toewijzing
+  // daar niet gevoelig voor en tekent de straal nooit.  Stille fout.
+  function [9:0] dist;
+    input signed [11:0] here;
+    input signed [11:0] want;
+    begin
+      dist = (here >= want) ? (here - want) : (want - here);
+    end
+  endfunction
+
+  // ---- hoofdstraal A: omhoog, licht naar rechts (offset: niet recht op) ---
+  wire signed [11:0] tA = OY - sly;
+  wire [9:0] lenA = (grow > 10'd104) ? 10'd104 : grow;
+  wire hitA = (tA >= 0) && (tA < $signed({2'b0,lenA})) &&
+              (dist(slx, OX + (tA >>> 2) + wob(tA[9:0])) <= {7'b0, cw});
+
+  // ---- hoofdstraal B: naar links, licht omlaag (120 graden van A) --------
+  //      langs x geparametriseerd, want deze is bijna horizontaal
+  wire signed [11:0] tB = OX - slx;
+  wire [9:0] lenB = (grow > 10'd112) ? 10'd112 : grow;
+  wire hitB = (tB >= 0) && (tB < $signed({2'b0,lenB})) &&
+              (dist(sly, OY + (tB >>> 2) + wob(tB[9:0])) <= {7'b0, cw});
+
+  // ---- hoofdstraal C: omlaag naar rechts (120 graden van B) --------------
+  wire signed [11:0] tC = sly - OY;
+  wire [9:0] lenC = (grow > 10'd130) ? 10'd130 : grow;
+  wire hitC = (tC >= 0) && (tC < $signed({2'b0,lenC})) &&
+              (dist(slx, OX + tC + (tC >>> 2) + wob(tC[9:0])) <= {7'b0, cw});
+
+  // ---- tak D: uit A op t=52, bijna HAAKS erop (naar rechts, licht omhoog) -
+  localparam signed [11:0] DX0 = OX + 12'sd13;   // 52 >> 2
+  localparam signed [11:0] DY0 = OY - 12'sd52;
+  wire signed [11:0] tD = slx - DX0;
+  wire [9:0] lenD = (grow > 10'd52) ?
+                    ((grow - 10'd52 > 10'd70) ? 10'd70 : (grow - 10'd52)) : 10'd0;
+  wire hitD = (egg_frame >= 3'd2) && (tD >= 0) && (tD < $signed({2'b0,lenD})) &&
+              (dist(sly, DY0 - (tD >>> 2) + wob(tD[9:0])) <= 10'd2);
+
+  // ---- tak E: uit C op t=60, steil naar linksonder (~95 graden van C) ----
+  localparam signed [11:0] EX0 = OX + 12'sd75;   // 60 + 15
+  localparam signed [11:0] EY0 = OY + 12'sd60;
+  wire signed [11:0] tE = sly - EY0;
+  wire [9:0] lenE = (grow > 10'd60) ?
+                    ((grow - 10'd60 > 10'd60) ? 10'd60 : (grow - 10'd60)) : 10'd0;
+  wire hitE = (egg_frame >= 3'd3) && (tE >= 0) && (tE < $signed({2'b0,lenE})) &&
+              (dist(slx, EX0 - tE + wob(tE[9:0])) <= 10'd2);
+
+  assign crack_on = in_egg_box && (code != 3'd0) &&
+                    (hitA || hitB || hitC || hitD || hitE);
+
+  // ======================= FLITS ==========================================
+  // Een groeiende schijf die het scherm overneemt.  Een echte cirkel kost twee
+  // vermenigvuldigingen per pixel (duur!); een ACHTHOEK benadert hem met
+  // alleen vergelijkingen en shifts:  max + min/2 <= r.
+  // flash_r komt van buiten (home.v telt hem op), zodat de groei vloeiend is.
+  wire [9:0] fdx = (x >= EGG_CX) ? (x - EGG_CX) : (EGG_CX - x);
+  wire [9:0] fcy = EGG_FOOT - 10'd128;                  // midden van het ei
+  wire [9:0] fdy = (y >= fcy) ? (y - fcy) : (fcy - y);
+  wire [9:0] fmx = (fdx > fdy) ? fdx : fdy;
+  wire [9:0] fmn = (fdx > fdy) ? fdy : fdx;
+  localparam [9:0] RIM = 10'd10;        // dikte van de rode bies
+  wire [9:0] fd   = fmx + (fmn >> 1);   // achthoek-"afstand"
+  assign flash_on  = (flash_r != 10'd0) && (fd <= flash_r);
+  // de buitenste RIM pixels van de schijf krijgen een andere kleur
+  assign flash_rim = flash_on && (fd + RIM > flash_r);
 
   // --- PRESS ANY BUTTON (3x5 font, 4x geschaald) --------------------------
   wire in_press = blink &&

@@ -55,7 +55,7 @@ module tt_um_dragonchi (
   wire you_win, overflow, evolve_now;
   wire act_feed, act_drink, act_sleep, act_minigame, req_evolve, restart;
   wire game_over, minigame_done;
-  wire [9:0] coins;
+  wire [9:0] coins, flash_r;
   home u_home (
     .clk(clk), .rst_n(rst_n), .frame_tick(frame_tick),
     .btn_pressed(btn_pressed),
@@ -63,7 +63,7 @@ module tt_um_dragonchi (
     .mode(mode), .menu_sel(menu_sel),
     .act_feed(act_feed), .act_drink(act_drink), .act_sleep(act_sleep),
     .req_evolve(req_evolve), .restart(restart), .you_win(you_win), .act_minigame(act_minigame),
-    .egg_frame(egg_frame)
+    .egg_frame(egg_frame), .flash_r(flash_r)
   );
 
   // ---- balance game (Person B) ----
@@ -144,8 +144,8 @@ module tt_um_dragonchi (
     .chest_outcome(chest_outcome), .dragon_mood_anim(dragon_mood_anim),
     .chest_frame(chest_frame), .flash(flash), .flame_frame(flame_frame),
     .R(R), .G(G), .B(B), .overflow(overflow), .evolve_now(evolve_now),
-    .egg_frame(egg_frame), .chest_contents(chest_contents), .pot(pot), .round(round),
-    .evolve_blink(evolve_blink), .frame_tick(frame_tick)
+    .chest_contents(chest_contents), .pot(pot), .round(round),
+    .evolve_blink(evolve_blink), .frame_tick(frame_tick), .egg_frame(egg_frame), .flash_r(flash_r)
   );
 
   

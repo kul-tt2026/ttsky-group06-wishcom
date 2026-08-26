@@ -29,7 +29,8 @@ module home (
     output reg        act_minigame,    // the 4th combo action
     output reg        req_evolve,      // -> dragon_state
     output reg        restart,
-    output reg  [2:0] egg_frame        // 0 heel, 1 barst, 2 open, 3 weg
+    output reg  [2:0] egg_frame,       // 0 heel, 1 barst, 2 open, 3 weg
+    output reg  [9:0] flash_r          // flash refresh rate
 );
   localparam [2:0] M_TITLE    = 3'd0,
                    M_EGG      = 3'd1,
@@ -78,6 +79,7 @@ module home (
       act_minigame <= 1'b0;
       req_evolve   <= 1'b0;
       restart      <= 1'b0;
+      flash_r      <= 10'd0;
 
       case (mode)
 
@@ -90,17 +92,17 @@ module home (
         end
 
         // -------------------------------------------------------------
-       M_EGG: begin
-        if (egg_timer == 8'd0) begin
-          if (any_btn) egg_timer <= 8'd150; // Start animatie van 150 frames
-        end else begin
-          egg_timer <= egg_timer - 8'd1;
-          if (egg_timer == 8'd1) begin
+        M_EGG: begin
+          if (egg_timer != 7'd0) begin
+            egg_timer <= egg_timer - 7'd1;          // barst groeit
+          end else if (flash_r < 10'd760) begin
+            flash_r <= flash_r + 10'd8;             // flits groeit
+          end else begin
             restart <= 1'b1;
+            flash_r <= 10'd0;
             mode    <= M_HOME;
           end
         end
-      end
         // -------------------------------------------------------------
         M_HOME: begin
           // end conditions first: they are levels, so test before buttons
