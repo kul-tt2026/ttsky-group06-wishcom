@@ -216,259 +216,259 @@ endmodule
 // endmodule
 
 
-module egg1_generator (
-    input  wire        clk,
-    input  wire        rst_n,
-    input  wire [9:0]  x,
-    input  wire [9:0]  y,
-    input wire [2:0]  egg_frame,
-    output reg         px_on,
-    output reg  [2:0]  px_code
-);
+// module egg1_generator (
+//     input  wire        clk,
+//     input  wire        rst_n,
+//     input  wire [9:0]  x,
+//     input  wire [9:0]  y,
+//     input wire [2:0]  egg_frame,
+//     output reg         px_on,
+//     output reg  [2:0]  px_code
+// );
 
 
-    // Sprite startpositie op het scherm
-    // Sprite blijft 256x256 op het scherm door 8x te schalen (ipv 4x)
-    localparam [9:0] SPRITE_X = 10'd184;
-    localparam [9:0] SPRITE_Y = 10'd96;
-    localparam [9:0] SPRITE_W = 10'd256;
-    localparam [9:0] SPRITE_H = 10'd256;
+//     // Sprite startpositie op het scherm
+//     // Sprite blijft 256x256 op het scherm door 8x te schalen (ipv 4x)
+//     localparam [9:0] SPRITE_X = 10'd184;
+//     localparam [9:0] SPRITE_Y = 10'd96;
+//     localparam [9:0] SPRITE_W = 10'd256;
+//     localparam [9:0] SPRITE_H = 10'd256;
 
-    wire in_bounds = (x >= SPRITE_X) && (x < (SPRITE_X + SPRITE_W)) &&
-                     (y >= SPRITE_Y) && (y < (SPRITE_Y + SPRITE_H));
+//     wire in_bounds = (x >= SPRITE_X) && (x < (SPRITE_X + SPRITE_W)) &&
+//                      (y >= SPRITE_Y) && (y < (SPRITE_Y + SPRITE_H));
 
-    // Delen door 8 (>> 3) i.p.v. door 4 -> 32x32 coördinaten
-    wire [4:0] rel_x = in_bounds ? 5'((x - SPRITE_X) >> 3) : 5'd0;
-    wire [4:0] rel_y = in_bounds ? 5'((y - SPRITE_Y) >> 3) : 5'd0;
+//     // Delen door 8 (>> 3) i.p.v. door 4 -> 32x32 coördinaten
+//     wire [4:0] rel_x = in_bounds ? 5'((x - SPRITE_X) >> 3) : 5'd0;
+//     wire [4:0] rel_y = in_bounds ? 5'((y - SPRITE_Y) >> 3) : 5'd0;
 
-    // 10-bit adres (1024 entries) i.p.v. 12-bit (4096 entries)
-    wire [9:0] addr = {rel_y, rel_x};
+//     // 10-bit adres (1024 entries) i.p.v. 12-bit (4096 entries)
+//     wire [9:0] addr = {rel_y, rel_x};
 
-    reg [2:0] rom [0:1023];
-    initial begin
-        $readmemh("egg1.hex", rom);
-    end
-    // Geregistreerde (pipelined) output
-    always @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            px_on   <= 1'b0;
-            px_code <= 3'd0;
-        end else begin
-            if (in_bounds && (egg_frame == 3'd1) && (rom[addr] != 3'd0)) begin
-                px_on   <= 1'b1;
-                px_code <= rom[addr];
-            end else begin
-                px_on   <= 1'b0;
-                px_code <= 3'd0;
-            end
-        end
-    end
+//     reg [2:0] rom [0:1023];
+//     initial begin
+//         $readmemh("egg1.hex", rom);
+//     end
+//     // Geregistreerde (pipelined) output
+//     always @(posedge clk or negedge rst_n) begin
+//         if (!rst_n) begin
+//             px_on   <= 1'b0;
+//             px_code <= 3'd0;
+//         end else begin
+//             if (in_bounds && (egg_frame == 3'd1) && (rom[addr] != 3'd0)) begin
+//                 px_on   <= 1'b1;
+//                 px_code <= rom[addr];
+//             end else begin
+//                 px_on   <= 1'b0;
+//                 px_code <= 3'd0;
+//             end
+//         end
+//     end
 
-endmodule
-
-
-module egg2_generator (
-    input  wire        clk,
-    input  wire        rst_n,
-    input  wire [9:0]  x,
-    input  wire [9:0]  y,
-    input  wire [2:0]  egg_frame,
-    output reg         px_on,
-    output reg  [2:0]  px_code
-);
+// endmodule
 
 
-    // Sprite startpositie op het scherm
-    // Sprite blijft 256x256 op het scherm door 8x te schalen (ipv 4x)
-    localparam [9:0] SPRITE_X = 10'd184;
-    localparam [9:0] SPRITE_Y = 10'd96;
-    localparam [9:0] SPRITE_W = 10'd256;
-    localparam [9:0] SPRITE_H = 10'd256;
-
-    wire in_bounds = (x >= SPRITE_X) && (x < (SPRITE_X + SPRITE_W)) &&
-                     (y >= SPRITE_Y) && (y < (SPRITE_Y + SPRITE_H));
-
-    // Delen door 8 (>> 3) i.p.v. door 4 -> 32x32 coördinaten
-    wire [4:0] rel_x = in_bounds ? 5'((x - SPRITE_X) >> 3) : 5'd0;
-    wire [4:0] rel_y = in_bounds ? 5'((y - SPRITE_Y) >> 3) : 5'd0;
-
-    // 10-bit adres (1024 entries) i.p.v. 12-bit (4096 entries)
-    wire [9:0] addr = {rel_y, rel_x};
-
-    reg [2:0] rom [0:1023];
-    initial begin
-        $readmemh("egg2.hex", rom);
-    end
-    // Geregistreerde (pipelined) output
-    always @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            px_on   <= 1'b0;
-            px_code <= 3'd0;
-        end else begin
-            if (in_bounds && (egg_frame == 3'd2) && (rom[addr] != 3'd0)) begin
-                px_on   <= 1'b1;
-                px_code <= rom[addr];
-            end else begin
-                px_on   <= 1'b0;
-                px_code <= 3'd0;
-            end
-        end
-    end
-
-endmodule
+// module egg2_generator (
+//     input  wire        clk,
+//     input  wire        rst_n,
+//     input  wire [9:0]  x,
+//     input  wire [9:0]  y,
+//     input  wire [2:0]  egg_frame,
+//     output reg         px_on,
+//     output reg  [2:0]  px_code
+// );
 
 
-module egg3_generator (
-    input  wire        clk,
-    input  wire        rst_n,
-    input  wire [9:0]  x,
-    input  wire [9:0]  y,
-    input  wire [2:0]  egg_frame,
-    output reg         px_on,
-    output reg  [2:0]  px_code
-);
+//     // Sprite startpositie op het scherm
+//     // Sprite blijft 256x256 op het scherm door 8x te schalen (ipv 4x)
+//     localparam [9:0] SPRITE_X = 10'd184;
+//     localparam [9:0] SPRITE_Y = 10'd96;
+//     localparam [9:0] SPRITE_W = 10'd256;
+//     localparam [9:0] SPRITE_H = 10'd256;
+
+//     wire in_bounds = (x >= SPRITE_X) && (x < (SPRITE_X + SPRITE_W)) &&
+//                      (y >= SPRITE_Y) && (y < (SPRITE_Y + SPRITE_H));
+
+//     // Delen door 8 (>> 3) i.p.v. door 4 -> 32x32 coördinaten
+//     wire [4:0] rel_x = in_bounds ? 5'((x - SPRITE_X) >> 3) : 5'd0;
+//     wire [4:0] rel_y = in_bounds ? 5'((y - SPRITE_Y) >> 3) : 5'd0;
+
+//     // 10-bit adres (1024 entries) i.p.v. 12-bit (4096 entries)
+//     wire [9:0] addr = {rel_y, rel_x};
+
+//     reg [2:0] rom [0:1023];
+//     initial begin
+//         $readmemh("egg2.hex", rom);
+//     end
+//     // Geregistreerde (pipelined) output
+//     always @(posedge clk or negedge rst_n) begin
+//         if (!rst_n) begin
+//             px_on   <= 1'b0;
+//             px_code <= 3'd0;
+//         end else begin
+//             if (in_bounds && (egg_frame == 3'd2) && (rom[addr] != 3'd0)) begin
+//                 px_on   <= 1'b1;
+//                 px_code <= rom[addr];
+//             end else begin
+//                 px_on   <= 1'b0;
+//                 px_code <= 3'd0;
+//             end
+//         end
+//     end
+
+// endmodule
 
 
-    // Sprite startpositie op het scherm
-    // Sprite blijft 256x256 op het scherm door 8x te schalen (ipv 4x)
-    localparam [9:0] SPRITE_X = 10'd184;
-    localparam [9:0] SPRITE_Y = 10'd96;
-    localparam [9:0] SPRITE_W = 10'd256;
-    localparam [9:0] SPRITE_H = 10'd256;
-
-    wire in_bounds = (x >= SPRITE_X) && (x < (SPRITE_X + SPRITE_W)) &&
-                     (y >= SPRITE_Y) && (y < (SPRITE_Y + SPRITE_H));
-
-    // Delen door 8 (>> 3) i.p.v. door 4 -> 32x32 coördinaten
-    wire [4:0] rel_x = in_bounds ? 5'((x - SPRITE_X) >> 3) : 5'd0;
-    wire [4:0] rel_y = in_bounds ? 5'((y - SPRITE_Y) >> 3) : 5'd0;
-
-    // 10-bit adres (1024 entries) i.p.v. 12-bit (4096 entries)
-    wire [9:0] addr = {rel_y, rel_x};
-
-    reg [2:0] rom [0:1023];
-    initial begin
-        $readmemh("egg3.hex", rom);
-    end
-    // Geregistreerde (pipelined) output
-    always @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            px_on   <= 1'b0;
-            px_code <= 3'd0;
-        end else begin
-            if (in_bounds && (egg_frame == 3'd3) && (rom[addr] != 3'd0)) begin
-                px_on   <= 1'b1;
-                px_code <= rom[addr];
-            end else begin
-                px_on   <= 1'b0;
-                px_code <= 3'd0;
-            end
-        end
-    end
-
-endmodule
+// module egg3_generator (
+//     input  wire        clk,
+//     input  wire        rst_n,
+//     input  wire [9:0]  x,
+//     input  wire [9:0]  y,
+//     input  wire [2:0]  egg_frame,
+//     output reg         px_on,
+//     output reg  [2:0]  px_code
+// );
 
 
-module egg4_generator (
-    input  wire        clk,
-    input  wire        rst_n,
-    input  wire [9:0]  x,
-    input  wire [9:0]  y,
-    input  wire [2:0]  egg_frame,
-    output reg         px_on,
-    output reg  [2:0]  px_code
-);
+//     // Sprite startpositie op het scherm
+//     // Sprite blijft 256x256 op het scherm door 8x te schalen (ipv 4x)
+//     localparam [9:0] SPRITE_X = 10'd184;
+//     localparam [9:0] SPRITE_Y = 10'd96;
+//     localparam [9:0] SPRITE_W = 10'd256;
+//     localparam [9:0] SPRITE_H = 10'd256;
+
+//     wire in_bounds = (x >= SPRITE_X) && (x < (SPRITE_X + SPRITE_W)) &&
+//                      (y >= SPRITE_Y) && (y < (SPRITE_Y + SPRITE_H));
+
+//     // Delen door 8 (>> 3) i.p.v. door 4 -> 32x32 coördinaten
+//     wire [4:0] rel_x = in_bounds ? 5'((x - SPRITE_X) >> 3) : 5'd0;
+//     wire [4:0] rel_y = in_bounds ? 5'((y - SPRITE_Y) >> 3) : 5'd0;
+
+//     // 10-bit adres (1024 entries) i.p.v. 12-bit (4096 entries)
+//     wire [9:0] addr = {rel_y, rel_x};
+
+//     reg [2:0] rom [0:1023];
+//     initial begin
+//         $readmemh("egg3.hex", rom);
+//     end
+//     // Geregistreerde (pipelined) output
+//     always @(posedge clk or negedge rst_n) begin
+//         if (!rst_n) begin
+//             px_on   <= 1'b0;
+//             px_code <= 3'd0;
+//         end else begin
+//             if (in_bounds && (egg_frame == 3'd3) && (rom[addr] != 3'd0)) begin
+//                 px_on   <= 1'b1;
+//                 px_code <= rom[addr];
+//             end else begin
+//                 px_on   <= 1'b0;
+//                 px_code <= 3'd0;
+//             end
+//         end
+//     end
+
+// endmodule
 
 
-    // Sprite startpositie op het scherm
-    // Sprite blijft 256x256 op het scherm door 8x te schalen (ipv 4x)
-    localparam [9:0] SPRITE_X = 10'd184;
-    localparam [9:0] SPRITE_Y = 10'd96;
-    localparam [9:0] SPRITE_W = 10'd256;
-    localparam [9:0] SPRITE_H = 10'd256;
-
-    wire in_bounds = (x >= SPRITE_X) && (x < (SPRITE_X + SPRITE_W)) &&
-                     (y >= SPRITE_Y) && (y < (SPRITE_Y + SPRITE_H));
-
-    // Delen door 8 (>> 3) i.p.v. door 4 -> 32x32 coördinaten
-    wire [4:0] rel_x = in_bounds ? 5'((x - SPRITE_X) >> 3) : 5'd0;
-    wire [4:0] rel_y = in_bounds ? 5'((y - SPRITE_Y) >> 3) : 5'd0;
-
-    // 10-bit adres (1024 entries) i.p.v. 12-bit (4096 entries)
-    wire [9:0] addr = {rel_y, rel_x};
-
-    reg [2:0] rom [0:1023];
-    initial begin
-        $readmemh("egg4.hex", rom);
-    end
-    // Geregistreerde (pipelined) output
-    always @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            px_on   <= 1'b0;
-            px_code <= 3'd0;
-        end else begin
-            if (in_bounds && (egg_frame == 3'd4) && (rom[addr] != 3'd0)) begin
-                px_on   <= 1'b1;
-                px_code <= rom[addr];
-            end else begin
-                px_on   <= 1'b0;
-                px_code <= 3'd0;
-            end
-        end
-    end
-
-endmodule
+// module egg4_generator (
+//     input  wire        clk,
+//     input  wire        rst_n,
+//     input  wire [9:0]  x,
+//     input  wire [9:0]  y,
+//     input  wire [2:0]  egg_frame,
+//     output reg         px_on,
+//     output reg  [2:0]  px_code
+// );
 
 
-module egg5_generator (
-    input  wire        clk,
-    input  wire        rst_n,
-    input  wire [9:0]  x,
-    input  wire [9:0]  y,
-    input  wire [2:0]  egg_frame,
-    output reg         px_on,
-    output reg  [2:0]  px_code
-);
+//     // Sprite startpositie op het scherm
+//     // Sprite blijft 256x256 op het scherm door 8x te schalen (ipv 4x)
+//     localparam [9:0] SPRITE_X = 10'd184;
+//     localparam [9:0] SPRITE_Y = 10'd96;
+//     localparam [9:0] SPRITE_W = 10'd256;
+//     localparam [9:0] SPRITE_H = 10'd256;
+
+//     wire in_bounds = (x >= SPRITE_X) && (x < (SPRITE_X + SPRITE_W)) &&
+//                      (y >= SPRITE_Y) && (y < (SPRITE_Y + SPRITE_H));
+
+//     // Delen door 8 (>> 3) i.p.v. door 4 -> 32x32 coördinaten
+//     wire [4:0] rel_x = in_bounds ? 5'((x - SPRITE_X) >> 3) : 5'd0;
+//     wire [4:0] rel_y = in_bounds ? 5'((y - SPRITE_Y) >> 3) : 5'd0;
+
+//     // 10-bit adres (1024 entries) i.p.v. 12-bit (4096 entries)
+//     wire [9:0] addr = {rel_y, rel_x};
+
+//     reg [2:0] rom [0:1023];
+//     initial begin
+//         $readmemh("egg4.hex", rom);
+//     end
+//     // Geregistreerde (pipelined) output
+//     always @(posedge clk or negedge rst_n) begin
+//         if (!rst_n) begin
+//             px_on   <= 1'b0;
+//             px_code <= 3'd0;
+//         end else begin
+//             if (in_bounds && (egg_frame == 3'd4) && (rom[addr] != 3'd0)) begin
+//                 px_on   <= 1'b1;
+//                 px_code <= rom[addr];
+//             end else begin
+//                 px_on   <= 1'b0;
+//                 px_code <= 3'd0;
+//             end
+//         end
+//     end
+
+// endmodule
 
 
-    // Sprite startpositie op het scherm
-    // Sprite blijft 256x256 op het scherm door 8x te schalen (ipv 4x)
-    localparam [9:0] SPRITE_X = 10'd184;
-    localparam [9:0] SPRITE_Y = 10'd96;
-    localparam [9:0] SPRITE_W = 10'd256;
-    localparam [9:0] SPRITE_H = 10'd256;
+// module egg5_generator (
+//     input  wire        clk,
+//     input  wire        rst_n,
+//     input  wire [9:0]  x,
+//     input  wire [9:0]  y,
+//     input  wire [2:0]  egg_frame,
+//     output reg         px_on,
+//     output reg  [2:0]  px_code
+// );
 
-    wire in_bounds = (x >= SPRITE_X) && (x < (SPRITE_X + SPRITE_W)) &&
-                     (y >= SPRITE_Y) && (y < (SPRITE_Y + SPRITE_H));
 
-    // Delen door 8 (>> 3) i.p.v. door 4 -> 32x32 coördinaten
-    wire [4:0] rel_x = in_bounds ? 5'((x - SPRITE_X) >> 3) : 5'd0;
-    wire [4:0] rel_y = in_bounds ? 5'((y - SPRITE_Y) >> 3) : 5'd0;
+//     // Sprite startpositie op het scherm
+//     // Sprite blijft 256x256 op het scherm door 8x te schalen (ipv 4x)
+//     localparam [9:0] SPRITE_X = 10'd184;
+//     localparam [9:0] SPRITE_Y = 10'd96;
+//     localparam [9:0] SPRITE_W = 10'd256;
+//     localparam [9:0] SPRITE_H = 10'd256;
 
-    // 10-bit adres (1024 entries) i.p.v. 12-bit (4096 entries)
-    wire [9:0] addr = {rel_y, rel_x};
+//     wire in_bounds = (x >= SPRITE_X) && (x < (SPRITE_X + SPRITE_W)) &&
+//                      (y >= SPRITE_Y) && (y < (SPRITE_Y + SPRITE_H));
 
-    reg [2:0] rom [0:1023];
-    initial begin
-        $readmemh("egg5.hex", rom);
-    end
-    // Geregistreerde (pipelined) output
-    always @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            px_on   <= 1'b0;
-            px_code <= 3'd0;
-        end else begin
-            if (in_bounds && (egg_frame == 3'd5) && (rom[addr] != 3'd0)) begin
-                px_on   <= 1'b1;
-                px_code <= rom[addr];
-            end else begin
-                px_on   <= 1'b0;
-                px_code <= 3'd0;
-            end
-        end
-    end
+//     // Delen door 8 (>> 3) i.p.v. door 4 -> 32x32 coördinaten
+//     wire [4:0] rel_x = in_bounds ? 5'((x - SPRITE_X) >> 3) : 5'd0;
+//     wire [4:0] rel_y = in_bounds ? 5'((y - SPRITE_Y) >> 3) : 5'd0;
 
-endmodule
+//     // 10-bit adres (1024 entries) i.p.v. 12-bit (4096 entries)
+//     wire [9:0] addr = {rel_y, rel_x};
+
+//     reg [2:0] rom [0:1023];
+//     initial begin
+//         $readmemh("egg5.hex", rom);
+//     end
+//     // Geregistreerde (pipelined) output
+//     always @(posedge clk or negedge rst_n) begin
+//         if (!rst_n) begin
+//             px_on   <= 1'b0;
+//             px_code <= 3'd0;
+//         end else begin
+//             if (in_bounds && (egg_frame == 3'd5) && (rom[addr] != 3'd0)) begin
+//                 px_on   <= 1'b1;
+//                 px_code <= rom[addr];
+//             end else begin
+//                 px_on   <= 1'b0;
+//                 px_code <= 3'd0;
+//             end
+//         end
+//     end
+
+// endmodule
 
 module egg0_generator (
     input  wire        clk,

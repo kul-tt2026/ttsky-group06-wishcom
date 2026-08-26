@@ -26,7 +26,7 @@ module egg_draw (
             .px_code(egg0_px_code)
     );
 
-    egg1_generator egg1(
+    egg0_generator egg1(
             .clk(clk),
             .rst_n(rst_n),
             .x(x),
@@ -36,7 +36,7 @@ module egg_draw (
             .px_code(egg1_px_code)
     );
 
-    egg2_generator egg2(
+    egg0_generator egg2(
             .clk(clk),
             .rst_n(rst_n),
             .x(x),
@@ -46,7 +46,7 @@ module egg_draw (
             .px_code(egg2_px_code)
     );
 
-    egg3_generator egg3(
+    egg0_generator egg3(
             .clk(clk),
             .rst_n(rst_n),
             .x(x),
@@ -56,7 +56,7 @@ module egg_draw (
             .px_code(egg3_px_code)
     );
 
-    egg4_generator egg4(
+    egg0_generator egg4(
             .clk(clk),
             .rst_n(rst_n),
             .x(x),
@@ -66,7 +66,7 @@ module egg_draw (
             .px_code(egg4_px_code)
     );
 
-    egg5_generator egg5(
+    egg0_generator egg5(
             .clk(clk),
             .rst_n(rst_n),
             .x(x),
