@@ -37,7 +37,7 @@ module chest_draw (
     output wire [2:0] lid_code
 );
 
-  localparam [9:0] BOX = 10'd128;   // 32 sprite-pixels x4
+  localparam [9:0] BOX = 10'd192;   // 32 sprite-pixels x4
 
   // Boven/links van de origin wrapt de lokale coordinaat naar ~1023, dus een
   // enkele "< BOX" test vangt meteen ook de linker- en bovenrand af.  Geen
@@ -46,8 +46,11 @@ module chest_draw (
 
   // Schaal x4: gewoon twee bits eraf schuiven.  Alleen machten van twee,
   // anders heb je een deler nodig.
-  wire [4:0] sx = x[6:2];           // 0..31 kolom in de sprite
-  wire [4:0] sy = y[6:2];           // 0..31 rij   in de sprite
+  wire [15:0] xm = x[7:0] * 8'd171;
+  wire [15:0] ym = y[7:0] * 8'd171;
+
+  wire [4:0] sx = xm[14:10];        // 0..31 kolom in de sprite
+  wire [4:0] sy = ym[14:10];        // 0..31 rij   in de sprite
 
   wire is_body = sy[4];             // rij 16..31 -> bak
   wire [3:0] srow = sy[3:0];        // rij binnen de laag

@@ -72,10 +72,10 @@ localparam [2:0] M_TITLE    = 3'd0,
   localparam DRAGON_X = 10'd0, DRAGON_Y = 10'd0;
   // localparam SATBAR_X = 10'd24,  SATBAR_Y = 10'd56;
   // localparam COINBAR_X  = 10'd24,  COINBAR_Y  = 10'd80;
-  localparam [9:0] CHEST_X     = 10'd176;
-  localparam [9:0] CHEST_Y0    = 10'd60;
-  localparam [9:0] CHEST_PITCH = 10'd192;
-  localparam [9:0] CHEST_BOX   = 10'd128;
+  localparam [9:0] CHEST_X     = 10'd144;
+  localparam [9:0] CHEST_Y0    = 10'd52;
+  localparam [9:0] CHEST_PITCH = 10'd194;
+  localparam [9:0] CHEST_BOX   = 10'd192;
  
   localparam [1:0] C_PICK = 2'd0, C_OPEN = 2'd1, C_RESULT = 2'd2;
   // localparam HEARTS_X = 10'd168, HEARTS_Y = 10'd16;
@@ -149,9 +149,9 @@ localparam [2:0] M_TITLE    = 3'd0,
     end else if (py >= CHEST_Y0 + CHEST_PITCH &&
                  py <  CHEST_Y0 + CHEST_PITCH + CHEST_BOX) begin
       c_slot = 2'd1;  c_top = CHEST_Y0 + CHEST_PITCH;      c_inrow = 1'b1;
-    end else if (py >= CHEST_Y0 + 10'd384 &&
-                 py <  CHEST_Y0 + 10'd384 + CHEST_BOX) begin
-      c_slot = 2'd2;  c_top = CHEST_Y0 + 10'd384;          c_inrow = 1'b1;
+    end else if (py >= CHEST_Y0 + (CHEST_PITCH << 1) &&
+                 py <  CHEST_Y0 + (CHEST_PITCH << 1) + CHEST_BOX) begin
+      c_slot = 2'd2;  c_top = CHEST_Y0 + (CHEST_PITCH << 1);  c_inrow = 1'b1;
     end else begin
       c_slot = 2'd0;  c_top = CHEST_Y0;                    c_inrow = 1'b0;
     end
@@ -190,7 +190,32 @@ wire c_is_sel = (c_slot == chest_sel);
   wire chest_lid_on  = show_chests && c_inrow && c_lid_on;
 
 
+  //inhoud chests 
+  // Welke inhoud hoort bij DEZE rij?  chest_contents is {kist2, kist1, kist0}.
+  reg [2:0] c_content;
+  always @(*) begin
+    case (c_slot)
+      2'd0:    c_content = chest_contents[2:0];
+      2'd1:    c_content = chest_contents[5:3];
+      default: c_content = chest_contents[8:6];
+    endcase
+  end
 
+  // De gekozen kist verklapt zich al in OPEN, de andere twee pas in RESULT.
+  wire c_show_icon = (chest_state == C_RESULT) ||
+                     ((chest_state == C_OPEN) && c_is_sel);
+
+  wire       c_icon_on;
+  wire [2:0] c_icon_code;
+  icon_draw u_icon (
+    .x       (px - CHEST_X),
+    .y       (py - c_top),
+    .icon    (c_content),
+    .px_on   (c_icon_on),
+    .px_code (c_icon_code)
+  );
+
+  wire chest_icon_on = show_chests && c_inrow && c_show_icon && c_icon_on;
 
 
   // MINI GAME MENU PAGE 
@@ -299,6 +324,25 @@ end
       dim_color = {1'b0, c[5], 1'b0, c[3], 1'b0, c[1]};
     end
   endfunction
+
+    function [5:0] icon_color;
+    input [2:0] code;
+    begin
+      case (code)
+        3'd1:    icon_color = 6'b00_00_00;   // zwarte outline
+        3'd2:    icon_color = 6'b11_10_00;   // goud
+        3'd3:    icon_color = 6'b10_01_00;   // donkergoud
+        3'd4:    icon_color = 6'b11_11_11;   // wit / glas
+        3'd5:    icon_color = 6'b00_11_00;   // gifgroen
+        3'd6:    icon_color = 6'b00_10_00;   // donkergroen
+        3'd7:    icon_color = 6'b10_01_00;   // kurk
+        default: icon_color = 6'b00_00_00;
+      endcase
+    end
+  endfunction
+
+  wire [5:0] icon_raw_rgb = icon_color(c_icon_code);
+  wire [5:0] icon_rgb     = c_dim ? dim_color(icon_raw_rgb) : icon_raw_rgb;
  
   wire [5:0] body_raw_rgb = chest_color(c_body_code);
   wire [5:0] lid_raw_rgb  = chest_color(c_lid_code);
@@ -439,7 +483,7 @@ end
     else if (show_buttons  && button_on)              rgb = buttons_rgb;
     else if (show_menu     && menu_on)                rgb = menu_rgb;
     else if (chest_body_on)                           rgb = body_rgb;
-    //else if (icon_on)                                 rgb = icon_rgb;
+    else if (chest_icon_on)                            rgb = icon_rgb;
     else if (chest_lid_on)                            rgb = lid_rgb; 
     else if (show_dragon && dragon_on)                rgb = dragon_rgb;
     else rgb = (mode == M_CHEST) ? BG_CHEST : bg_home_rgb;
