@@ -84,6 +84,36 @@ localparam [2:0] M_TITLE    = 3'd0,
 
 
   // TITELKAART -------------------------------------------------------------
+  // wire       title_on;
+  // wire [2:0] title_code;
+  // title_card u_title (
+  //   .x(px), .y(py),
+  //   .px_on(title_on), .px_code(title_code)
+  // );
+
+  // // WIEGEND EI OP GRAS (alleen titelscherm) --------------------------------
+  // wire       tegg_on, tground_on, tground_shadow;
+  // wire [2:0] tegg_code;
+  // title_egg u_title_egg (
+  //   .clk(clk), .rst_n(rst_n), .frame_tick(frame_tick),
+  //   .x(px), .y(py),
+  //   .egg_on(tegg_on), .egg_code(tegg_code),
+  //   .ground_on(tground_on), .ground_shadow(tground_shadow)
+  // );
+
+
+  `ifdef NO_TITLE
+  // Titelscherm uitgeschakeld voor render-benches die M_TITLE niet tonen.
+  // title_card is ~2500 regels combinatoriek die anders voor elke pixel
+  // geevalueerd wordt; dat scheelt ongeveer 20 s per bench.
+  // Bij synthese staat NO_TITLE niet gedefinieerd, dus daar verandert niets.
+  wire       title_on       = 1'b0;
+  wire [2:0] title_code     = 3'd0;
+  wire       tegg_on        = 1'b0;
+  wire [2:0] tegg_code      = 3'd0;
+  wire       tground_on     = 1'b0;
+  wire       tground_shadow = 1'b0;
+`else
   wire       title_on;
   wire [2:0] title_code;
   title_card u_title (
@@ -100,6 +130,8 @@ localparam [2:0] M_TITLE    = 3'd0,
     .egg_on(tegg_on), .egg_code(tegg_code),
     .ground_on(tground_on), .ground_shadow(tground_shadow)
   );
+`endif
+
   // DRAGON -----------------------------------------------------------------
   // uiterlijk draak hangt af van dragon_state
   // als in toekomst genoeg tijd, beinvloed mood ook uiterlijk van draak (houden we momenteel achterwegen)
