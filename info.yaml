@@ -39,6 +39,7 @@ project:
     - "chest_menu.v"
     - "title_card.v"
     - "title_egg.v"
+    - "icon_draw.v"
 
 
 # The pinout of your project. Leave unused pins blank. DO NOT delete or add any pins.

@@ -34,13 +34,13 @@ module renderer (
     input  wire       flame_frame,
     input  wire       evolve_blink,
 
-    input             frame_tick, // voor animatie van ei
+    input  wire       frame_tick, // voor animatie van ei
 
-    input             overflow, // als hartjes vol of geld vol
+    input  wire       overflow, // als hartjes vol of geld vol
     input  wire [8:0] chest_contents,  // {kist2, kist1, kist0}, 3 bits elk
     input  wire [9:0] pot,             // groot tonen, los van coins, hoeveel coins je hebt in minigame
     input  wire [3:0] round,           // teken round+1, wleke ronde je zit in mini game
-    input  wire [2:0] egg_frame,       // 0 heel, 1 barst, 2 open, 3 weg
+    input  wire [2:0] egg_frame,       // 0=whole, 1-4=cracks, 5=flashing
     input  wire [9:0] flash_r,          // flash refresh rate
     output reg  [1:0] R,
     output reg  [1:0] G,
@@ -490,6 +490,6 @@ end
     {R, G, B} = rgb;
   end
 
-  wire _unused = &{menu_sel, chest_outcome, chest_contents, chest_frame,
+  wire _unused = &{menu_sel, chest_outcome, chest_frame,
                    flame_frame, combo_len, flash, 1'b0};
 endmodule

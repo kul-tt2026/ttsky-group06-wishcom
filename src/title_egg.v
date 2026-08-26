@@ -27,7 +27,7 @@ module title_egg (
     input  wire       frame_tick,
     input  wire [9:0] x,             // portret-x  0..479
     input  wire [9:0] y,             // portret-y  0..639
-    input  wire [2:0] egg_frame,     // 0 heel .. 4 wijd open, 5 weg
+    input  wire [2:0] egg_frame,     // 0 heel .. 4 wijd open, 5 same 
     input  wire [9:0] flash_r,       // straal van de flits; 0 = uit
 
     output wire       egg_on,

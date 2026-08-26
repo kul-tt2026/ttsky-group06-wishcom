@@ -29,7 +29,7 @@ module home (
     output reg        act_minigame,    // the 4th combo action
     output reg        req_evolve,      // -> dragon_state
     output reg        restart,
-    output reg  [2:0] egg_frame,       // 0 heel, 1 barst, 2 open, 3 weg
+    output reg  [2:0] egg_frame,       // 0=whole, 1-4=cracks, 5=flashing
     output reg  [9:0] flash_r          // flash refresh rate
 );
   localparam [2:0] M_TITLE    = 3'd0,
@@ -49,17 +49,21 @@ module home (
   // any button at all -- used on the title / end screens
   wire any_btn = |btn_pressed;
 
-  reg [7:0] egg_timer;
+  reg [6:0] egg_timer;
 
+    // egg_frame combinatorisch uit egg_timer.  LET OP: egg_timer == 0 betekent
+  // twee dingen -- "nog niet begonnen" (op TITLE) en "klaar met barsten" (in
+  // M_EGG, terwijl de flits loopt).  Daarom eerst op mode gaten, anders
+  // springt het ei tijdens de flits terug naar heel en begint het te hoppen.
   always @(*) begin
-    if      (egg_timer == 8'd0)   egg_frame = 3'd0; // Frame 0: Ei heel (wacht op knop)
-    else if (egg_timer > 8'd120)  egg_frame = 3'd1; // Frame 1: Eerste scheur (150..121)
-    else if (egg_timer > 8'd90)   egg_frame = 3'd2; // Frame 2: Grotere barst (120..91)
-    else if (egg_timer > 8'd60)   egg_frame = 3'd3; // Frame 3: Ei breekt open (90..61)
-    else if (egg_timer > 8'd30)   egg_frame = 3'd4; // Frame 4: Draakje verschijnt (60..31)
-    else                          egg_frame = 3'd5; // Frame 5: Ei weg / draakje klaar (30..1)
+    if      (mode != M_EGG)      egg_frame = 3'd0; // TITLE: heel ei, hopt
+    else if (egg_timer == 7'd0)  egg_frame = 3'd5; // klaar; flits dekt het af
+    else if (egg_timer >  7'd72) egg_frame = 3'd1;
+    else if (egg_timer >  7'd54) egg_frame = 3'd2;
+    else if (egg_timer >  7'd36) egg_frame = 3'd3;
+    else if (egg_timer >  7'd18) egg_frame = 3'd4;
+    else                         egg_frame = 3'd5;   
   end
-
   always @(posedge clk) begin
     if (!rst_n) begin
       mode         <= M_TITLE;
@@ -71,6 +75,7 @@ module home (
       req_evolve   <= 1'b0;
       restart      <= 1'b0;
       egg_timer    <= 7'd0;
+      flash_r      <= 10'd0;
     end else if (frame_tick) begin
       // every pulse defaults to 0; the case below may raise one for one frame
       act_feed     <= 1'b0;
@@ -79,7 +84,7 @@ module home (
       act_minigame <= 1'b0;
       req_evolve   <= 1'b0;
       restart      <= 1'b0;
-      flash_r      <= 10'd0;
+      
 
       case (mode)
 
@@ -87,10 +92,10 @@ module home (
         M_TITLE: begin
           // any button starts a new game.  restart clears the stats.
           if (any_btn) begin
-            mode    <= M_EGG;
+            egg_timer <= 7'd90;   // 90 frames = 1.5 s barsten
+            mode      <= M_EGG;
           end
         end
-
         // -------------------------------------------------------------
         M_EGG: begin
           if (egg_timer != 7'd0) begin
