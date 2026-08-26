@@ -291,20 +291,6 @@ wire [5:0] egg_rgb = (egg_code == 3'd1) ? 6'b00_00_00 :
                       (egg_code == 3'd7) ? 6'b10_11_01 :
                                             6'b00_00_00;
 
-reg [5:0] chest_rgb;
-always @(*) begin 
-  case (chest_code)
-  3'd1: chest_rgb = 6'b00_00_00;   // zwart / outline
-  3'd2: chest_rgb = 6'b10_01_00;   // hout
-  3'd3: chest_rgb = 6'b11_10_00;   // goud
-  3'd4: chest_rgb = 6'b11_11_11;   // wit
-  3'd5: chest_rgb = 6'b11_00_00;   // rood
-  3'd6: chest_rgb = 6'b01_00_00;   // donkere binnenkant
-  default: chest_rgb = 6'b10_01_00;
-
-endcase
-end
-
   function [5:0] chest_color;
     input [2:0] code;
     begin
@@ -467,12 +453,12 @@ end
     else if (show_buttons  && button_on)              rgb = buttons_rgb;
     else if (show_menu     && menu_on)                rgb = menu_rgb;
     else if (chest_body_on)                           rgb = body_rgb;
-    else if (icon_on)                                 rgb = icon_rgb;
+    //else if (icon_on)                                 rgb = icon_rgb;
     else if (chest_lid_on)                            rgb = lid_rgb; 
     else if (show_dragon && dragon_on)                rgb = dragon_rgb;
     else rgb = (mode == M_CHEST) ? BG_CHEST : bg_home_rgb;
     {R, G, B} = rgb;
   end
 
-  wire _unused = &{menu_sel, chest_state, chest_outcome, flame_frame, level, combo_len, flash,1'b0};
+  wire _unused = &{menu_sel, chest_state, chest_outcome, flame_frame, level, combo_len, flash,1'b0, chest_contents};
 endmodule

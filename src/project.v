@@ -136,7 +136,7 @@ module tt_um_dragonchi (
 
 
   renderer u_renderer (
-    .pix_x(pix_x), .pix_y(pix_y), .video_active(video_active),
+    .clk(clk), .rst_n(rst_n), .pix_x(pix_x), .pix_y(pix_y), .video_active(video_active),
     .mode(mode), .menu_sel(menu_sel),
     .hearts(hearts), .satisfaction(satisfaction),
     .coins(coins), .level(level), .combo_len(combo_len),
