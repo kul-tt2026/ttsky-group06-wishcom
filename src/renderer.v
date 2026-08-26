@@ -14,7 +14,7 @@ module renderer (
     input  wire [9:0] pix_y,
     input  wire       video_active,
 
-    input  wire [2:0] mode,          // 0 TITLE, 1 EGG, 2 HOME, 4 CHEST 5GAMEOVER
+    input  wire [2:0] mode,  // 0 TITLE, 1 EGG, 2 HOME, 3 CHEST, 4 GAMEOVER, 5 YOU_WIN
     input  wire [2:0] menu_sel,
     input  wire [2:0] hearts, // 3 bit
     input  wire [2:0] satisfaction, // 3 bit => 5 options
@@ -41,7 +41,7 @@ module renderer (
     input  wire [9:0] pot,             // groot tonen, los van coins, hoeveel coins je hebt in minigame
     input  wire [3:0] round,           // teken round+1, wleke ronde je zit in mini game
     input  wire [2:0] egg_frame,       // 0 heel, 1 barst, 2 open, 3 weg
-
+    input  wire [9:0] flash_r,          // flash refresh rate
     output reg  [1:0] R,
     output reg  [1:0] G,
     output reg  [1:0] B
@@ -51,7 +51,8 @@ localparam [2:0] M_TITLE    = 3'd0,
                  M_EGG      = 3'd1,
                  M_HOME     = 3'd2,
                  M_CHEST    = 3'd3,
-                 M_GAMEOVER = 3'd4;
+                 M_GAMEOVER = 3'd4,
+                 M_YOU_WIN  = 3'd5;
 
   // ======================= 0. ROTATE ======================================
   // Fysiek scherm: 640x480 liggend.  Wij tekenen in PORTRET: 480 x 640.
@@ -67,7 +68,6 @@ localparam [2:0] M_TITLE    = 3'd0,
   localparam [9:0] HEARTS_X  = 10'd130, HEARTS_Y  = 10'd16;  // 304 x 24
   localparam [9:0] SATBAR_X  = 10'd85, SATBAR_Y  = 10'd370;  // 162 x 24
   localparam [9:0] COINBAR_X = 10'd24,  COINBAR_Y = 10'd80;  //  24 x 132
-  localparam [9:0] EGG_X = 10'd0,  EGG_Y = 10'd0;  //  24 x 132
 
   localparam DRAGON_X = 10'd0, DRAGON_Y = 10'd0;
   // localparam SATBAR_X = 10'd24,  SATBAR_Y = 10'd56;
@@ -82,38 +82,7 @@ localparam [2:0] M_TITLE    = 3'd0,
 
   // ======================= drawable instances =============================
 
-
   // TITELKAART -------------------------------------------------------------
-  // wire       title_on;
-  // wire [2:0] title_code;
-  // title_card u_title (
-  //   .x(px), .y(py),
-  //   .px_on(title_on), .px_code(title_code)
-  // );
-
-  // // WIEGEND EI OP GRAS (alleen titelscherm) --------------------------------
-  // wire       tegg_on, tground_on, tground_shadow;
-  // wire [2:0] tegg_code;
-  // title_egg u_title_egg (
-  //   .clk(clk), .rst_n(rst_n), .frame_tick(frame_tick),
-  //   .x(px), .y(py),
-  //   .egg_on(tegg_on), .egg_code(tegg_code),
-  //   .ground_on(tground_on), .ground_shadow(tground_shadow)
-  // );
-
-
-  `ifdef NO_TITLE
-  // Titelscherm uitgeschakeld voor render-benches die M_TITLE niet tonen.
-  // title_card is ~2500 regels combinatoriek die anders voor elke pixel
-  // geevalueerd wordt; dat scheelt ongeveer 20 s per bench.
-  // Bij synthese staat NO_TITLE niet gedefinieerd, dus daar verandert niets.
-  wire       title_on       = 1'b0;
-  wire [2:0] title_code     = 3'd0;
-  wire       tegg_on        = 1'b0;
-  wire [2:0] tegg_code      = 3'd0;
-  wire       tground_on     = 1'b0;
-  wire       tground_shadow = 1'b0;
-`else
   wire       title_on;
   wire [2:0] title_code;
   title_card u_title (
@@ -121,16 +90,24 @@ localparam [2:0] M_TITLE    = 3'd0,
     .px_on(title_on), .px_code(title_code)
   );
 
-  // WIEGEND EI OP GRAS (alleen titelscherm) --------------------------------
-  wire       tegg_on, tground_on, tground_shadow;
+  // EI OP GRAS + BARST + FLITS + PRESS ANY BUTTON --------------------------
+  // Precies EEN instantie, gedeeld door M_TITLE en M_EGG.  Twee instanties
+  // zetten de ei-ROM twee keer op de chip.
+  wire       tegg_on, crack_on, flash_on, flash_rim, press_on;
+  wire       tground_on, tground_shadow;
   wire [2:0] tegg_code;
   title_egg u_title_egg (
     .clk(clk), .rst_n(rst_n), .frame_tick(frame_tick),
     .x(px), .y(py),
-    .egg_on(tegg_on), .egg_code(tegg_code),
+    .egg_frame(egg_frame), .flash_r(flash_r),
+    .egg_on(tegg_on),   .egg_code(tegg_code),
+    .crack_on(crack_on),
+    .flash_on(flash_on), .flash_rim(flash_rim),
+    .press_on(press_on),
     .ground_on(tground_on), .ground_shadow(tground_shadow)
   );
-`endif
+
+
 
   // DRAGON -----------------------------------------------------------------
   // uiterlijk draak hangt af van dragon_state
@@ -147,17 +124,7 @@ localparam [2:0] M_TITLE    = 3'd0,
   );
 
 
-  wire        egg_on; //of er een pixel van draak is
-  wire [2:0]  egg_code;
 
-
-  egg_draw u_egg (
-    .x(px - EGG_X), .y(py - EGG_Y), .egg_frame(egg_frame),
-    .px_on(egg_on), .px_code(egg_code),
-    .clk(clk), .rst_n(rst_n)
-  );
-
-  
 
   // THREE CHESTS ---------------------------------
   // chest_frame: staat van box selected?
@@ -204,6 +171,9 @@ wire c_is_sel = (c_slot == chest_sel);
  
   wire       c_body_on, c_lid_on;
   wire [2:0] c_body_code, c_lid_code;
+  wire show_menu   = (mode == M_CHEST) && (chest_state == 2'd3);
+  wire show_chests = (mode == M_CHEST) && (chest_state != 2'd3);
+
  
   chest_draw u_chest (
     .x           (px - CHEST_X),
@@ -230,10 +200,6 @@ wire c_is_sel = (c_slot == chest_sel);
     .x(px), .y(py), .pot(pot), .round(round),
     .px_on(menu_on), .px_code(menu_code)
   );
-
-  wire show_menu   = (mode == M_CHEST) && (chest_state == 2'd3);
-  wire show_chests = (mode == M_CHEST) && (chest_state != 2'd3);
-
 
   // TWO BARS: satisfaction (5 levels, 3 bits ) & coins (8 bits)  ---------------------
   wire sat_on;
@@ -313,15 +279,6 @@ wire c_is_sel = (c_slot == chest_sel);
 
 endcase
 end
-
-wire [5:0] egg_rgb = (egg_code == 3'd1) ? 6'b00_00_00 :
-                      (egg_code == 3'd2) ? 6'b10_10_10 :
-                      (egg_code == 3'd3) ? 6'b00_11_00 :
-                      (egg_code == 3'd4) ? 6'b11_11_11 :
-                      (egg_code == 3'd5) ? 6'b00_10_00 :
-                      (egg_code == 3'd6) ? 6'b01_01_01 :
-                      (egg_code == 3'd7) ? 6'b10_11_01 :
-                                            6'b00_00_00;
 
   function [5:0] chest_color;
     input [2:0] code;
@@ -460,25 +417,22 @@ wire [5:0] egg_rgb = (egg_code == 3'd1) ? 6'b00_00_00 :
   reg [5:0] rgb;
   always @(*) begin
     if (!video_active)           rgb = 6'b000000;      // MUST stay black
-    else if (mode == M_TITLE)   begin
-      if      (title_on)   rgb = title_rgb;
+    else if (mode == M_TITLE || mode == M_EGG) begin
+      if      (flash_on)   rgb = flash_rim ? 6'b11_00_00 : 6'b11_10_00;
+      else if (title_on)   rgb = title_rgb;
+      else if (crack_on)   rgb = 6'b00_00_00;      // barst boven het ei
       else if (tegg_on)    rgb = tegg_rgb;
+      else if (press_on && (mode == M_TITLE)) rgb = 6'b00_00_00;
       else if (tground_on) rgb = tground_shadow ? 6'b00_01_00 : 6'b00_10_00;
       else                 rgb = 6'b01_10_11;      // hemelsblauw
     end
-
-    else if (mode == M_EGG) begin
-      if (egg_on)
-        rgb = egg_rgb;
-      else
-        rgb = bg_home_rgb; // of een eigen achtergrondkleur voor het ei-scherm
-    end
     else if (mode == M_GAMEOVER) begin
-    if (gameover_text_on)
-      rgb = 6'b00_00_00; // Zwarte letters "GAME OVER"
-    else
-      rgb = 6'b01_00_00; // Donkerrode achtergrond
-  end
+      if (gameover_text_on) rgb = 6'b00_00_00; // Zwarte letters "GAME OVER"
+    else                    rgb = 6'b01_00_00; // Donkerrode achtergrond
+    end
+    else if (mode == M_YOU_WIN) begin
+     rgb = 6'b11_11_00; //placeholder : goud
+    end
     else if (show_hearts     && heartsinfo_on)    rgb = heartsinfo_rgb;
     else if (show_coin       && coin_on)          rgb = coin_rgb;
     else if (show_satbar   && sat_on)                 rgb = sat_rgb;
@@ -492,5 +446,6 @@ wire [5:0] egg_rgb = (egg_code == 3'd1) ? 6'b00_00_00 :
     {R, G, B} = rgb;
   end
 
-  wire _unused = &{menu_sel, chest_state, chest_outcome, flame_frame, level, combo_len, flash,1'b0, chest_contents};
+  wire _unused = &{menu_sel, chest_outcome, chest_contents, chest_frame,
+                   flame_frame, combo_len, flash, 1'b0};
 endmodule
