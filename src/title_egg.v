@@ -166,11 +166,11 @@ module title_egg (
   // Afstand tussen twee waarden.  BEIDE als argument meegeven: leest een
   // functie een modulesignaal van binnenuit, dan wordt de continue toewijzing
   // daar niet gevoelig voor en tekent de straal nooit.  Stille fout.
-  function [9:0] dist;
+  function [9:0] absdiff;
     input signed [11:0] here;
     input signed [11:0] want;
     begin
-      dist = (here >= want) ? (here - want) : (want - here);
+      absdiff = (here >= want) ? (here - want) : (want - here);
     end
   endfunction
 
@@ -178,20 +178,20 @@ module title_egg (
   wire signed [11:0] tA = OY - sly;
   wire [9:0] lenA = (grow > 10'd104) ? 10'd104 : grow;
   wire hitA = (tA >= 0) && (tA < $signed({2'b0,lenA})) &&
-              (dist(slx, OX + (tA >>> 2) + wob(tA[9:0])) <= {7'b0, cw});
+              (absdiff(slx, OX + (tA >>> 2) + wob(tA[9:0])) <= {7'b0, cw});
 
   // ---- hoofdstraal B: naar links, licht omlaag (120 graden van A) --------
   //      langs x geparametriseerd, want deze is bijna horizontaal
   wire signed [11:0] tB = OX - slx;
   wire [9:0] lenB = (grow > 10'd112) ? 10'd112 : grow;
   wire hitB = (tB >= 0) && (tB < $signed({2'b0,lenB})) &&
-              (dist(sly, OY + (tB >>> 2) + wob(tB[9:0])) <= {7'b0, cw});
+              (absdiff(sly, OY + (tB >>> 2) + wob(tB[9:0])) <= {7'b0, cw});
 
   // ---- hoofdstraal C: omlaag naar rechts (120 graden van B) --------------
   wire signed [11:0] tC = sly - OY;
   wire [9:0] lenC = (grow > 10'd130) ? 10'd130 : grow;
   wire hitC = (tC >= 0) && (tC < $signed({2'b0,lenC})) &&
-              (dist(slx, OX + tC + (tC >>> 2) + wob(tC[9:0])) <= {7'b0, cw});
+              (absdiff(slx, OX + tC + (tC >>> 2) + wob(tC[9:0])) <= {7'b0, cw});
 
   // ---- tak D: uit A op t=52, bijna HAAKS erop (naar rechts, licht omhoog) -
   localparam signed [11:0] DX0 = OX + 12'sd13;   // 52 >> 2
@@ -200,7 +200,7 @@ module title_egg (
   wire [9:0] lenD = (grow > 10'd52) ?
                     ((grow - 10'd52 > 10'd70) ? 10'd70 : (grow - 10'd52)) : 10'd0;
   wire hitD = (egg_frame >= 3'd2) && (tD >= 0) && (tD < $signed({2'b0,lenD})) &&
-              (dist(sly, DY0 - (tD >>> 2) + wob(tD[9:0])) <= 10'd2);
+              (absdiff(sly, DY0 - (tD >>> 2) + wob(tD[9:0])) <= 10'd2);
 
   // ---- tak E: uit C op t=60, steil naar linksonder (~95 graden van C) ----
   localparam signed [11:0] EX0 = OX + 12'sd75;   // 60 + 15
@@ -209,7 +209,7 @@ module title_egg (
   wire [9:0] lenE = (grow > 10'd60) ?
                     ((grow - 10'd60 > 10'd60) ? 10'd60 : (grow - 10'd60)) : 10'd0;
   wire hitE = (egg_frame >= 3'd3) && (tE >= 0) && (tE < $signed({2'b0,lenE})) &&
-              (dist(slx, EX0 - tE + wob(tE[9:0])) <= 10'd2);
+              (absdiff(slx, EX0 - tE + wob(tE[9:0])) <= 10'd2);
 
   assign crack_on = in_egg_box && (code != 3'd0) &&
                     (hitA || hitB || hitC || hitD || hitE);
