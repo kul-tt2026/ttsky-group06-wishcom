@@ -14,6 +14,11 @@
 // wordt en niet op COINS_MAX.  Het bovenste vakje gaat aan bij 896; bij
 // coins >= COINS_MAX zetten we alles aan zodat de balk echt vol staat.
 //
+// DE CIJFERS KOMEN UIT digit_rom (sprites.v), hetzelfde 4x6 font dat
+// chest_menu voor de pot en het rondenummer gebruikt.  Er stond hier ooit
+// een eigen 3x5 bitmap; die is weg zodat elk getal op het scherm er
+// hetzelfde uitziet.  Zie de git-historie als je hem terug wilt.
+//
 // px_code: 0 = frame + schotjes   1 = leeg vakje   2 = vol vakje + cijfers
 // ---------------------------------------------------------------------------
 module coinbar (
@@ -36,11 +41,11 @@ module coinbar (
   localparam [9:0] BAR_H = FRAME + (NSEG * PITCH) - (PITCH - SEG_H) + FRAME; // 196
 
   // ======================= geometrie cijfers ==============================
-  // 3x5 font, schaal 3: drie cijfers van 9 px met 3 px ertussen = 33 breed.
-  localparam [9:0] TXT_Y_START = BAR_H + 10'd6;      // 202
-  localparam [9:0] TXT_Y_END   = TXT_Y_START + 10'd15;
-  localparam [9:0] TXT_X_START = 10'd3;
-  localparam [9:0] TXT_X_END   = TXT_X_START + 10'd33;
+  // 4x6 font op schaal 3: elk cijfer 12x18, pitch 14 (12 glyph + 2 gat).
+  // Drie cijfers = 12+2+12+2+12 = 40, precies de breedte van de balk.
+  localparam [9:0] TXT_Y_START = BAR_H + 10'd6;        // 202
+  localparam [9:0] TXT_Y_END   = TXT_Y_START + 10'd18; // 220
+  localparam [9:0] TXT_W       = 10'd40;
 
   // ======================= waar zijn we (balk) ============================
   // Boven/links van de origin wrapt de lokale coordinaat naar ~1023, dus
@@ -92,73 +97,47 @@ module coinbar (
   wire show_tien = show_hond || (d_tien != 4'd0);
 
   // ======================= cijfers tekenen ================================
-  wire in_txt_box = (y >= TXT_Y_START) && (y < TXT_Y_END) &&
-                    (x >= TXT_X_START) && (x < TXT_X_END);
+  wire in_txt_box = (y >= TXT_Y_START) && (y < TXT_Y_END) && (x < TXT_W);
 
-  wire [9:0] dy_txt = y - TXT_Y_START;   // 0..14
-  wire [9:0] dx_txt = x - TXT_X_START;   // 0..32
-  wire [5:0] txt_x  = in_txt_box ? dx_txt[5:0] : 6'd0;
+  wire [9:0] dy_txt = y - TXT_Y_START;   // 0..17
+  wire [5:0] txt_x  = in_txt_box ? x[5:0] : 6'd0;   // 0..39
 
-  // font_y = dy_txt / 3.  Bereik is 0..14, dus vergelijken is goedkoper
+  // font_y = dy_txt / 3.  Bereik is 0..17, dus vergelijken is goedkoper
   // dan vermenigvuldigen.
-  wire [2:0] font_y = !in_txt_box     ? 3'd0 :
+  wire [2:0] font_y = !in_txt_box       ? 3'd0 :
                       (dy_txt < 10'd3)  ? 3'd0 :
                       (dy_txt < 10'd6)  ? 3'd1 :
                       (dy_txt < 10'd9)  ? 3'd2 :
-                      (dy_txt < 10'd12) ? 3'd3 : 3'd4;
+                      (dy_txt < 10'd12) ? 3'd3 :
+                      (dy_txt < 10'd15) ? 3'd4 : 3'd5;
 
-  // Welk cijfer, en welke kolom daarbinnen.  Slots: 0..8, 12..20, 24..32.
+  // Welk cijfer, en welke kolom daarbinnen.  Slots: 0..11, 14..25, 28..39.
   reg [3:0] cur_digit;
   reg [5:0] col_in_digit;
   reg       valid_col;
 
   always @(*) begin
-    if (txt_x <= 6'd8) begin
-      cur_digit = d_hond;  col_in_digit = txt_x;             valid_col = show_hond;
-    end else if (txt_x >= 6'd12 && txt_x <= 6'd20) begin
-      cur_digit = d_tien;  col_in_digit = txt_x - 6'd12;     valid_col = show_tien;
-    end else if (txt_x >= 6'd24 && txt_x <= 6'd32) begin
-      cur_digit = d_een;   col_in_digit = txt_x - 6'd24;     valid_col = 1'b1;
+    if (txt_x <= 6'd11) begin
+      cur_digit = d_hond;  col_in_digit = txt_x;          valid_col = show_hond;
+    end else if (txt_x >= 6'd14 && txt_x <= 6'd25) begin
+      cur_digit = d_tien;  col_in_digit = txt_x - 6'd14;  valid_col = show_tien;
+    end else if (txt_x >= 6'd28) begin
+      cur_digit = d_een;   col_in_digit = txt_x - 6'd28;  valid_col = 1'b1;
     end else begin
-      cur_digit = 4'd0;    col_in_digit = 6'd0;              valid_col = 1'b0;
+      cur_digit = 4'd0;    col_in_digit = 6'd0;           valid_col = 1'b0;
     end
   end
 
-  // font_x = col_in_digit / 3, bereik 0..8
+  // font_x = col_in_digit / 3, bereik 0..11 -> 0..3
   wire [1:0] font_x = (col_in_digit < 6'd3) ? 2'd0 :
-                      (col_in_digit < 6'd6) ? 2'd1 : 2'd2;
+                      (col_in_digit < 6'd6) ? 2'd1 :
+                      (col_in_digit < 6'd9) ? 2'd2 : 2'd3;
 
-  // 3x5 bitmap, bit 14 is linksboven
-  reg [14:0] glyph;
-  always @(*) case (cur_digit)
-    4'd0:    glyph = 15'b111_101_101_101_111;
-    4'd1:    glyph = 15'b010_110_010_010_111;
-    4'd2:    glyph = 15'b111_001_111_100_111;
-    4'd3:    glyph = 15'b111_001_111_001_111;
-    4'd4:    glyph = 15'b101_101_111_001_001;
-    4'd5:    glyph = 15'b111_100_111_001_111;
-    4'd6:    glyph = 15'b111_100_111_101_111;
-    4'd7:    glyph = 15'b111_001_001_010_010;
-    4'd8:    glyph = 15'b111_101_111_101_111;
-    4'd9:    glyph = 15'b111_101_111_001_111;
-    default: glyph = 15'b000_000_000_000_000;
-  endcase
+  // Het gedeelde 4x6 font; bits[3] is de linkerkolom.
+  wire [3:0] bits;
+  digit_rom u_dig (.digit(cur_digit), .row(font_y), .bits(bits));
 
-  // Eerst de rij kiezen, dan de kolom.  Twee kleine muxen in plaats van
-  // een variabele bit-index met een vermenigvuldiging erin.
-  reg [2:0] row_bits;
-  always @(*) case (font_y)
-    3'd0:    row_bits = glyph[14:12];
-    3'd1:    row_bits = glyph[11:9];
-    3'd2:    row_bits = glyph[8:6];
-    3'd3:    row_bits = glyph[5:3];
-    default: row_bits = glyph[2:0];
-  endcase
-
-  wire pix_lit = (font_x == 2'd0) ? row_bits[2] :
-                 (font_x == 2'd1) ? row_bits[1] : row_bits[0];
-
-  wire font_px = in_txt_box && valid_col && pix_lit;
+  wire font_px = in_txt_box && valid_col && bits[2'd3 - font_x];
 
   // ======================= output =========================================
   assign px_on   = in_bar || font_px;

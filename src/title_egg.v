@@ -179,24 +179,24 @@ module title_egg (
   assign egg_on   = in_shell;
   assign egg_code = code;
 
-
   // ======================= BARST ==========================================
-  // Geen extra sprites: alles wiskundig.
-  //
   // DRIE hoofdstralen vanuit een punt midden in het ei, 120 graden uit elkaar
   // (een echte drieslag-breuk) en met een offset gedraaid, zodat geen enkele
-  // recht omhoog of recht opzij wijst.  Daarna TWEE vertakkingen die halverwege
-  // een hoofdstraal vertrekken onder een grote hoek (~90 graden), want een tak
-  // die bijna evenwijdig loopt leest niet als een tak.
+  // recht omhoog of recht opzij wijst.  Er zaten ooit twee vertakkingen bij;
+  // die kostten samen ~400 cellen en zijn eruit gehaald -- git bewaart ze.
+  //
+  // In ruil komen de drie stralen nu NA ELKAAR: eerst A, dan B erbij, dan C.
+  // Dat leest als een ei dat stap voor stap openbreekt, in plaats van drie
+  // lijnen die synchroon uitzetten.  Het is bovendien goedkoper -- elke straal
+  // leest zijn lengte uit de tabel, zonder gedeelde `grow` met drie
+  // afkapvergelijkingen erachter.
   //
   // Elke straal krijgt een driehoeksgolf-slingering.
   // REGEL: helling + slingering moet onder de lijndikte blijven, anders valt
   // de straal uiteen in losse stukjes.
-
-    // Alles hieronder rekent in 10-bit signed: de grootste tussenwaarde is
-  // EX0 - tE + wob = 382, ruim binnen -512..511.  Met 12 bits betaalde je
-  // twee overbodige bits op elke opteller, aftrekker en comparator, maal
-  // vijftien -- dat is honderden cellen voor niets.
+  //
+  // Alles rekent in 10-bit signed: de grootste tussenwaarde is
+  // OX + tC + (tC>>>2) + wob = 313, ruim binnen -512..511.
   wire [9:0] lx = x - EGG_X;                     // lokaal 0..255
   wire [9:0] ly = y - EGG_Y;
   wire signed [9:0] slx = $signed({2'b0, lx[7:0]});
@@ -205,18 +205,23 @@ module title_egg (
   localparam signed [9:0] OX = 10'sd128;         // oorsprong midden in het ei
   localparam signed [9:0] OY = 10'sd112;
 
-  reg [9:0] grow;
+  // Lengte per straal per frame; 0 = deze straal bestaat nog niet.
+  // De lijn wordt dikker naarmate het ei verder openbreekt.
+   // Lengte per straal per frame; 0 = deze straal bestaat nog niet.
+  // Twee stralen, 120 graden uit elkaar: A omhoog, B naar links.  Er was ooit
+  // een derde (C, naar rechtsonder) plus twee vertakkingen; die zijn eruit
+  // gehaald toen de plaats op moest -- git bewaart ze.
+  reg [7:0] lenA, lenB;
   reg [2:0] cw;
   always @(*) case (egg_frame)
-    3'd0: begin grow = 10'd0;   cw = 3'd0; end
-    3'd1: begin grow = 10'd45;  cw = 3'd2; end
-    3'd2: begin grow = 10'd90;  cw = 3'd2; end
-    3'd3: begin grow = 10'd140; cw = 3'd2; end
-    3'd4: begin grow = 10'd200; cw = 3'd4; end
-    default: begin grow = 10'd200; cw = 3'd4; end
+    3'd0:    begin lenA=8'd0;   lenB=8'd0;   cw=3'd0; end
+    3'd1:    begin lenA=8'd45;  lenB=8'd0;   cw=3'd2; end
+    3'd2:    begin lenA=8'd80;  lenB=8'd40;  cw=3'd2; end
+    3'd3:    begin lenA=8'd104; lenB=8'd80;  cw=3'd3; end
+    default: begin lenA=8'd104; lenB=8'd112; cw=3'd4; end
   endcase
 
-  // slingering: driehoeksgolf, periode 16, amplitude 7
+  // slingering: driehoeksgolf, periode 16, amplitude 7.
   // Alleen de onderste vier bits doen mee, dus die geven we ook maar door.
   function signed [9:0] wob;
     input [3:0] t;
@@ -229,14 +234,13 @@ module title_egg (
     end
   endfunction
 
-  // |here - want| <= w, maar zonder de dubbele aftrekking van absdiff.
+  // |here - want| <= w, zonder de dubbele aftrekking van absdiff.
   // (here - want + w) ligt in 0..2w precies als het verschil binnen w valt:
-  // is het verschil te negatief dan wordt de som negatief (unsigned: enorm),
-  // is het te positief dan wordt de som groter dan 2w.  Een aftrekking, een
-  // optelling en EEN vergelijking, in plaats van comparator + 2 aftrekkers +
-  // mux + vergelijking.  BEIDE waarden als argument meegeven -- leest een
-  // functie een modulesignaal van binnenuit, dan wordt de continue toewijzing
-  // daar niet gevoelig voor en tekent de straal nooit.  Stille fout.
+  // te negatief en de som wordt negatief (unsigned: enorm), te positief en hij
+  // wordt groter dan 2w.  Een aftrekking, een optelling, EEN vergelijking.
+  // BEIDE waarden als argument meegeven -- leest een functie een modulesignaal
+  // van binnenuit, dan wordt de continue toewijzing daar niet gevoelig voor en
+  // tekent de straal nooit.  Stille fout.
   function ok;
     input signed [9:0] here;
     input signed [9:0] want;
@@ -248,45 +252,19 @@ module title_egg (
     end
   endfunction
 
-  // ---- hoofdstraal A: omhoog, licht naar rechts (offset: niet recht op) ---
+  // ---- straal A: omhoog, licht naar rechts -- verschijnt als eerste -------
   wire signed [9:0] tA = OY - sly;
-  wire [9:0] lenA = (grow > 10'd104) ? 10'd104 : grow;
-  wire hitA = (tA >= 0) && (tA < $signed({2'b0, lenA[7:0]})) &&
+  wire hitA = (tA >= 0) && (tA < $signed({2'b0, lenA})) &&
               ok(slx, OX + (tA >>> 2) + wob(tA[3:0]), cw);
 
-  // ---- hoofdstraal B: naar links, licht omlaag (120 graden van A) --------
+  // ---- straal B: naar links, licht omlaag -- komt er in frame 2 bij -------
   //      langs x geparametriseerd, want deze is bijna horizontaal
   wire signed [9:0] tB = OX - slx;
-  wire [9:0] lenB = (grow > 10'd112) ? 10'd112 : grow;
-  wire hitB = (tB >= 0) && (tB < $signed({2'b0, lenB[7:0]})) &&
+  wire hitB = (tB >= 0) && (tB < $signed({2'b0, lenB})) &&
               ok(sly, OY + (tB >>> 2) + wob(tB[3:0]), cw);
 
-  // ---- hoofdstraal C: omlaag naar rechts (120 graden van B) --------------
-  wire signed [9:0] tC = sly - OY;
-  wire [9:0] lenC = (grow > 10'd130) ? 10'd130 : grow;
-  wire hitC = (tC >= 0) && (tC < $signed({2'b0, lenC[7:0]})) &&
-              ok(slx, OX + tC + (tC >>> 2) + wob(tC[3:0]), cw);
+  assign crack_on = in_shell && (hitA || hitB);
 
-  // ---- tak D: uit A op t=52, bijna HAAKS erop (naar rechts, licht omhoog) -
-  localparam signed [9:0] DX0 = OX + 10'sd13;    // 52 >> 2
-  localparam signed [9:0] DY0 = OY - 10'sd52;
-  wire signed [9:0] tD = slx - DX0;
-  wire [9:0] lenD = (grow > 10'd52) ?
-                    ((grow - 10'd52 > 10'd70) ? 10'd70 : (grow - 10'd52)) : 10'd0;
-  wire hitD = (egg_frame >= 3'd2) && (tD >= 0) && (tD < $signed({2'b0, lenD[7:0]})) &&
-              ok(sly, DY0 - (tD >>> 2) + wob(tD[3:0]), 3'd2);
-
-  // ---- tak E: uit C op t=60, steil naar linksonder (~95 graden van C) ----
-  localparam signed [9:0] EX0 = OX + 10'sd75;    // 60 + 15
-  localparam signed [9:0] EY0 = OY + 10'sd60;
-  wire signed [9:0] tE = sly - EY0;
-  wire [9:0] lenE = (grow > 10'd60) ?
-                    ((grow - 10'd60 > 10'd60) ? 10'd60 : (grow - 10'd60)) : 10'd0;
-  wire hitE = (egg_frame >= 3'd3) && (tE >= 0) && (tE < $signed({2'b0, lenE[7:0]})) &&
-              ok(slx, EX0 - tE + wob(tE[3:0]), 3'd2);
-
-  assign crack_on = in_shell && (hitA || hitB || hitC || hitD || hitE);
-  
 
   // ======================= FLITS ==========================================
   // Een groeiende schijf die het scherm overneemt.  Een echte cirkel kost twee

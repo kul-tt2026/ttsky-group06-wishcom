@@ -135,68 +135,13 @@ module hearts (
 
   wire heart_edge = heart_outer && !heart_inner;   // zwarte contour
   wire heart_core = heart_inner && heart_filled;   // rode kern
+  // overflow: de gevulde hartjes worden wit in plaats van rood.  Dat zegt
+  // hetzelfde als het woord OVERFLOW, kost geen enkele cel extra, en scheelt
+  // een compleet alfabet dat verder nergens voor dient.
 
   assign px_on   = text_px || heart_edge || heart_core;
-  assign px_code = text_px    ? 2'd2 :
-                   heart_core ? 2'd1 : 2'd0;
+  assign px_code = heart_core ? (overflow ? 2'd2 : 2'd1) : 2'd0;
 endmodule
 
 
-// ---------------------------------------------------------------------------
-// 6x8 letters, alleen wat "OVERFLOW" nodig heeft.  bits[5] = linkerkolom.
-// chr is de POSITIE in het woord (0..7), niet een ASCII-code -- dit ROM'etje
-// bestaat alleen voor dit ene label.
-// ---------------------------------------------------------------------------
-module glyph_rom (
-    input  wire [2:0] chr,
-    input  wire [2:0] row,
-    output reg  [5:0] bits
-);
-  always @(*) begin
-    case (chr)
-      3'd0, 3'd6: case (row)             // O
-        3'd0: bits = 6'b011110;  3'd1: bits = 6'b110011;
-        3'd2: bits = 6'b110011;  3'd3: bits = 6'b110011;
-        3'd4: bits = 6'b110011;  3'd5: bits = 6'b110011;
-        3'd6: bits = 6'b110011;  3'd7: bits = 6'b011110;
-      endcase
-      3'd1: case (row)                   // V
-        3'd0: bits = 6'b110011;  3'd1: bits = 6'b110011;
-        3'd2: bits = 6'b110011;  3'd3: bits = 6'b110011;
-        3'd4: bits = 6'b110011;  3'd5: bits = 6'b011110;
-        3'd6: bits = 6'b011110;  3'd7: bits = 6'b001100;
-      endcase
-      3'd2: case (row)                   // E
-        3'd0: bits = 6'b111111;  3'd1: bits = 6'b110000;
-        3'd2: bits = 6'b110000;  3'd3: bits = 6'b111100;
-        3'd4: bits = 6'b110000;  3'd5: bits = 6'b110000;
-        3'd6: bits = 6'b110000;  3'd7: bits = 6'b111111;
-      endcase
-      3'd3: case (row)                   // R
-        3'd0: bits = 6'b111110;  3'd1: bits = 6'b110011;
-        3'd2: bits = 6'b110011;  3'd3: bits = 6'b111110;
-        3'd4: bits = 6'b111100;  3'd5: bits = 6'b110110;
-        3'd6: bits = 6'b110011;  3'd7: bits = 6'b110011;
-      endcase
-      3'd4: case (row)                   // F
-        3'd0: bits = 6'b111111;  3'd1: bits = 6'b110000;
-        3'd2: bits = 6'b110000;  3'd3: bits = 6'b111100;
-        3'd4: bits = 6'b110000;  3'd5: bits = 6'b110000;
-        3'd6: bits = 6'b110000;  3'd7: bits = 6'b110000;
-      endcase
-      3'd5: case (row)                   // L
-        3'd0: bits = 6'b110000;  3'd1: bits = 6'b110000;
-        3'd2: bits = 6'b110000;  3'd3: bits = 6'b110000;
-        3'd4: bits = 6'b110000;  3'd5: bits = 6'b110000;
-        3'd6: bits = 6'b110000;  3'd7: bits = 6'b111111;
-      endcase
-      default: case (row)                // W -- twee dunne V'en; met dikke
-        3'd0: bits = 6'b101101;          // stammen leest hij als een U
-        3'd1: bits = 6'b101101;  3'd2: bits = 6'b101101;
-        3'd3: bits = 6'b101101;  3'd4: bits = 6'b101101;
-        3'd5: bits = 6'b101101;  3'd6: bits = 6'b101101;
-        3'd7: bits = 6'b010010;
-      endcase
-    endcase
-  end
-endmodule
+
