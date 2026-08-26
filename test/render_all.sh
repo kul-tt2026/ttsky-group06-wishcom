@@ -4,7 +4,7 @@ set -e
 # Zorg ervoor dat de map test/figures bestaat
 mkdir -p figures
 echo ""
-iverilog -g2012 -o sim_egg home_lvl1_tb.v ../src/dragon_draw.v ../src/sprites.v ../src/home.v ../src/renderer.v ../src/chest_draw.v ../src/chest_menu.v ../src/satisfactionbar.v ../src/coinbar.v ../src/hearts.v ../src/draw_buttons.v ../src/egg_draw.v
+iverilog -g2012 -o sim_egg -y ../src home_lvl1_tb.v ../src/sprites.v
 vvp sim_egg
 python3 -c "from PIL import Image; Image.open('frame.ppm').save('figures/home_lvl1_render.png')"
 echo "✓ Opslaan voltooid: figures/home_render.png"
@@ -12,7 +12,7 @@ echo "✓ Opslaan voltooid: figures/home_render.png"
 # Zorg ervoor dat de map test/figures bestaat
 mkdir -p figures
 echo ""
-iverilog -g2012 -o sim_egg home_lvl2_tb.v ../src/dragon_draw.v ../src/sprites.v ../src/home.v ../src/renderer.v ../src/chest_draw.v ../src/chest_menu.v ../src/satisfactionbar.v ../src/coinbar.v ../src/hearts.v ../src/draw_buttons.v ../src/egg_draw.v
+iverilog -g2012 -o sim_egg -y ../src home_lvl1_tb.v ../src/sprites.v
 vvp sim_egg
 python3 -c "from PIL import Image; Image.open('frame.ppm').save('figures/home_lvl2_render.png')"
 echo "✓ Opslaan voltooid: figures/home_render.png"
@@ -21,7 +21,7 @@ echo "✓ Opslaan voltooid: figures/home_render.png"
 # Zorg ervoor dat de map test/figures bestaat
 mkdir -p figures
 echo ""
-iverilog -g2012 -o sim_egg home_lvl3_tb.v ../src/dragon_draw.v ../src/sprites.v ../src/home.v ../src/renderer.v ../src/chest_draw.v ../src/chest_menu.v ../src/satisfactionbar.v ../src/coinbar.v ../src/hearts.v ../src/draw_buttons.v ../src/egg_draw.v 
+iverilog -g2012 -o sim_egg -y ../src home_lvl1_tb.v ../src/sprites.v
 vvp sim_egg
 python3 -c "from PIL import Image; Image.open('frame.ppm').save('figures/home_lvl3_render.png')"
 echo "✓ Opslaan voltooid: figures/home_render.png"
@@ -29,35 +29,40 @@ echo "✓ Opslaan voltooid: figures/home_render.png"
 # Zorg ervoor dat de map test/figures bestaat
 mkdir -p figures
 echo ""
-iverilog -g2012 -o sim_egg gameover_tb.v ../src/dragon_draw.v ../src/sprites.v ../src/home.v ../src/renderer.v ../src/chest_draw.v ../src/satisfactionbar.v ../src/coinbar.v ../src/hearts.v ../src/draw_buttons.v ../src/chest_menu.v ../src/egg_draw.v
+iverilog -g2012 -o sim_egg -y ../src home_lvl1_tb.v ../src/sprites.v
 vvp sim_egg
 python3 -c "from PIL import Image; Image.open('frame.ppm').save('figures/gameover_render.png')"
 echo "✓ Opslaan voltooid: figures/gameover_render.png"
 
 
 
-iverilog -g2012 -o sim_egg dragon_lvl2_tb.v ../src/dragon_draw.v ../src/sprites.v ../src/egg_draw.v
+iverilog -g2012 -o sim_egg -y ../src home_lvl1_tb.v ../src/sprites.v
 vvp sim_egg
 python3 -c "from PIL import Image; Image.open('frame.ppm').save('figures/lvl2_render.png')"
 echo "✓ Opslaan voltooid: figures/lvl2_render.png"
 
 echo ""
 
-iverilog -g2012 -o sim_egg dragon_lvl2_tb.v ../src/dragon_draw.v ../src/sprites.v ../src/egg_draw.v
+iverilog -g2012 -o sim_egg -y ../src home_lvl1_tb.v ../src/sprites.v
 vvp sim_egg
 python3 -c "from PIL import Image; Image.open('frame.ppm').save('figures/lvl2_render.png')"
 echo "✓ Opslaan voltooid: figures/lvl2_render.png"
 
 
-iverilog -g2012 -o sim_chest chest_menu_tb.v ../src/dragon_draw.v ../src/sprites.v ../src/home.v ../src/renderer.v ../src/chest_draw.v ../src/chest_menu.v ../src/satisfactionbar.v ../src/coinbar.v ../src/hearts.v ../src/draw_buttons.v ../src/egg_draw.v
+iverilog -g2012 -o sim_egg -y ../src home_lvl1_tb.v ../src/sprites.v
 vvp sim_chest
 python3 -c "from PIL import Image; Image.open('frame.ppm').save('figures/chest_menu_render.png')"
+echo "✓ Opslaan voltooid: figures/chest_menu_render.png"
 
+iverilog -g2012 -o sim_egg -y ../src home_lvl1_tb.v ../src/sprites.v
+vvp sim_chest_pick
+python3 -c "from PIL import Image; [Image.open(f'chest_{s}.ppm').save(f'figures/chest_{s}.png') for s in ['pick','open','result']]"
+echo "✓ Opslaan voltooid: figures/chest.png"
 # Opruimen van tijdelijke bestanden
 rm -f sim_egg sim_render frame.ppm
 
 echo ""
-iverilog -g2012 -o sim_egg dragon_lvl3_tb.v ../src/dragon_draw.v ../src/sprites.v ../src/egg_draw.v
+iverilog -g2012 -o sim_egg -y ../src home_lvl1_tb.v ../src/sprites.v
 vvp sim_egg
 python3 -c "from PIL import Image; Image.open('frame.ppm').save('figures/lvl3_render.png')"
 echo "✓ Opslaan voltooid: figures/lvl3_render.png"
