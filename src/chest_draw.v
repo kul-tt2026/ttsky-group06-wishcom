@@ -8,6 +8,12 @@
 //        y   0.. 63   deksel   (sprite rij  0..15)
 //        y  64..127   bak      (sprite rij 16..31)
 //
+// SCHAAL x4, NIET x6.  Hier stond ooit `x * 171 >> 10`, wat een deling door
+// zes is -- terwijl het commentaar x4 beweerde.  Dat waren vier echte
+// vermenigvuldigingen.  Nu is het twee bits eraf schuiven en dus gratis; de
+// kist ging daardoor van 192 naar 128 px.  Pas je dit weer aan, dan moeten
+// CHEST_BOX/CHEST_PITCH in renderer.v EN alle getallen in icon_draw.v mee.
+//
 // TWEE APARTE UITGANGEN, en dat is het hele punt van deze module.  Het icoon
 // moet VOOR het deksel maar ACHTER de bak zitten, dus renderer.v moet de
 // lagen kunnen scheiden:
@@ -18,8 +24,7 @@
 //
 // Zolang het icoon nog laag zit valt het achter de bak en zie je het niet.
 // Zodra het boven de rand uitkomt is er geen bak-pixel meer en verschijnt
-// het vanzelf.  Er is dus GEEN clipping-logica nodig -- de volgorde van de
-// else-if keten in renderer.v doet het werk.
+// het vanzelf.  Er is dus GEEN clipping-logica nodig.
 //
 // px_code (gelijk aan de tabel in renderer.v):
 //   1 = donker / outline    3 = goud
@@ -37,20 +42,15 @@ module chest_draw (
     output wire [2:0] lid_code
 );
 
-  localparam [9:0] BOX = 10'd192;   // 32 sprite-pixels x4
+  localparam [9:0] BOX = 10'd128;   // 32 sprite-pixels x4
 
   // Boven/links van de origin wrapt de lokale coordinaat naar ~1023, dus een
-  // enkele "< BOX" test vangt meteen ook de linker- en bovenrand af.  Geen
-  // signed vergelijking nodig.
+  // enkele "< BOX" test vangt meteen ook de linker- en bovenrand af.
   wire in_box = (x < BOX) && (y < BOX);
 
-  // Schaal x4: gewoon twee bits eraf schuiven.  Alleen machten van twee,
-  // anders heb je een deler nodig.
-  wire [15:0] xm = x[7:0] * 8'd171;
-  wire [15:0] ym = y[7:0] * 8'd171;
-
-  wire [4:0] sx = xm[14:10];        // 0..31 kolom in de sprite
-  wire [4:0] sy = ym[14:10];        // 0..31 rij   in de sprite
+  // Schaal x4: twee bits eraf schuiven, geen vermenigvuldiging.
+  wire [4:0] sx = x[6:2];           // 0..31 kolom in de sprite
+  wire [4:0] sy = y[6:2];           // 0..31 rij   in de sprite
 
   wire is_body = sy[4];             // rij 16..31 -> bak
   wire [3:0] srow = sy[3:0];        // rij binnen de laag
@@ -74,7 +74,6 @@ module chest_draw (
   // ---- highlight-kader ---------------------------------------------------
   // Rand van 4 px rond het vakje.  Goedkoper dan de kist groter tekenen: dat
   // zou een tweede schaalfactor vragen, en dus een tweede geometriepad.
-  // De sprite raakt de buitenste 4 px nooit, dus overlap is uitgesloten.
   wire border = in_box && highlighted &&
                 ((x < 10'd4) || (x >= BOX - 10'd4) ||
                  (y < 10'd4) || (y >= BOX - 10'd4));
@@ -86,8 +85,6 @@ module chest_draw (
   assign body_on   = body_px;
   assign body_code = {1'b0, body_raw};
 
-  // Het kader hangt aan de deksellaag: het ligt in de buitenste 4 px, waar
-  // geen sprite-pixel komt, dus het botst nergens mee.
   assign lid_on    = lid_px || border;
   assign lid_code  = border ? 3'd4 : {1'b0, lid_raw};
 

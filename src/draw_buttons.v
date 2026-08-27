@@ -2,15 +2,19 @@
 // ---------------------------------------------------------------------------
 // DRAW_BUTTONS.  RENDER GROUP.  Puur combinatorisch, geen bitmap-ROM.
 //
-// Het knoppenpaneel (480 breed, 200 hoog) wiskundig getekend.  Referentie-
-// beeld: docs/buttons_panel.png; de vormen hieronder zijn er 1-op-1 de bron
-// van (docs/gen3.py).  Alle schuine randen: helling 2:1.  Witruimtes ~8 px.
+// Het knoppenpaneel (480 breed, 200 hoog) wiskundig getekend.  Alle schuine
+// randen: helling 2:1.  Witruimtes 8 px.
+//
+// De middenknop was een ellips met twee tabellen van 41 ingangen voor de
+// halfbreedte per rij; die kostten samen zo'n 300 cellen.  Nu is het een
+// rechthoek met exact dezelfde 8 px speling tot de vier trapezia: die
+// eindigen op ly 52 / ly 148 / lx 160 / lx 320, en de rechthoek loopt van
+// lx 168 tot 312 en van ly 60 tot 140.  Daardoor verdween ook `ady`, die
+// nergens anders voor diende.
 //
 // px_code: 0 transparant | 1 outline zwart | 2 donkerpaars
-//         
-//          4 wit (tekst + pijl)
-// evolve_now laag -> middenknop kleurt donkerpaars mee (gedimd), geen
-// aparte kleur nodig.
+//          3 middenknop-vulling | 4 wit (tekst + pijl)
+// evolve_now laag -> middenknop kleurt gedimd mee, geen aparte kleur nodig.
 //
 // Coordinaten: ABSOLUUT portret (x 0..479, y 0..639); het paneel plaatst
 // zichzelf op BTN_Y.  Verplaatsen = 1 localparam.
@@ -30,7 +34,6 @@ module draw_buttons (
   wire [9:0] xm  = 10'd480 - lx;                 // spiegel links<->rechts
   wire [9:0] ym  = 10'd200 - ly;                 // spiegel boven<->onder
   wire [9:0] adx = (lx >= 10'd240) ? (lx - 10'd240) : (10'd240 - lx);
-  wire [9:0] ady = (ly >= 10'd100) ? (ly - 10'd100) : (10'd100 - ly);
 
   // ---- trapezium BOVEN: 6<=y<=52, |x-240| + 2(y-6) <= 152 ----------------
   // (som-vorm: alles blijft unsigned, nooit onderloop)
@@ -54,103 +57,21 @@ module draw_buttons (
   wire rgt_i = (xm>=10'd94) && (xm<=10'd154) &&
                (xm <= 10'd45 + (ly<<1)) && (xm + (ly<<1) <= 10'd445);
 
-  // ---- ELLIPS via per-rij halfbreedte-ROM (geen vermenigvuldigers) -------
-  // Tabel = halfbreedte+1 per rij (0 = niets), uit dezelfde kwadratische
-  // test berekend; pixel-identiek aan het referentiebeeld, geen tip-puntjes.
-  reg [6:0] ehw_o;
-  always @(*) case (ady[5:0])
-      6'd0: ehw_o = 7'd72;
-      6'd1: ehw_o = 7'd72;
-      6'd2: ehw_o = 7'd72;
-      6'd3: ehw_o = 7'd72;
-      6'd4: ehw_o = 7'd72;
-      6'd5: ehw_o = 7'd71;
-      6'd6: ehw_o = 7'd71;
-      6'd7: ehw_o = 7'd71;
-      6'd8: ehw_o = 7'd71;
-      6'd9: ehw_o = 7'd70;
-      6'd10: ehw_o = 7'd70;
-      6'd11: ehw_o = 7'd69;
-      6'd12: ehw_o = 7'd69;
-      6'd13: ehw_o = 7'd68;
-      6'd14: ehw_o = 7'd67;
-      6'd15: ehw_o = 7'd67;
-      6'd16: ehw_o = 7'd66;
-      6'd17: ehw_o = 7'd65;
-      6'd18: ehw_o = 7'd64;
-      6'd19: ehw_o = 7'd63;
-      6'd20: ehw_o = 7'd62;
-      6'd21: ehw_o = 7'd61;
-      6'd22: ehw_o = 7'd60;
-      6'd23: ehw_o = 7'd59;
-      6'd24: ehw_o = 7'd57;
-      6'd25: ehw_o = 7'd56;
-      6'd26: ehw_o = 7'd54;
-      6'd27: ehw_o = 7'd53;
-      6'd28: ehw_o = 7'd51;
-      6'd29: ehw_o = 7'd49;
-      6'd30: ehw_o = 7'd47;
-      6'd31: ehw_o = 7'd45;
-      6'd32: ehw_o = 7'd42;
-      6'd33: ehw_o = 7'd40;
-      6'd34: ehw_o = 7'd37;
-      6'd35: ehw_o = 7'd34;
-      6'd36: ehw_o = 7'd30;
-      6'd37: ehw_o = 7'd26;
-      6'd38: ehw_o = 7'd20;
-      6'd39: ehw_o = 7'd12;
-      6'd40: ehw_o = 7'd0;
-      default: ehw_o = 7'd0;
-    endcase
-  reg [6:0] ehw_i;
-  always @(*) case (ady[5:0])
-      6'd0: ehw_i = 7'd66;
-      6'd1: ehw_i = 7'd66;
-      6'd2: ehw_i = 7'd66;
-      6'd3: ehw_i = 7'd66;
-      6'd4: ehw_i = 7'd66;
-      6'd5: ehw_i = 7'd65;
-      6'd6: ehw_i = 7'd65;
-      6'd7: ehw_i = 7'd65;
-      6'd8: ehw_i = 7'd64;
-      6'd9: ehw_i = 7'd64;
-      6'd10: ehw_i = 7'd63;
-      6'd11: ehw_i = 7'd62;
-      6'd12: ehw_i = 7'd62;
-      6'd13: ehw_i = 7'd61;
-      6'd14: ehw_i = 7'd60;
-      6'd15: ehw_i = 7'd59;
-      6'd16: ehw_i = 7'd58;
-      6'd17: ehw_i = 7'd57;
-      6'd18: ehw_i = 7'd56;
-      6'd19: ehw_i = 7'd54;
-      6'd20: ehw_i = 7'd53;
-      6'd21: ehw_i = 7'd52;
-      6'd22: ehw_i = 7'd50;
-      6'd23: ehw_i = 7'd48;
-      6'd24: ehw_i = 7'd46;
-      6'd25: ehw_i = 7'd44;
-      6'd26: ehw_i = 7'd42;
-      6'd27: ehw_i = 7'd39;
-      6'd28: ehw_i = 7'd36;
-      6'd29: ehw_i = 7'd33;
-      6'd30: ehw_i = 7'd30;
-      6'd31: ehw_i = 7'd25;
-      6'd32: ehw_i = 7'd20;
-      6'd33: ehw_i = 7'd12;
-      6'd34: ehw_i = 7'd0;
-      6'd35: ehw_i = 7'd0;
-      6'd36: ehw_i = 7'd0;
-      6'd37: ehw_i = 7'd0;
-      6'd38: ehw_i = 7'd0;
-      6'd39: ehw_i = 7'd0;
-      6'd40: ehw_i = 7'd0;
-      default: ehw_i = 7'd0;
-    endcase
-  wire ell_o = (ady <= 10'd40) && ({3'b0, adx[6:0]} < {3'b0, ehw_o}) && (adx <= 10'd72);
-  wire ell_i = (ady <= 10'd40) && ({3'b0, adx[6:0]} < {3'b0, ehw_i}) && (adx <= 10'd72);
+  // ---- MIDDENKNOP: rechthoek, 8 px vrij van alle vier de trapezia --------
+  // Boven eindigt op ly 52, onder begint op ly 148, links eindigt op lx 160,
+  // rechts begint op lx 320.  Vandaar 60..140 en 168..312.  Randdikte 6,
+  // net als bij de trapezia.
+  localparam [9:0] EV_HW = 10'd72;      // halve breedte  (240 +- 72)
+  localparam [9:0] EV_Y0 = 10'd60;      // bovenkant
+  localparam [9:0] EV_Y1 = 10'd140;     // onderkant
+  localparam [9:0] EV_B  = 10'd6;       // randdikte
 
-   // ======================= TEKST: 3x5 font op schaal 4 ====================
+  wire ell_o = (adx <= EV_HW) &&
+               (ly >= EV_Y0) && (ly <= EV_Y1);
+  wire ell_i = (adx <= EV_HW - EV_B) &&
+               (ly >= EV_Y0 + EV_B) && (ly <= EV_Y1 - EV_B);
+
+  // ======================= TEKST: 3x5 font op schaal 4 ====================
   // lettercel 16 px breed (12 glyph + 4 spatie), 20 px hoog
   //
   // De vijf woorden staan op VIJF VERSCHILLENDE plekken van het paneel, dus
@@ -241,7 +162,7 @@ module draw_buttons (
   wire [9:0] wd_u = lx - 10'd202;
   wire [9:0] wd_v = ly - 10'd19;
   reg [3:0] wd_ch;
-  always @(*) case (wd_u[7:4])
+  always @(*) case (wd_u[7:4])          // 4 bits: de letterindex komt nooit boven 5
       4'd0: wd_ch = 4'd1;
       4'd1: wd_ch = 4'd10;
       4'd2: wd_ch = 4'd4;
@@ -268,7 +189,7 @@ module draw_buttons (
   wire [9:0] we_u = lx - 10'd194;
   wire [9:0] we_v = ly - 10'd96;
   reg [3:0] we_ch;
-  always @(*) case (we_u[7 :4])
+  always @(*) case (we_u[7:4])
       4'd0: we_ch = 4'd2;
       4'd1: we_ch = 4'd12;
       4'd2: we_ch = 4'd8;
@@ -326,6 +247,8 @@ module draw_buttons (
   wire arr_stem = (ly>=10'd82) && (ly<=10'd91) && (adx <= 10'd4);
 
   wire any_text = word_on | arr_head | arr_stem;
+
+  // ======================= samenstellen ===================================
   wire any_fill_dark = top_i | bot_i | lft_i | rgt_i;
   wire any_out  = (top_o|bot_o|lft_o|rgt_o|ell_o) & ~(any_fill_dark|ell_i);
 
