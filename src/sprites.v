@@ -125,7 +125,7 @@ module dragon_l2_generator (
     wire _unused = &{mood_anim, 1'b0};
 
     localparam [9:0] SPRITE_X = 10'd186;   // midden blijft 250
-    localparam [9:0] SPRITE_Y = 10'd212;   // onderkant blijft 340
+    localparam [9:0] SPRITE_Y = 10'd166;   // onderkant blijft 340
     localparam [9:0] SPRITE_W = 10'd128;   // 32 * 4
     localparam [9:0] SPRITE_H = 10'd128;
 
@@ -179,7 +179,7 @@ module dragon_l3_generator (
     wire _unused = &{mood_anim, 1'b0};
 
     localparam [9:0] SPRITE_X = 10'd222;   // midden blijft 286
-    localparam [9:0] SPRITE_Y = 10'd208;   // onderkant blijft 336
+    localparam [9:0] SPRITE_Y = 10'd162;   // onderkant blijft 336
     localparam [9:0] SPRITE_W = 10'd128;   // 32 * 4
     localparam [9:0] SPRITE_H = 10'd128;
 
@@ -231,7 +231,7 @@ module dragon_l4_generator (
     wire _unused = &{mood_anim, 1'b0};
 
     localparam [9:0] SPRITE_X = 10'd189;   // midden blijft 285
-    localparam [9:0] SPRITE_Y = 10'd168;   // onderkant blijft 360
+    localparam [9:0] SPRITE_Y = 10'd122;   // onderkant blijft 360
     localparam [9:0] SPRITE_W = 10'd192;   // 48 * 4
     localparam [9:0] SPRITE_H = 10'd192;
 
@@ -264,22 +264,9 @@ module dragon_l4_generator (
 endmodule
 
 // ===========================================================================
-// BACKGROUND -- het thuisscherm: lucht, zon, twee wolkjes, gras en aarde.
-//
-// PORTRET-coordinaten (px, py), net als alle andere drawables.
-//
-//   y <  GRASS_Y            lucht, met zon en wolkjes
-//   y in [GRASS_Y, +50)     grasstrook -- zelfde groen als het titelscherm
-//   y in [SOIL_Y,  +4)      donkere aardrand, scheidt gras van grond
-//   y >= SOIL_Y + 4         aarde
-//
-// GRASS_Y AFSTELLEN: de draak moet er met zijn onderkant op rusten.  De drie
-// sprite-vakken eindigen op y = 340 (l2), 336 (l3) en 360 (l4), dus 344 laat
-// de kleine draken erop staan en de grote er net iets in zakken.  Zie je na
-// een render dat het niet klopt, dan is dit de enige regel die je aanraakt.
-//
-// GEEN VERMENIGVULDIGINGEN: de zon is een tabel van halfbreedtes per rij
-// (zoals draw_buttons), de wolkjes en de horizon zijn vergelijkingen.
+// BACKGROUND -- lucht met zon en twee wolkjes, een grasstrook, en daaronder
+// aarde.  De zon gaat via een halfbreedte-tabel per rij (zoals draw_buttons),
+// de wolkjes en de horizon zijn vergelijkingen.
 // ===========================================================================
 module background (
     input  wire [9:0] x,          // portret-x  0..479
@@ -287,8 +274,8 @@ module background (
     output reg  [5:0] bg_rgb
 );
   // ---- horizon -----------------------------------------------------------
-  localparam [9:0] GRASS_Y = 10'd344;            // bovenkant gras
-  localparam [9:0] GRASS_H = 10'd50;             // dikte grasstrook
+  localparam [9:0] GRASS_Y = 10'd294;            // bovenkant gras
+  localparam [9:0] GRASS_H = 10'd100;            // dikte grasstrook
   localparam [9:0] SOIL_Y  = GRASS_Y + GRASS_H;  // 394
   localparam [9:0] EDGE_H  = 10'd4;              // donkere scheidingslijn
 
@@ -298,12 +285,13 @@ module background (
   localparam [9:0] SUN_R  = 10'd36;
 
   // ---- kleuren -----------------------------------------------------------
-  localparam [5:0] C_SKY   = 6'b01_10_11;   // hemelsblauw, zoals het titelscherm
-  localparam [5:0] C_SUN   = 6'b11_11_00;   // geel
-  localparam [5:0] C_CLOUD = 6'b11_11_11;   // wit
-  localparam [5:0] C_GRASS = 6'b00_10_00;   // ZELFDE groen als title_egg's gras
-  localparam [5:0] C_EDGE  = 6'b01_00_00;   // donkerbruine rand
-  localparam [5:0] C_SOIL  = 6'b10_01_00;   // aarde
+  localparam [5:0] C_SKY     = 6'b01_10_11;   // hemelsblauw, zoals het titelscherm
+  localparam [5:0] C_SUN     = 6'b11_11_00;   // geel
+  localparam [5:0] C_CLOUD   = 6'b11_11_11;   // wit
+  localparam [5:0] C_GRASS   = 6'b00_10_00;   // ZELFDE groen als title_egg's gras
+  localparam [5:0] C_EDGE    = 6'b01_00_00;   // donkerbruine rand
+  localparam [5:0] C_SOIL    = 6'b10_01_00;   // aarde
+  localparam [5:0] C_SOIL_DK = 6'b01_00_00;   // donkerder, voor de spikkels
 
   // ---- zon ---------------------------------------------------------------
   // Halfbreedte per rij uit een tabel: sqrt(R^2 - dy^2) zou twee
@@ -329,17 +317,32 @@ module background (
   wire sun = (sdy <= SUN_R) && (sdx < {4'd0, sun_hw});
 
   // ---- twee wolkjes ------------------------------------------------------
-  // Elk twee rechthoeken: een smalle bovenop een brede.  Links naast de draak
-  // en rechts eronder, zodat ze niet achter de sprite verdwijnen.
-  wire cloud1 = (y >= 10'd205 && y < 10'd215 && x >= 10'd91  && x < 10'd139) ||
-                (y >= 10'd215 && y < 10'd227 && x >= 10'd75  && x < 10'd155);
+  // Elk twee rechthoeken: een smalle bovenop een brede.  Ze zijn 50 px mee
+  // omhoog gegaan met de graslijn.  De onderste blijft daarmee ruim onder de
+  // zon: die eindigt op y = 140, deze begint op 215.
+  wire cloud1 = (y >= 10'd95 && y < 10'd105 && x >= 10'd121  && x < 10'd169) ||
+                (y >= 10'd105 && y < 10'd117 && x >= 10'd105  && x < 10'd185);
 
-  wire cloud2 = (y >= 10'd265 && y < 10'd275 && x >= 10'd406 && x < 10'd454) ||
-                (y >= 10'd275 && y < 10'd287 && x >= 10'd390 && x < 10'd470);
+  wire cloud2 = (y >= 10'd165 && y < 10'd175 && x >= 10'd376 && x < 10'd424) ||
+                (y >= 10'd175 && y < 10'd187 && x >= 10'd360 && x < 10'd440);
 
+   // ---- spikkels in de grond ---------------------------------------------
+  // Een gewone x^y geeft ZIGZAG: bit i hangt dan alleen van x[i] en y[i] af,
+  // en dat leest als diagonale strepen.  Hier gaat y er OMGEKEERD in -- bit i
+  // van h komt uit x[i] en y[5-i] -- waardoor er geen diagonaal meer in zit.
+  // Omdraaien is alleen bedrading, dus dat is gratis.
+  //
+  // De laagste gebruikte bit is bit 1, dus de korrels zijn 2 px groot.
+  // Grovere korrels: neem x[7:2] en y[7:2].
+  // Meer korrels: laat de tweede voorwaarde weg (gaat van ~9% naar ~12%).
+  wire [5:0] hx = x[6:1];
+  wire [5:0] hy = {y[1], y[2], y[3], y[4], y[5], y[6]};   // omgekeerd
+  wire [5:0] h  = hx ^ hy;
+
+  wire speck = (h[2:0] == 3'd3) && (h[5:4] != 2'b00);
   // ---- stapelen ----------------------------------------------------------
   always @(*) begin
-    if      (y >= SOIL_Y + EDGE_H) bg_rgb = C_SOIL;
+    if      (y >= SOIL_Y + EDGE_H) bg_rgb = speck ? C_SOIL_DK : C_SOIL;
     else if (y >= SOIL_Y)          bg_rgb = C_EDGE;
     else if (y >= GRASS_Y)         bg_rgb = C_GRASS;
     else if (sun)                  bg_rgb = C_SUN;
@@ -347,7 +350,6 @@ module background (
     else                           bg_rgb = C_SKY;
   end
 endmodule
-
 
 // ===========================================================================
 // GAMEOVER_TEXT -- "GAME" / "OVER" in een 6x8 font, 6x geschaald.
@@ -519,7 +521,6 @@ module chest_body_rom (
   wire [8:0] addr = {row, col};
   assign code = rom[addr];
 endmodule
-
 // ---------------------------------------------------------------------------
 // LEVEL_BOX -- "LVL n" linksboven op het homescherm.
 //

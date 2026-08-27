@@ -74,8 +74,8 @@ module renderer (
   // screen is a one-line edit.
 
   localparam [9:0] HEARTS_X  = 10'd270, HEARTS_Y  = 10'd16;  // 304 x 24
-  localparam [9:0] SATBAR_X  = 10'd85,  SATBAR_Y  = 10'd358; // 162 x 24
-  localparam [9:0] COINBAR_X = 10'd24,  COINBAR_Y = 10'd80;  //  40 x 220
+  localparam [9:0] SATBAR_X  = 10'd85,  SATBAR_Y  = 10'd318; // 162 x 24
+  localparam [9:0] COINBAR_X = 10'd24,  COINBAR_Y = 10'd50;  //  40 x 220
   localparam [9:0] LEVEL_X   = 10'd24,   LEVEL_Y   = 10'd24;   //  48 x 18
 
   localparam DRAGON_X = 10'd0, DRAGON_Y = 10'd0;
@@ -459,7 +459,7 @@ module renderer (
     end
     else if (mode == M_YOU_WIN)                    rgb = 6'b11_11_00;  // placeholder
     else if (show_hearts   && heartsinfo_on)       rgb = heartsinfo_rgb;
-    else if (show_coin     && lvl_on)              rgb = 6'b11_11_11;  // LVL n
+    else if (show_coin     && lvl_on)              rgb = 6'b00_00_00;  // LVL n
     else if (show_coin     && coin_on)             rgb = coin_rgb;
     else if (show_satbar   && sat_on)              rgb = sat_rgb;
     else if (show_buttons  && button_on)           rgb = buttons_rgb;

@@ -14,8 +14,11 @@
 //
 // DE SMILEY kost weinig omdat hij in elk vakje op dezelfde plek staat: de
 // cirkel en de ogen hangen alleen van (sx, sy) af, en alleen de MONDHOOGTE
-// komt uit een tabel op idx.  Dat is een tabel van 25 ingangen, geen vijf
+// komt uit een tabel op idx.  Dat is een tabel van 45 ingangen, geen vijf
 // aparte gezichten.  Zet SMILEY op 0 als je de vakjes leeg wilt.
+//
+// Het vakje is 40 px hoog (was 20) zodat het gezicht straal 16 kan hebben --
+// op straal 8 was er van de mond niets te zien.
 //
 // px_code: 0 = zwart (frame, schotjes, en de lijnen van de smiley)
 //          1..5 = kleur van vakje 0..4
@@ -37,13 +40,13 @@ module satisfactionbar (
   localparam [9:0] FRAME = 10'd2;       // zwarte buitenrand
   localparam [9:0] PITCH = 10'd62;      // afstand per segment
   localparam [9:0] SEG_W = 10'd60;      // vakje langs x
-  localparam [9:0] SEG_H = 10'd20;      // vakje langs y
+  localparam [9:0] SEG_H = 10'd40;      // vakje langs y
 
   localparam [9:0] RING_X = 10'd2;      // randdikte op de lange as
-  localparam [9:0] RING_Y = 10'd1;      // randdikte op de korte as
+  localparam [9:0] RING_Y = 10'd2;      // randdikte op de korte as
 
   localparam [9:0] BAR_W = FRAME + (NSEG * PITCH) - (PITCH - SEG_W) + FRAME; // 312
-  localparam [9:0] BAR_H = FRAME + SEG_H + FRAME;                            //  24
+  localparam [9:0] BAR_H = FRAME + SEG_H + FRAME;                            //  44
 
   // ======================= coordinaten =====================================
   // Links/boven van de origin wrapt de lokale coordinaat naar ~1023, dus
@@ -53,8 +56,8 @@ module satisfactionbar (
                   (y >= FRAME) && (y < BAR_H - FRAME);
 
   wire [9:0] diff_x = x - FRAME;        // 0..307 binnen in_inner
-  wire [9:0] diff_y = y - FRAME;        // 0..19
-  wire [4:0] sy     = diff_y[4:0];
+  wire [9:0] diff_y = y - FRAME;        // 0..39
+  wire [5:0] sy     = diff_y[5:0];
 
   // Vijf vaste grenzen in plaats van diff_x/62 en diff_x%62.
   reg [2:0] idx;
@@ -78,65 +81,79 @@ module satisfactionbar (
 
   wire ring = CURSOR_MODE && in_seg && selected &&
               ((sx < 6'd2) || (sx >= 6'd58) ||
-               (sy < 5'd1) || (sy >= 5'd19));
+               (sy < 6'd2) || (sy >= 6'd38));
 
   wire coloured = CURSOR_MODE ? 1'b1 : (idx <= sat);
 
   // ======================= de smiley ======================================
-  // Gezicht met straal 8 rond (30, 10) binnen het vakje.  De tabel geeft per
-  // rij de halve breedte PLUS EEN, uit floor(sqrt(64 - ay^2)) + 1, zodat 0
+  // Gezicht met straal 16 rond (30, 20) binnen het vakje.  De tabel geeft per
+  // rij de halve breedte PLUS EEN, uit floor(sqrt(256 - ay^2)) + 1, zodat 0
   // netjes "deze rij raakt de cirkel niet" betekent -- zelfde patroon als de
   // bollen in hearts.v en de ellips in draw_buttons.v.
   wire [5:0] fdx = (sx >= 6'd30) ? (sx - 6'd30) : (6'd30 - sx);
-  wire [4:0] ay  = (sy >= 5'd10) ? (sy - 5'd10) : (5'd10 - sy);
+  wire [5:0] ay  = (sy >= 6'd20) ? (sy - 6'd20) : (6'd20 - sy);
 
-  reg [4:0] fw;
+  reg [5:0] fw;
   always @(*) case (ay)
-    5'd0:    fw = 5'd9;
-    5'd1:    fw = 5'd8;
-    5'd2:    fw = 5'd8;
-    5'd3:    fw = 5'd8;
-    5'd4:    fw = 5'd7;
-    5'd5:    fw = 5'd7;
-    5'd6:    fw = 5'd6;
-    5'd7:    fw = 5'd4;
-    5'd8:    fw = 5'd1;
-    default: fw = 5'd0;
+    6'd0:    fw = 6'd17;
+    6'd1:    fw = 6'd16;
+    6'd2:    fw = 6'd16;
+    6'd3:    fw = 6'd16;
+    6'd4:    fw = 6'd16;
+    6'd5:    fw = 6'd16;
+    6'd6:    fw = 6'd15;
+    6'd7:    fw = 6'd15;
+    6'd8:    fw = 6'd14;
+    6'd9:    fw = 6'd14;
+    6'd10:   fw = 6'd13;
+    6'd11:   fw = 6'd12;
+    6'd12:   fw = 6'd11;
+    6'd13:   fw = 6'd10;
+    6'd14:   fw = 6'd8;
+    6'd15:   fw = 6'd6;
+    6'd16:   fw = 6'd1;
+    default: fw = 6'd0;
   endcase
 
-  wire in_face   = (fdx < {1'b0, fw});
-  wire face_ring = in_face && (fdx + 6'd2 >= {1'b0, fw});
+  wire in_face   = (fdx < fw);
+  wire face_ring = in_face && (fdx + 6'd3 >= fw);      // 3 px dikke omtrek
 
-  // Twee ogen van 2x3.
-  wire eye = in_face && (sy >= 5'd6) && (sy <= 5'd8) &&
-             (((sx >= 6'd26) && (sx <= 6'd27)) ||
-              ((sx >= 6'd33) && (sx <= 6'd34)));
+  // Twee ogen van 4x6.
+  wire eye = in_face && (sy >= 6'd12) && (sy <= 6'd17) &&
+             (((sx >= 6'd22) && (sx <= 6'd25)) ||
+              ((sx >= 6'd35) && (sx <= 6'd38)));
 
   // De mond: per segment en per kolom een rij.  Bij een chagrijnig gezicht
   // liggen de hoeken LAGER dan het midden, bij een blij gezicht hoger.
-  // 31 betekent "hier geen mond".
-  reg [4:0] mrow;
-  always @(*) case ({idx, fdx[2:0]})
-    {3'd0,3'd0}: mrow = 5'd12;  {3'd0,3'd1}: mrow = 5'd12;
-    {3'd0,3'd2}: mrow = 5'd13;  {3'd0,3'd3}: mrow = 5'd14;
-    {3'd0,3'd4}: mrow = 5'd15;
-    {3'd1,3'd0}: mrow = 5'd13;  {3'd1,3'd1}: mrow = 5'd13;
-    {3'd1,3'd2}: mrow = 5'd13;  {3'd1,3'd3}: mrow = 5'd14;
-    {3'd1,3'd4}: mrow = 5'd14;
-    {3'd2,3'd0}: mrow = 5'd14;  {3'd2,3'd1}: mrow = 5'd14;
-    {3'd2,3'd2}: mrow = 5'd14;  {3'd2,3'd3}: mrow = 5'd14;
-    {3'd2,3'd4}: mrow = 5'd14;
-    {3'd3,3'd0}: mrow = 5'd15;  {3'd3,3'd1}: mrow = 5'd15;
-    {3'd3,3'd2}: mrow = 5'd14;  {3'd3,3'd3}: mrow = 5'd14;
-    {3'd3,3'd4}: mrow = 5'd13;
-    {3'd4,3'd0}: mrow = 5'd16;  {3'd4,3'd1}: mrow = 5'd16;
-    {3'd4,3'd2}: mrow = 5'd15;  {3'd4,3'd3}: mrow = 5'd14;
-    {3'd4,3'd4}: mrow = 5'd13;
-    default:     mrow = 5'd31;
+  // 63 betekent "hier geen mond"; sy komt nooit boven 39, dus de test
+  // (sy >= mrow) valt dan vanzelf af.
+  reg [5:0] mrow;
+  always @(*) case ({idx, fdx[3:0]})
+    {3'd0,4'd0}: mrow=6'd24; {3'd0,4'd1}: mrow=6'd24; {3'd0,4'd2}: mrow=6'd24;
+    {3'd0,4'd3}: mrow=6'd25; {3'd0,4'd4}: mrow=6'd26; {3'd0,4'd5}: mrow=6'd27;
+    {3'd0,4'd6}: mrow=6'd28; {3'd0,4'd7}: mrow=6'd29; {3'd0,4'd8}: mrow=6'd30;
+
+    {3'd1,4'd0}: mrow=6'd26; {3'd1,4'd1}: mrow=6'd26; {3'd1,4'd2}: mrow=6'd26;
+    {3'd1,4'd3}: mrow=6'd26; {3'd1,4'd4}: mrow=6'd26; {3'd1,4'd5}: mrow=6'd27;
+    {3'd1,4'd6}: mrow=6'd28; {3'd1,4'd7}: mrow=6'd28; {3'd1,4'd8}: mrow=6'd28;
+
+    {3'd2,4'd0}: mrow=6'd28; {3'd2,4'd1}: mrow=6'd28; {3'd2,4'd2}: mrow=6'd28;
+    {3'd2,4'd3}: mrow=6'd28; {3'd2,4'd4}: mrow=6'd28; {3'd2,4'd5}: mrow=6'd28;
+    {3'd2,4'd6}: mrow=6'd28; {3'd2,4'd7}: mrow=6'd28; {3'd2,4'd8}: mrow=6'd28;
+
+    {3'd3,4'd0}: mrow=6'd30; {3'd3,4'd1}: mrow=6'd30; {3'd3,4'd2}: mrow=6'd30;
+    {3'd3,4'd3}: mrow=6'd29; {3'd3,4'd4}: mrow=6'd28; {3'd3,4'd5}: mrow=6'd28;
+    {3'd3,4'd6}: mrow=6'd27; {3'd3,4'd7}: mrow=6'd26; {3'd3,4'd8}: mrow=6'd26;
+
+    {3'd4,4'd0}: mrow=6'd32; {3'd4,4'd1}: mrow=6'd32; {3'd4,4'd2}: mrow=6'd31;
+    {3'd4,4'd3}: mrow=6'd30; {3'd4,4'd4}: mrow=6'd29; {3'd4,4'd5}: mrow=6'd28;
+    {3'd4,4'd6}: mrow=6'd27; {3'd4,4'd7}: mrow=6'd26; {3'd4,4'd8}: mrow=6'd26;
+
+    default:     mrow = 6'd63;
   endcase
 
-  wire mouth = in_face && (fdx <= 6'd4) &&
-               ((sy == mrow) || (sy == mrow + 5'd1));
+  wire mouth = in_face && (fdx <= 6'd8) &&
+               (sy >= mrow) && (sy < mrow + 6'd3);     // 3 px dikke mond
 
   wire smiley = SMILEY && in_seg && (face_ring || eye || mouth);
 
