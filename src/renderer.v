@@ -271,6 +271,9 @@ module renderer (
     .text_on(gameover_text_on)
   );
 
+  wire win_on;
+  win_screen u_win(.x(px), .y(py), .on(win_on));
+
   // HEARTS -----------------------------------------------------------------
   wire       heartsinfo_on;
   wire [1:0] heartsinfo_code;
@@ -463,7 +466,7 @@ module renderer (
       if (gameover_text_on) rgb = 6'b00_00_00;     // zwarte letters
       else                  rgb = 6'b01_00_00;     // donkerrode achtergrond
     end
-    else if (mode == M_YOU_WIN)                    rgb = 6'b11_11_00;  // placeholder
+    else if (mode == M_YOU_WIN) rgb = win_on ? 6'b11_10_00 : 6'b00_00_00;
     else if (show_hearts   && heartsinfo_on)       rgb = heartsinfo_rgb;
     else if (show_coin     && lvl_on)              rgb = 6'b00_00_00;  // LVL n
     else if (show_coin     && coin_on)             rgb = coin_rgb;

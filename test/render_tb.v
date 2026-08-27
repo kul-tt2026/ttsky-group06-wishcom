@@ -22,7 +22,7 @@
 module render_tb;
 
   // ======================= WAT WIL JE ZIEN ================================
-  localparam [2:0] MODE = 3'd2;    // 0 TITLE  1 EGG  2 HOME  3 CHEST
+  localparam [2:0] MODE = 3'd4;    // 0 TITLE  1 EGG  2 HOME  3 CHEST
                                    // 4 GAMEOVER  5 YOU_WIN
   localparam       STEP = 1;       // 1 = vol, 2 of 4 = snel itereren
 
@@ -44,6 +44,8 @@ module render_tb;
   // ei / flits (alleen zichtbaar in mode EGG)
   localparam [2:0] SET_EGGFR   = 3'd3;   // 0 heel .. 4 wijd open
   localparam [9:0] SET_FLASHR  = 10'd0;  // 0 = flits uit
+
+  localparam [7:0] SET_BTN_LEVEL = 8'b0010_0000;
 
   // ======================= aandrijving ====================================
   reg clk = 1'b0;
@@ -89,6 +91,7 @@ module render_tb;
     .round          (SET_ROUND),
     .egg_frame      (SET_EGGFR),
     .flash_r        (SET_FLASHR),
+    .btn_level      (SET_BTN_LEVEL),
 
     .R(R), .G(G), .B(B)
   );

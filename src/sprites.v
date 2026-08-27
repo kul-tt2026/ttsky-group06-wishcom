@@ -351,45 +351,42 @@ module background (
   end
 endmodule
 
+
 // ===========================================================================
-// GAMEOVER_TEXT -- "GAME" / "OVER" in een 6x8 font, 6x geschaald.
-// Vier delingen eruit: /48 wordt een vergelijkingsketen, /6 wordt *683 >> 12.
+// GAMEOVER_TEXT -- "GAME" / "OVER" in een 6x8 font, 8x geschaald.
+// Schaal 8 en niet 6: /8 is een bitselectie, terwijl /6 via (n*683)>>12 twee
+// optelbomen van zes termen kostte.  Ook de lettercel is nu 64 breed, een
+// macht van twee, waardoor "welke letter" een bus-slice is in plaats van een
+// vergelijkingsketen plus een vermenigvuldiging met 48.
 // ===========================================================================
 module gameover_text (
     input  wire [9:0] px,        // 0..479 (portret X)
     input  wire [9:0] py,        // 0..639 (portret Y)
     output wire       text_on
 );
-  localparam [9:0] START_X = 10'd144;
-  localparam [9:0] LINE1_Y = 10'd250;   // GAME
-  localparam [9:0] LINE2_Y = 10'd320;   // OVER
-  localparam [9:0] CHAR_H  = 10'd48;
+  localparam [9:0] START_X = 10'd112;   // (480 - 256) / 2
+  localparam [9:0] LINE_W  = 10'd256;   // 4 letters * 64
+  localparam [9:0] LINE1_Y = 10'd240;   // GAME
+  localparam [9:0] LINE2_Y = 10'd330;   // OVER
+  localparam [9:0] CHAR_H  = 10'd64;    // 8 rijen * 8
 
-  wire in_line1 = (px >= START_X) && (px < START_X + 10'd192) &&
+  wire in_line1 = (px >= START_X) && (px < START_X + LINE_W) &&
                   (py >= LINE1_Y) && (py < LINE1_Y + CHAR_H);
-  wire in_line2 = (px >= START_X) && (px < START_X + 10'd192) &&
+  wire in_line2 = (px >= START_X) && (px < START_X + LINE_W) &&
                   (py >= LINE2_Y) && (py < LINE2_Y + CHAR_H);
 
-  wire [9:0] lx = px - START_X;         // 0..191
+  wire [9:0] lx = px - START_X;         // 0..255
 
-  // welke letter: vier vergelijkingen i.p.v. lx / 48
-  wire [1:0] char_pos = (lx < 10'd48)  ? 2'd0 :
-                        (lx < 10'd96)  ? 2'd1 :
-                        (lx < 10'd144) ? 2'd2 : 2'd3;
-  wire [9:0] char_x0  = ({8'd0, char_pos} << 5) + ({8'd0, char_pos} << 4);  // *48
-  wire [9:0] cx10     = lx - char_x0;
-  wire [5:0] cx       = cx10[5:0];      // 0..47 binnen de lettercel
+  wire [1:0] char_pos = lx[7:6];        // welke letter: /64, gewoon een slice
+  wire [5:0] cx       = lx[5:0];        // 0..63 binnen de lettercel
 
   wire [9:0] ly10 = in_line1 ? (py - LINE1_Y) : (py - LINE2_Y);
-  wire [5:0] ly   = ly10[5:0];          // 0..47
+  wire [5:0] ly   = ly10[5:0];          // 0..63
 
-  // /6 == (n * 683) >> 12
-  wire [15:0] mcol = {10'd0, cx} * 16'd683;
-  wire [15:0] mrow = {10'd0, ly} * 16'd683;
-  wire [2:0]  gcol = mcol[14:12];       // 0..5
-  wire [2:0]  grow = mrow[14:12];       // 0..7
+  wire [2:0] gcol = cx[5:3];            // /8
+  wire [2:0] grow = ly[5:3];            // /8
 
-  wire in_glyph = (cx < 6'd36);         // laatste 12 px is tussenruimte
+  wire in_glyph = (cx < 6'd48);         // laatste 16 px is tussenruimte
 
   // ---- welk karakter -----------------------------------------------------
   // IDs: 0:G 1:A 2:M 3:E 4:O 5:V 6:R
@@ -605,4 +602,65 @@ module level_box (
   wire dig_px = in_dig && q_bits[2'd3 - dgx];
 
   assign on = txt_px || dig_px;
+endmodule
+
+// ---------------------------------------------------------------------------
+// WIN_SCREEN -- "YOU WIN" in twee regels, gouden letters op zwart.
+//
+// Dezelfde 5x8 glyphs als font_rom in chest_menu.v: O, U, I en N zijn er
+// letterlijk uit overgenomen, Y en W zijn in dezelfde stijl bijgetekend.
+// Maar het is een VASTE bitmap, geen fontopzoeking: "YOU WIN" verandert
+// nooit, en een label-instantie zou font_rom en word_rom een tweede keer op
+// de chip zetten voor 415 cellen.  Zelfde afweging als bij PRESS ANY BUTTON
+// en LVL.
+//
+// Schaal 16 (een bitselectie, dus gratis): elke letter wordt 80 x 112, elke
+// regel 272 x 112.  Twee regels onder elkaar, gecentreerd op een scherm van
+// 480 breed.
+// ---------------------------------------------------------------------------
+module win_screen (
+    input  wire [9:0] x,          // absolute portret-x, 0..479
+    input  wire [9:0] y,          // absolute portret-y, 0..639
+    output wire       on
+);
+  localparam [9:0] W_X  = 10'd104;   // (480 - 272) / 2
+  localparam [9:0] W_W  = 10'd272;   // 17 kolommen * 16
+  localparam [9:0] W_H  = 10'd112;   //  7 rijen    * 16
+  localparam [9:0] L1_Y = 10'd200;   // "YOU"
+  localparam [9:0] L2_Y = 10'd344;   // "WIN"
+
+  wire in_x  = (x >= W_X) && (x < W_X + W_W);
+  wire in_l1 = in_x && (y >= L1_Y) && (y < L1_Y + W_H);
+  wire in_l2 = in_x && (y >= L2_Y) && (y < L2_Y + W_H);
+
+  wire [9:0] gx = x - W_X;
+  wire [9:0] gy = in_l1 ? (y - L1_Y) : (y - L2_Y);
+
+  wire [4:0] col = gx[8:4];          // /16, 0..16
+  wire [2:0] row = gy[6:4];          // /16, 0..6
+
+  // Zeventien kolommen per regel: drie letters van 5 met 1 px ertussen.
+  // Bit 16 is de linkerkolom.
+  reg [16:0] bits;
+  always @(*) case ({in_l2, row})
+    // ---- regel 1: Y O U ----
+    {1'b0,3'd0}: bits = 17'b10001_0_01110_0_10001;
+    {1'b0,3'd1}: bits = 17'b10001_0_10001_0_10001;
+    {1'b0,3'd2}: bits = 17'b01010_0_10001_0_10001;
+    {1'b0,3'd3}: bits = 17'b00100_0_10001_0_10001;
+    {1'b0,3'd4}: bits = 17'b00100_0_10001_0_10001;
+    {1'b0,3'd5}: bits = 17'b00100_0_10001_0_10001;
+    {1'b0,3'd6}: bits = 17'b00100_0_01110_0_01110;
+    // ---- regel 2: W I N ----
+    {1'b1,3'd0}: bits = 17'b10001_0_11111_0_10001;
+    {1'b1,3'd1}: bits = 17'b10001_0_00100_0_11001;
+    {1'b1,3'd2}: bits = 17'b10001_0_00100_0_11001;
+    {1'b1,3'd3}: bits = 17'b10101_0_00100_0_10101;
+    {1'b1,3'd4}: bits = 17'b10101_0_00100_0_10011;
+    {1'b1,3'd5}: bits = 17'b11011_0_00100_0_10011;
+    {1'b1,3'd6}: bits = 17'b10001_0_11111_0_10001;
+    default:     bits = 17'd0;
+  endcase
+
+  assign on = (in_l1 || in_l2) && bits[5'd16 - col];
 endmodule
