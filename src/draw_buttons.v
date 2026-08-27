@@ -22,10 +22,21 @@
 module draw_buttons (
     input  wire [9:0] x,
     input  wire [9:0] y,
+    input  wire [7:0] btn_level,   // {evolve, sleep, feed, play, drink}, actief = ingedrukt
+                                   // VASTGEHOUDEN toestand uit buttons.v (`level`).
+                                   // NIET btn_pressed: die is maar een klokcyclus
+                                   // hoog en dus onzichtbaar.  En niet te
+                                   // verwarren met `level` van de draak.
+
     output wire       px_on,
     output wire [2:0] px_code
 );
   localparam [9:0] BTN_Y = 10'd420;
+  localparam BTN_EVOLVE = 3'd1,
+             BTN_FEED   = 3'd4,
+             BTN_DRINK  = 3'd5,
+             BTN_SLEEP  = 3'd6,
+             BTN_PLAY   = 3'd7;
 
   wire        in_panel = (y >= BTN_Y) && (y < BTN_Y + 10'd200);
   wire [9:0]  lx = x;
@@ -80,6 +91,9 @@ module draw_buttons (
   // lijnt de synthese die tabel van zeventig ingangen ook vijf keer in --
   // vier volledige kopieen die nooit tegelijk iets doen.  Zelfde reden
   // waarom renderer.v maar EEN title_egg instantieert voor twee modes.
+  //              DRINK
+  //     FEED     EVOLVE     SLEEP
+  //              PLAY
   function [2:0] frow; input [3:0] ch; input [2:0] row; begin
     case ({ch, row})
       {4'd0,3'd0}: frow = 3'b010;
@@ -249,12 +263,24 @@ module draw_buttons (
   wire any_text = word_on | arr_head | arr_stem;
 
   // ======================= samenstellen ===================================
+  // ---- ingedrukte knop licht op ------------------------------------------
+  // De vijf vullingen bestaan al; dit is alleen een extra kleur ertussen.
+  // btn_level komt uit buttons.v en blijft hoog zolang de speler drukt, dus
+  // je ziet het echt -- `pressed` daar duurt maar een klokcyclus.
+  wire lit = (top_i & btn_level[BTN_DRINK])  |   // boven
+             (lft_i & btn_level[BTN_FEED])   |   // links
+             (rgt_i & btn_level[BTN_SLEEP])  |   // rechts
+             (bot_i & btn_level[BTN_PLAY])   |   // onder
+             (ell_i & btn_level[BTN_EVOLVE]);    // midden
+  
+  
   wire any_fill_dark = top_i | bot_i | lft_i | rgt_i;
   wire any_out  = (top_o|bot_o|lft_o|rgt_o|ell_o) & ~(any_fill_dark|ell_i);
-
+  
   assign px_code = !in_panel      ? 3'd0 :
                    any_text       ? 3'd4 :
                    any_out        ? 3'd1 :
+                   lit            ? 3'd5 :
                    any_fill_dark  ? 3'd2 :
                    ell_i          ? 3'd3 : 3'd0;
   assign px_on = (px_code != 3'd0);

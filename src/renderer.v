@@ -41,6 +41,7 @@ module renderer (
     input  wire       evolve_blink,
 
     input  wire       frame_tick, // voor animatie van ei
+    input  wire [7:0] btn_level,
 
     input  wire       overflow, // als hartjes vol of geld vol
     input  wire [8:0] chest_contents,  // {kist2, kist1, kist0}, 3 bits elk
@@ -287,6 +288,7 @@ module renderer (
   wire [2:0] button_code;
   draw_buttons buttons_u (
     .x(px), .y(py),
+    .btn_level(btn_level),
     .px_on(button_on), .px_code(button_code)
   );
 
@@ -415,6 +417,7 @@ module renderer (
     3'd1: buttons_rgb = 6'b00_00_00;
     3'd2: buttons_rgb = 6'b01_00_10;   // donkerpaars
     3'd3: buttons_rgb = evolve_rgb;    // de evolve-knop
+    3'd5: buttons_rgb = 6'b10_01_11;
     default: buttons_rgb = 6'b11_11_11;
   endcase
 

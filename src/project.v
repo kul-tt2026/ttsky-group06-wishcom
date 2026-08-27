@@ -40,7 +40,7 @@ module tt_um_dragonchi (
   wire [7:0] btn_level, btn_pressed;
   buttons u_buttons (
     .clk(clk), .rst_n(rst_n), .frame_tick(frame_tick), .raw(ui_in),
-    .level(btn_level), .pressed(btn_pressed)
+    .btn_level(btn_level), .pressed(btn_pressed)
   );
 
 // ---- the dragon's stats: wire decleration (Person A) ----
@@ -145,7 +145,8 @@ module tt_um_dragonchi (
     .chest_frame(chest_frame), .flash(flash), .flame_frame(flame_frame),
     .R(R), .G(G), .B(B), .overflow(overflow), .evolve_now(evolve_now),
     .chest_contents(chest_contents), .pot(pot), .round(round),
-    .evolve_blink(evolve_blink), .frame_tick(frame_tick), .egg_frame(egg_frame), .flash_r(flash_r)
+    .evolve_blink(evolve_blink), .frame_tick(frame_tick), .egg_frame(egg_frame), .flash_r(flash_r),
+    .btn_level(btn_level)
   );
 
   
