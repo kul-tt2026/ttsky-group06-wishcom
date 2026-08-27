@@ -347,22 +347,25 @@ module renderer (
     end
   endfunction
 
-  function [5:0] icon_color;
+
+    function [5:0] icon_color;
     input [2:0] code;
     begin
       case (code)
-        3'd1:    icon_color = 6'b00_00_00;   // zwarte outline
-        3'd2:    icon_color = 6'b11_10_00;   // goud
-        3'd3:    icon_color = 6'b10_01_00;   // donkergoud
-        3'd4:    icon_color = 6'b11_11_11;   // wit / glas
-        3'd5:    icon_color = 6'b00_11_00;   // gifgroen
-        3'd6:    icon_color = 6'b00_10_00;   // donkergroen
-        3'd7:    icon_color = 6'b10_01_00;   // kurk
+        3'd1:    icon_color = 6'b00_00_00;   // zwart (omtrek, bomromp)
+        3'd2:    icon_color = 6'b10_01_00;   // bruin / donkeroranje (kurk, muntschaduw)
+        3'd3:    icon_color = 6'b11_10_00;   // oranje (muntvlak)
+        3'd4:    icon_color = 6'b11_11_01;   // creme / geel (muntglans, vonken bom2)
+        3'd5:    icon_color = 6'b11_11_11;   // wit (glans op de bom)
+        3'd6:    icon_color = 6'b10_00_00;   // rood (drank, vonken, rode bom)
+        3'd7:    icon_color = 6'b01_01_10;   // grijsblauw (glas)
         default: icon_color = 6'b00_00_00;
       endcase
     end
   endfunction
 
+ 
+        
   wire [2:0] chest_px_code = chest_body_on ? c_body_code : c_lid_code;
   wire [5:0] chest_raw_rgb = chest_color(chest_px_code);
   wire [5:0] chest_rgb     = c_dim ? dim_color(chest_raw_rgb) : chest_raw_rgb;
