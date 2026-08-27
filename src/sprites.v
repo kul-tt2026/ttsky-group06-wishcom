@@ -458,28 +458,30 @@ module gameover_text (
   assign text_on = (in_line1 || in_line2) && in_glyph && glyph_bits[3'd5 - gcol];
 endmodule
 
-
 // ===========================================================================
-// POT_SPRITE -- 32x32, 8x geschaald.  Schaal is een macht van twee: shift.
+// POT_SPRITE -- 32x32, 4x geschaald -> 128x128.  Schaal is een macht van twee.
+// De aanroeper plaatst hem: op het kiesscherm staat hij linksboven in de
+// boord, in het menu gecentreerd.  Dezelfde instantie, alleen een andere
+// oorsprong -- twee instanties zouden de ROM twee keer op de chip zetten.
 // ===========================================================================
 module pot_sprite (
     input  wire [9:0] x,
     input  wire [9:0] y,
+    input  wire [9:0] X0,
+    input  wire [9:0] Y0,
     output wire       px_on,
     output wire [2:0] px_code
 );
-  localparam [9:0] SPRITE_X = 10'd112;
-  localparam [9:0] SPRITE_Y = 10'd140;
-  localparam [9:0] SPRITE_W = 10'd256;
-  localparam [9:0] SPRITE_H = 10'd256;
+  localparam [9:0] SPRITE_W = 10'd128;   // 32 * 4
+  localparam [9:0] SPRITE_H = 10'd128;
 
-  wire in_bounds = (x >= SPRITE_X) && (x < (SPRITE_X + SPRITE_W)) &&
-                   (y >= SPRITE_Y) && (y < (SPRITE_Y + SPRITE_H));
+  wire in_bounds = (x >= X0) && (x < X0 + SPRITE_W) &&
+                   (y >= Y0) && (y < Y0 + SPRITE_H);
 
-  wire [9:0] div_x = (x - SPRITE_X) >> 3;
-  wire [9:0] div_y = (y - SPRITE_Y) >> 3;
-  wire [4:0] rel_x = in_bounds ? div_x[4:0] : 5'd0;
-  wire [4:0] rel_y = in_bounds ? div_y[4:0] : 5'd0;
+  wire [9:0] ox = x - X0;
+  wire [9:0] oy = y - Y0;
+  wire [4:0] rel_x = in_bounds ? ox[6:2] : 5'd0;   // /4
+  wire [4:0] rel_y = in_bounds ? oy[6:2] : 5'd0;
   wire [9:0] addr  = {rel_y, rel_x};
 
   reg [2:0] rom [0:1023];
@@ -488,7 +490,6 @@ module pot_sprite (
   assign px_code = in_bounds ? rom[addr] : 3'd0;
   assign px_on   = (px_code != 3'd0);
 endmodule
-
 
 // ===========================================================================
 // CHEST ROM'S -- deksel (twee frames) en bak.
@@ -663,4 +664,76 @@ module win_screen (
   endcase
 
   assign on = (in_l1 || in_l2) && bits[5'd16 - col];
+endmodule
+
+// ===========================================================================
+// SCALES_BG -- drakenschubben als achtergrond voor de minigame, met een
+// bruine boord en een gouden bies bovenaan.
+//
+// Tegel van 64 x 32, waarbij elke tweede rij een halve tegel opschuift -- dat
+// verspringen is wat de schubben laat nestelen.  Beide maten zijn machten van
+// twee, dus "waar zit ik in de tegel" is puur bitselectie, en een halve tegel
+// opschuiven is bit 5 omklappen in plaats van een opteller.
+//
+// Elke schub is de BOVENRAND van een cirkel met straal 36 waarvan het
+// middelpunt op ty = 34 ligt, dus net onder de tegel.  Daardoor waaiert hij
+// uit van smal bovenaan naar de volle tegelbreedte onderaan.  De halve breedte
+// per rij komt uit een tabel: geen sqrt, geen vermenigvuldiging.
+//
+// De schubben rekenen vanaf SCALES_Y en niet vanaf y = 0, zodat de eerste rij
+// onder de bies netjes bij het begin van een tegel start in plaats van er
+// halverwege doorheen gesneden te worden.
+// ===========================================================================
+module scales_bg (
+    input  wire [9:0] x,          // portret-x  0..479
+    input  wire [9:0] y,          // portret-y  0..639
+    input  wire       plain,      // 1 = effen bruin onder de bies (menuscherm)
+    output wire [5:0] bg_rgb
+);
+  // ---- kleuren -----------------------------------------------------------
+  localparam [5:0] C_LINE  = 6'b00_00_00;   // zwart
+  localparam [5:0] C_LIGHT = 6'b00_10_00;   // schub
+  localparam [5:0] C_DARK  = 6'b00_01_00;   // naad en schaduw
+  localparam [5:0] C_BROWN = 6'b01_00_00;   // hout, zoals de kisten
+  localparam [5:0] C_GOLD  = 6'b11_10_00;   // goud, zoals de kisten
+
+  // ---- boord bovenaan ----------------------------------------------------
+  localparam [9:0] BORDER_H = 10'd176;                  // bruine boord
+  localparam [9:0] TRIM_H   = 10'd10;                    // gouden bies
+  localparam [9:0] SCALES_Y = BORDER_H + TRIM_H;        // 208
+
+  // ---- vorm van de schub -------------------------------------------------
+  localparam [5:0] LINE_W = 6'd6;           // dikte van de omtrek
+  localparam [4:0] SHADE  = 5'd10;          // hoogte van de schaduwband
+
+  wire [9:0] ys = y - SCALES_Y;             // wrapt boven de bies; niet erg,
+                                            // de cascade tekent daar de boord
+  wire [5:0] tx = {x[5] ^ ys[5], x[4:0]};   // 0..63 binnen de tegel
+  wire [4:0] ty = ys[4:0];                  // 0..31
+
+  wire [5:0] dx = (tx >= 6'd32) ? (tx - 6'd32) : (6'd32 - tx);   // 0..32
+
+  reg [5:0] hw;
+  always @(*) case (ty)
+    5'd0:  hw = 6'd11;   5'd1:  hw = 6'd14;   5'd2:  hw = 6'd16;
+    5'd3:  hw = 6'd18;   5'd4:  hw = 6'd19;   5'd5:  hw = 6'd21;
+    5'd6:  hw = 6'd22;   5'd7:  hw = 6'd23;   5'd8:  hw = 6'd24;
+    5'd9:  hw = 6'd25;   5'd10: hw = 6'd26;   5'd11: hw = 6'd27;
+    5'd12: hw = 6'd28;   5'd13: hw = 6'd29;   5'd14: hw = 6'd29;
+    5'd15: hw = 6'd30;   5'd16: hw = 6'd31;   5'd17: hw = 6'd31;
+    default: hw = 6'd32;                      // vanaf rij 18 vult hij de tegel
+  endcase
+
+  wire outside = (dx > hw);
+  wire outline = !outside && (dx + LINE_W > hw);
+  wire shadow  = !outside && !outline && (ty < SHADE);
+
+  wire [5:0] scale_rgb = outline             ? C_LINE :
+                         (outside || shadow) ? C_DARK : C_LIGHT;
+
+  // Op het menuscherm is alles effen bruin: geen schubben en ook geen bies.
+  // Daar staan twee grote knoppen en de pot op, en dat leest rustiger zonder
+  // enige structuur eronder.
+  assign bg_rgb = (plain || (y < BORDER_H)) ? C_BROWN :
+                  (y < SCALES_Y)            ? C_GOLD  : scale_rgb;
 endmodule

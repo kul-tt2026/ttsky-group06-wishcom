@@ -1,42 +1,64 @@
+`default_nettype none
+// ---------------------------------------------------------------------------
+// CHEST_MENU -- de HUD van de minigame, plus het tussenscherm.
+//
+// De ronde, de pot en het bedrag staan op BEIDE schermen: tijdens het kiezen
+// in de bruine boord bovenaan, in het menu groot in het midden.  Zelfde
+// informatie, andere plek -- dus muxen we de OORSPRONG en gebruiken we een
+// instantie.  Twee instanties zouden niet alleen dubbel zoveel cellen kosten,
+// ze zouden ook uit de pas kunnen lopen als het bedrag tijdens de overgang
+// verandert.  Nu leest allebei letterlijk dezelfde teller.
+//
+// Alleen CONTINUE en CASH OUT zijn menu-specifiek; die staan onder menu_open.
+//
+// px_code (3 bits) -- gedeeld met de sprite in pot.hex:
+//   1 = zwart / outline      5 = dof goud
+//   2 = bruin (de pot)       6 = fel geel (de munten)
+//   3 = goud (de HUD-tekst)  7 = groen (CONTINUE)
+//   4 = wit (menutekst)
+// ---------------------------------------------------------------------------
 module chest_menu (
     input  wire [9:0] x,            // absolute portret-x, 0..479
     input  wire [9:0] y,            // absolute portret-y, 0..639
     input  wire [9:0] pot,          // 0..999, uit chest_game
     input  wire [3:0] round,        // 0..15, wordt als round+1 getoond
-    output wire [3:0] q_digit,      // gedeelde digit_rom: wat wil ik opzoeken
+    input  wire       menu_open,    // chest_state == C_MENU
+    output wire [3:0] q_digit,      // gedeelde digit_rom
     output wire [2:0] q_row,
-    input  wire [3:0] q_bits,       // ... en het antwoord
+    input  wire [3:0] q_bits,
     output wire       q_on,
     output wire       px_on,
     output wire [2:0] px_code
 );
 
-  // ======================= 1. de drie woorden =============================
-  // ROUND op y 80..111, CONTINUE op 469..500, CASH OUT op 559..590.
-  // De keuze hangt ALLEEN van y af, dus we hoeven de uitkomst niet extra te
-  // gaten: valt y buiten alle drie de banden, dan blijft de mux op CASH OUT
-  // staan en zorgt de eigen bandtest van `label` (ly < 32) ervoor dat er
-  // niets verschijnt.
-  wire in_lbl_r  = (y >= 10'd80)  && (y < 10'd112);
-  wire in_lbl_c1 = (y >= 10'd469) && (y < 10'd501);
+  // ======================= 1. het woord ===================================
+  // ROUND: in het menu bovenaan, op het kiesscherm gecentreerd in de boord.
+  // CONTINUE en CASH OUT bestaan alleen in het menu.
+  wire in_lbl_r  = menu_open ? ((y >= 10'd80) && (y < 10'd112))
+                             : ((y >= 10'd58) && (y < 10'd90));
+  wire in_lbl_c1 = menu_open && (y >= 10'd469) && (y < 10'd501);
+  wire in_lbl_c2 = menu_open && (y >= 10'd559) && (y < 10'd591);
 
-  wire [9:0] lbl_X0 = in_lbl_r ? 10'd120 : 10'd112;
-  wire [9:0] lbl_Y0 = in_lbl_r ? 10'd80  : in_lbl_c1 ? 10'd469 : 10'd559;
-  wire [3:0] lbl_n  = in_lbl_r ? 4'd5    : 4'd8;
-  wire [1:0] lbl_w  = in_lbl_r ? 2'd0    : in_lbl_c1 ? 2'd1    : 2'd2;
+  wire [9:0] lbl_X0 = in_lbl_r ? (menu_open ? 10'd120 : 10'd160) : 10'd112;
+  wire [9:0] lbl_Y0 = in_lbl_r  ? (menu_open ? 10'd80 : 10'd58) :
+                      in_lbl_c1 ? 10'd469 : 10'd559;
+  
+  wire [3:0] lbl_n  = in_lbl_r ? 4'd5 : 4'd8;
+  wire [1:0] lbl_w  = in_lbl_r ? 2'd0 : in_lbl_c1 ? 2'd1 : 2'd2;
 
-  wire lbl_on;
+  wire lbl_raw;
   label u_lbl (
     .x(x), .y(y), .X0(lbl_X0), .Y0(lbl_Y0),
     .nchar(lbl_n), .word(lbl_w),
-    .on(lbl_on)
+    .on(lbl_raw)
   );
 
-  // ======================= 2 en 4. de twee getallen =======================
-  // Het rondenummer staat op y 80..103, het bedrag op y 400..447 -- ze
-  // sluiten elkaar uit, dus er hoeft er maar een tegelijk op te zoeken.
-  // Beide kinderen krijgen dezelfde bits binnen; wie niet in zijn vak zit
-  // maskeert het antwoord zelf al weg.
+  wire lbl_round = lbl_raw && in_lbl_r;                      // goud
+  wire lbl_btn   = lbl_raw && (in_lbl_c1 || in_lbl_c2);      // wit
+
+  // ======================= 2. de twee getallen ============================
+  // Het rondenummer en het bedrag staan op beide schermen ver uit elkaar, dus
+  // er hoeft er maar een tegelijk in de gedeelde digit_rom te kijken.
   wire [3:0] n2_d, n3_d;
   wire [2:0] n2_r, n3_r;
   wire       n2_q, n3_q;
@@ -45,53 +67,77 @@ module chest_menu (
   assign q_row   = n2_q ? n2_r : n3_r;
   assign q_on    = n2_q || n3_q;
 
+  // Het rondenummer staat onder ROUND, allebei gecentreerd op x = 240.
+ 
+  // Bij een enkel cijfer tekent number2 alleen de rechtercel; schuif het vak
+  // dan 8 px op zodat dat cijfer wel onder het midden van ROUND valt.
+  wire two_digits = (round_disp >= 5'd10);
+  wire [9:0] rnd_X0 = menu_open ? 10'd300
+                                : (two_digits ? 10'd208 : 10'd200);
+
+  wire [9:0] rnd_Y0 = menu_open ? 10'd84  : 10'd94;
+
   wire [4:0] round_disp = {1'b0, round} + 5'd1;   // round telt vanaf 0
   wire       num_round;
   number2 u_num_round (
-    .x(x), .y(y), .X0(10'd300), .Y0(10'd80),
+    .x(x), .y(y), .X0(rnd_X0), .Y0(rnd_Y0),
     .val(round_disp),
     .q_digit(n2_d), .q_row(n2_r), .q_bits(q_bits), .q_on(n2_q),
     .on(num_round)
   );
-
+ 
+  //e potwaarde staat BOVEN de pot, gecentreerd op de potkolom (x 8..135).
+  wire [9:0] val_X0 = menu_open ? 10'd192 : 10'd30;
+  wire [9:0] val_Y0 = menu_open ? 10'd348 : 10'd19;
+ 
   wire num_pot;
   number3 u_num_pot (
-    .x(x), .y(y), .X0(10'd144), .Y0(10'd400),
+    .x(x), .y(y), .X0(val_X0), .Y0(val_Y0),
     .val(pot),
     .q_digit(n3_d), .q_row(n3_r), .q_bits(q_bits), .q_on(n3_q),
     .on(num_pot)
   );
 
   // ======================= 3. de geldpot ==================================
+  // 128 x 128.  Linksboven in de boord tijdens het kiezen (8..135, past onder
+  // de bies op 150), gecentreerd in het menu.
+  wire [9:0] pot_X0 = menu_open ? 10'd176 : 10'd8;
+  wire [9:0] pot_Y0 = menu_open ? 10'd204 : 10'd49;
+
   wire       pot_on;
   wire [2:0] pot_code;
-  pot_sprite u_pot (.x(x), .y(y), .px_on(pot_on), .px_code(pot_code));
+  pot_sprite u_pot (
+    .x(x), .y(y), .X0(pot_X0), .Y0(pot_Y0),
+    .px_on(pot_on), .px_code(pot_code)
+  );
 
-  // ======================= 5. de twee knoppen =============================
+  // ======================= 4. de twee knoppen =============================
   localparam [9:0] BTN_X0 = 10'd60,  BTN_X1 = 10'd420;
   localparam [9:0] B1_Y0  = 10'd450, B1_Y1  = 10'd520;   // CONTINUE
   localparam [9:0] B2_Y0  = 10'd540, B2_Y1  = 10'd610;   // CASH OUT
 
-  wire in_b1 = (x >= BTN_X0) && (x < BTN_X1) && (y >= B1_Y0) && (y < B1_Y1);
-  wire in_b2 = (x >= BTN_X0) && (x < BTN_X1) && (y >= B2_Y0) && (y < B2_Y1);
+  wire in_b1 = menu_open && (x >= BTN_X0) && (x < BTN_X1) &&
+                            (y >= B1_Y0)  && (y < B1_Y1);
+  wire in_b2 = menu_open && (x >= BTN_X0) && (x < BTN_X1) &&
+                            (y >= B2_Y0)  && (y < B2_Y1);
 
   wire b1_edge = in_b1 && ((x < BTN_X0 + 10'd4) || (x >= BTN_X1 - 10'd4) ||
                            (y < B1_Y0 + 10'd4)  || (y >= B1_Y1 - 10'd4));
   wire b2_edge = in_b2 && ((x < BTN_X0 + 10'd4) || (x >= BTN_X1 - 10'd4) ||
                            (y < B2_Y0 + 10'd4)  || (y >= B2_Y1 - 10'd4));
 
-  // ======================= 6. stapelen ====================================
-  wire text_on = lbl_on | num_round | num_pot;
+  // ======================= 5. stapelen ====================================
+  wire hud_txt = lbl_round | num_round | num_pot;
 
-  assign px_on = text_on || pot_on || in_b1 || in_b2;
+  assign px_on = hud_txt || pot_on || lbl_btn || in_b1 || in_b2;
 
-  assign px_code = text_on              ? 3'd4     :   // wit
+  assign px_code = hud_txt              ? 3'd3     :   // goud
                    pot_on               ? pot_code :   // sprite eigen kleuren
+                   lbl_btn              ? 3'd4     :   // wit
                    (b1_edge || b2_edge) ? 3'd1     :   // zwarte outlines
                    in_b1                ? 3'd7     :   // CONTINUE = groen
                                           3'd5;        // CASH OUT = dof goud
 endmodule
-
 // ---------------------------------------------------------------------------
 // NUMBER3 -- drie cijfers, schaal 8 (32x48 per cijfer, pitch 64).
 // Voorloopnullen worden weggelaten: 40 leest als "40", niet als "040".
@@ -113,17 +159,15 @@ module number3 (
 
   wire [9:0] lx = x - X0;
   wire [9:0] ly = y - Y0;
-  wire in_band = (ly < 10'd48) && (lx < 10'd192);
+  wire in_band = (ly < 10'd24) && (lx < 10'd96);
 
-  wire [1:0] pos  = lx[7:6];                   // 0, 1 of 2
-  wire [5:0] cx   = lx[5:0];
-  wire [5:0] cy   = ly[5:0];
-  wire       in_g = (cx < 6'd32) && (cy < 6'd48);
+  wire [1:0] pos  = lx[6:5];                   // 0, 1 of 2
+  wire [4:0] cx   = lx[4:0];
+  wire [4:0] cy   = ly[4:0];
+  wire       in_g = (cx < 5'd16) && (cy < 5'd24);
 
-  // bits telt vier posities, dus twee indexbits.  Met drie klaagde verilator
-  // (WIDTHTRUNC); de bovenste bit was toch altijd nul.
-  wire [1:0] gcol = cx[4:3];                   // 0..3
-  wire [2:0] grow = cy[5:3];                   // 0..5
+  wire [1:0] gcol = cx[3:2];                   // 0..3
+  wire [2:0] grow = cy[4:2];                   // 0..5 
 
   reg  [3:0] digit;
   reg        visible;

@@ -80,10 +80,10 @@ module renderer (
   localparam [9:0] LEVEL_X   = 10'd24,   LEVEL_Y   = 10'd24;   //  48 x 18
 
   localparam DRAGON_X = 10'd0, DRAGON_Y = 10'd0;
-  localparam [9:0] CHEST_X     = 10'd144;
-  localparam [9:0] CHEST_Y0    = 10'd52;
-  localparam [9:0] CHEST_PITCH = 10'd194;
-  localparam [9:0] CHEST_BOX   = 10'd192;
+  localparam [9:0] CHEST_X     = 10'd176;   // horizontaal gecentreerd
+  localparam [9:0] CHEST_Y0    = 10'd204;   // 18 px onder de bies
+  localparam [9:0] CHEST_PITCH = 10'd145;   // 128 kist + 17 tussenruimte
+  localparam [9:0] CHEST_BOX   = 10'd128;
 
   localparam [1:0] C_PICK = 2'd0, C_OPEN = 2'd1, C_RESULT = 2'd2;
 
@@ -162,9 +162,10 @@ module renderer (
 
   wire       c_body_on, c_lid_on;
   wire [2:0] c_body_code, c_lid_code;
-  wire show_menu   = (mode == M_CHEST) && (chest_state == 2'd3);
-  wire show_chests = (mode == M_CHEST) && (chest_state != 2'd3);
-
+  wire in_chest    = (mode == M_CHEST);
+  wire show_menu   = in_chest;                            // HUD altijd
+  wire show_chests = in_chest && (chest_state != 2'd3);
+  
   chest_draw u_chest (
     .x           (px - CHEST_X),
     .y           (py - c_top),
@@ -233,6 +234,7 @@ module renderer (
   wire [2:0] menu_code;
   chest_menu u_menu (
     .x(px), .y(py), .pot(pot), .round(round),
+    .menu_open(chest_state == 2'd3),
     .q_digit(menu_d), .q_row(menu_r), .q_bits(dig_bits), .q_on(menu_q),
     .px_on(menu_on), .px_code(menu_code)
   );
@@ -299,6 +301,13 @@ module renderer (
   background u_bg (
     .x(px), .y(py),
     .bg_rgb(bg_home_rgb)
+  );
+  wire [5:0] bg_chest_rgb;
+
+  scales_bg u_scales (
+    .x(px), .y(py),
+    .plain(chest_state == 2'd3),
+    .bg_rgb(bg_chest_rgb)
   );
 
   // ======================= 2. SHOW ========================================
@@ -382,11 +391,11 @@ module renderer (
   always @(*) case (menu_code)
     3'd1: menu_rgb = 6'b00_00_00;   // outline
     3'd2: menu_rgb = 6'b10_01_00;   // bruin, de pot
-    3'd3: menu_rgb = 6'b11_10_00;   // oranje highlight
-    3'd4: menu_rgb = 6'b11_11_11;   // wit, tekst
-    3'd5: menu_rgb = 6'b10_10_00;   // dof goud
+    3'd3: menu_rgb = 6'b11_10_00;   // goud, de HUD-tekst
+    3'd4: menu_rgb = 6'b11_11_11;   // wit, menutekst
+    3'd5: menu_rgb = 6'b11_10_00;   // goud, de CASH OUT-knop
     3'd6: menu_rgb = 6'b11_11_00;   // fel geel, munten
-    3'd7: menu_rgb = 6'b00_10_00;   // groen (CONTINUE)
+    3'd7: menu_rgb = 6'b00_10_00;   // groen, CONTINUE
     default: menu_rgb = 6'b10_01_00;
   endcase
 
@@ -443,12 +452,14 @@ module renderer (
     2'd2:    heartsinfo_rgb = 6'b11_11_11;   // hartje bij overflow
     default: heartsinfo_rgb = 6'b00_00_00;
   endcase
+  
+
 
   // ======================= 3. STACK =======================================
   // TITEL/EI : flits > titel > barst > ei > press > grond > lucht
   // HOME     : hartjes > level > munten > satbar > knoppen > draak > achtergrond
   // KIST     : hartjes > menu > kist > pictogram > deksel > achtergrond
-  localparam [5:0] BG_CHEST = 6'b10_00_00;   // achtergrond minigame (rood)
+  //localparam [5:0] BG_CHEST = 6'b10_00_00;   // achtergrond minigame (rood)
 
   reg [5:0] rgb;
   always @(*) begin
@@ -477,7 +488,7 @@ module renderer (
     else if (chest_icon_on)                        rgb = icon_rgb;
     else if (chest_lid_on)                         rgb = chest_rgb;
     else if (show_dragon   && dragon_on)           rgb = sprite_rgb;
-    else rgb = (mode == M_CHEST) ? BG_CHEST : bg_home_rgb;
+    else rgb = (mode == M_CHEST) ? bg_chest_rgb : bg_home_rgb;
     {R, G, B} = rgb;
   end
 

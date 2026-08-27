@@ -22,7 +22,7 @@
 module render_tb;
 
   // ======================= WAT WIL JE ZIEN ================================
-  localparam [2:0] MODE = 3'd4;    // 0 TITLE  1 EGG  2 HOME  3 CHEST
+  localparam [2:0] MODE = 3'd3;    // 0 TITLE  1 EGG  2 HOME  3 CHEST
                                    // 4 GAMEOVER  5 YOU_WIN
   localparam       STEP = 1;       // 1 = vol, 2 of 4 = snel itereren
 
@@ -35,8 +35,8 @@ module render_tb;
   localparam       SET_EVOLVE  = 1'b1;   // evolve_now: knop mag oplichten
 
   // minigame
-  localparam [1:0] SET_CSTATE  = 2'd0;   // 0 PICK  1 OPEN  2 RESULT  3 MENU
-  localparam [1:0] SET_CSEL    = 2'd1;
+  localparam [1:0] SET_CSTATE  = 2'd1;   // 0 PICK  1 OPEN  2 RESULT  3 MENU
+  localparam [1:0] SET_CSEL    = 2'd2;
   localparam [8:0] SET_CONTENT = 9'b010_001_100;   // {kist2, kist1, kist0}
   localparam [9:0] SET_POT     = 10'd160;
   localparam [3:0] SET_ROUND   = 4'd2;
