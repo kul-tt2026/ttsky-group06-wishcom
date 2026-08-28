@@ -5,7 +5,6 @@ module dragon_draw (
     input  wire [9:0] x,
     input  wire [9:0] y,
     input  wire [2:0] level,
-    input  wire [2:0] mood_anim,
     output wire       px_on,
     output wire [2:0] px_code
 );
@@ -22,7 +21,6 @@ module dragon_draw (
         .rst_n     (rst_n),
         .x         (x),
         .y         (y),
-        .mood_anim (mood_anim),
         .px_on     (lvl2_px_on),
         .px_code   (lvl2_px_code)
     );
@@ -33,7 +31,6 @@ module dragon_draw (
         .rst_n     (rst_n),
         .x         (x),
         .y         (y),
-        .mood_anim (mood_anim),
         .px_on     (lvl3_px_on),
         .px_code   (lvl3_px_code)
     );
@@ -43,7 +40,6 @@ module dragon_draw (
         .rst_n     (rst_n),
         .x         (x),
         .y         (y),
-        .mood_anim (mood_anim),
         .px_on     (lvl4_px_on),
         .px_code   (lvl4_px_code)
     );

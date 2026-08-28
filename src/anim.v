@@ -2,59 +2,99 @@
 // ---------------------------------------------------------------------------
 // ANIMATION HEARTBEAT.  OWNER: PERSON B.
 //
-// All time-varying visual state, so the renderer stays a pure function.
-// New in this version: the dragon's MOOD animation, driven by satisfaction.
-// Whoever decides the dragon is sad decides what sad looks like -- that's
-// why this file and balance.v share an owner.
+// Alle tijdsafhankelijke beeldtoestand, zodat de renderer een pure functie
+// blijft van zijn ingangen.
+//
+// Hier stonden ooit ook chest_frame, flame_frame en dragon_mood_anim.  De
+// kistanimatie is er nooit gekomen -- de renderer leidt de drie standen
+// rechtstreeks af uit chest_state -- en de vlam en het humeur evenmin.  Alle
+// drie zijn eruit; git bewaart ze.
+//
+// LET OP: `flash` hier is NIET de flits van het ei.  Die komt uit home.v als
+// flash_r, de straal van de groeiende achthoek.  Deze is bedoeld voor een
+// fanfare bij het evolven en is nog niet geschreven.
 // ---------------------------------------------------------------------------
 module anim (
     input  wire       clk,
     input  wire       rst_n,
     input  wire       frame_tick,
-    input  wire [2:0] mode,             // to pause animations off-home
-    input  wire [2:0] satisfaction,     // 0 miserable .. 3 happy
-    input  wire [1:0] chest_state,      // to run the chest-open sequence
-                
+    input  wire [2:0] satisfaction,     // 0 boos .. 4 heel blij
 
-    output reg  [1:0] dragon_bob,       // idle bounce 0..2
-    output reg  [2:0] dragon_mood_anim, // 0 calm 1 wiggle 2 droop 3 shake
-    output reg  [1:0] chest_frame,      // 0 closed 1 opening 2 open
-    output reg        flash,  
+    input  wire       act_feed,         // eenframe-pulsen uit home.v
+    input  wire       act_drink,
+    input  wire       act_sleep,
+
+    output reg  [1:0] dragon_bob,       // idle wip 0..2   -- NOG TE SCHRIJVEN
+    output reg        flash,            // fanfare bij evolve -- NOG TE SCHRIJVEN
     output reg        evolve_blink,
-    output reg        flame_frame       // flame flicker
+
+    output reg  [1:0] fx_kind,          // 0 niets, 1 feed, 2 drink, 3 sleep
+    output wire       fx_on             // effect loopt
 );
-  reg [8:0] slow;                       // free-running frame counter
+  // ======================= evolve-knop knippert ===========================
   reg [7:0] blink_cnt;
 
   always @(posedge clk) begin
     if (!rst_n) begin
-      slow<=0; dragon_bob<=0; dragon_mood_anim<=0;
-      chest_frame<=0; flash<=0; flame_frame<=0; blink_cnt<=0; evolve_blink<=1'b1;
+      blink_cnt    <= 8'd0;
+      evolve_blink <= 1'b1;
+      dragon_bob   <= 2'd0;
+      flash        <= 1'b0;
     end else if (frame_tick) begin
-      slow <= slow + 6'd1;
-      flame_frame <= slow[3];
       if (blink_cnt == 8'd179) blink_cnt <= 8'd0;
       else                     blink_cnt <= blink_cnt + 8'd1;
       evolve_blink <= (blink_cnt < 8'd170);
 
+      // TODO Person B -- dragon_bob:
+      //   patroon 0,1,2,1, een stap per ~16 frames.  Sneller wippen naarmate
+      //   satisfaction hoger is, en bij 0 helemaal stilstaan -- een boze draak
+      //   die vrolijk op en neer gaat leest verkeerd.
+      //   Aansluiten kost EEN opteller: in dragon_draw.v `wire [9:0] yb =
+      //   y + {8'd0, dragon_bob};` en die yb aan alle drie de generatoren
+      //   geven.  Een hogere y voeren betekent verder in de sprite kijken,
+      //   dus de draak komt omhoog.
 
+      // TODO Person B -- flash:
+      //   knipperen op ~4 Hz tijdens het evolven.  Daarvoor is een signaal
+      //   nodig dat zegt DAT er geevolueerd is: `req_evolve` uit home.v is de
+      //   voor de hand liggende kandidaat, maar die wordt ook gestuurd als de
+      //   speler te weinig munten heeft.  Overleg met Person A of dragon_state
+      //   een bevestiging kan geven.
     end
-    
-
-
-      // TODO Person B:
-      //  * dragon_bob: 0,1,2,1 pattern, stepped every ~16 frames; consider
-      //    bobbing FASTER when happy, slower/none when miserable
-      //  * dragon_mood_anim from satisfaction:
-      //      3 happy     -> occasional wiggle (1)
-      //      2 neutral   -> calm (0)
-      //      1 sad       -> droop (2)
-      //      0 miserable -> shake (3)
-      //  * chest_frame: step 0->1->2 while chest_state==OPENING
-      //  * flash: blink ~4 Hz during the evolve fanfare (needs an evolve
-      //    signal -- coordinate with Person A on how to see it)
   end
 
+  // ======================= voeren / drinken / slapen ======================
+  // De meest basale versie: een halve seconde lang kleurt de renderer de lucht
+  // om.  EEN teller voor alle drie, want ze kunnen niet tegelijk -- home.v
+  // geeft per frame hoogstens een van deze pulsen.
+  //
+  // Wil je later meer: het vallende blok bij drinken volgt uit fx_t (hoe lager
+  // de teller, hoe verder gezakt), en bij slapen kan de draak grijs worden met
+  // een mux op sprite_rgb.  De teller hier hoeft daar niet voor te veranderen.
+  localparam [1:0] FX_NONE  = 2'd0,
+                   FX_FEED  = 2'd1,
+                   FX_DRINK = 2'd2,
+                   FX_SLEEP = 2'd3;
 
-  wire _unused = &{mode, satisfaction, chest_state, 1'b0};
+  localparam [4:0] FX_LEN = 5'd30;      // 30 frames = een halve seconde
+
+  reg [4:0] fx_t;
+
+  always @(posedge clk) begin
+    if (!rst_n) begin
+      fx_kind <= FX_NONE;
+      fx_t    <= 5'd0;
+    end else if (frame_tick) begin
+      if      (act_feed)  begin fx_kind <= FX_FEED;  fx_t <= FX_LEN; end
+      else if (act_drink) begin fx_kind <= FX_DRINK; fx_t <= FX_LEN; end
+      else if (act_sleep) begin fx_kind <= FX_SLEEP; fx_t <= FX_LEN; end
+      else if (fx_t != 5'd0)    fx_t <= fx_t - 5'd1;
+      else                      fx_kind <= FX_NONE;
+    end
+  end
+
+  assign fx_on = (fx_t != 5'd0);
+
+  // satisfaction wordt pas gelezen zodra dragon_bob geschreven is.
+  wire _unused = &{satisfaction, 1'b0};
 endmodule

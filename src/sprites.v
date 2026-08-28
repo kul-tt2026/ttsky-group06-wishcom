@@ -2,7 +2,7 @@
 // ---------------------------------------------------------------------------
 // Sprite storage.  OWNER: RENDER GROUP.
 //
-// Bevat: chest_rom, flame_rom, digit_rom (placeholders / font),
+// Bevat: digit_rom (placeholders / font),
 //        dragon_l2/l3/l4_generator, background, gameover_text,
 //        pot_sprite, chest_lid_rom, chest_body_rom.
 //
@@ -20,53 +20,7 @@
 //          n / 10  ==  (n * 205) >> 11    exact voor n < 1024
 //          n / 100 ==  (n *  41) >> 12    exact voor n < 1024
 //
-// En: dode code WEGGOOIEN, niet uitcommentariëren.  Een `/*` zonder `*/`
-// heeft hier ooit de halve file onzichtbaar gemaakt; git bewaart de rest.
-// ---------------------------------------------------------------------------
-
-
-// ===========================================================================
-// PLACEHOLDERS -- nergens geïnstantieerd voor zover ik kan zien.  Controleer
-// met `grep -n "chest_rom\|flame_rom" *.v` en gooi ze weg als dat klopt.
-// ===========================================================================
-module chest_rom (
-    input  wire [1:0] frame,     // 0 closed, 1 opening, 2 open
-    input  wire [4:0] row,
-    input  wire [4:0] col,
-    output reg  [1:0] code       // 0=transparent 1=outline 2=wood 3=gold
-);
-  always @(*) begin
-    code = 2'd0;
-    if (row>=5'd4 && row<5'd20 && col<5'd24) begin
-      if (row==5'd4 || row==5'd19 || col==5'd0 || col==5'd23) code = 2'd1;
-      else if (row==5'd11 || row==5'd12)                      code = 2'd3;
-      else                                                    code = 2'd2;
-    end
-  end
-  wire _unused = &{frame, 1'b0};
-endmodule
-
-
-module flame_rom (
-    input  wire       frame,
-    input  wire [3:0] row,
-    input  wire [3:0] col,
-    output reg  [1:0] code       // 0=transparent 1=bright 2=pale
-);
-  always @(*) begin
-    code = 2'd0;
-    if (col<4'd8) case (row)
-      4'd0 : code = (col==3||col==4) && frame ? 2'd1 : 2'd0;
-      4'd1 : code = (col==3||col==4) ? 2'd1 : 2'd0;
-      4'd2,4'd3 : code = (col>=2&&col<=5) ? 2'd1 : 2'd0;
-      4'd4,4'd5,4'd6 : code = (col>=1&&col<=6) ? ((col>=3&&col<=4)?2'd2:2'd1) : 2'd0;
-      4'd7,4'd8 : code = (col>=1&&col<=6) ? ((col>=2&&col<=5)?2'd2:2'd1) : 2'd0;
-      4'd9,4'd10: code = (col>=2&&col<=5) ? 2'd2 : 2'd0;
-      4'd11: code = (col==3||col==4) ? 2'd2 : 2'd0;
-      default: code = 2'd0;
-    endcase
-  end
-endmodule
+// 
 
 
 // ===========================================================================
@@ -118,11 +72,9 @@ module dragon_l2_generator (
     input  wire        rst_n,
     input  wire [9:0]  x,
     input  wire [9:0]  y,
-    input  wire [2:0]  mood_anim,
     output reg         px_on,
     output reg  [2:0]  px_code
 );
-    wire _unused = &{mood_anim, 1'b0};
 
     localparam [9:0] SPRITE_X = 10'd186;   // midden blijft 250
     localparam [9:0] SPRITE_Y = 10'd166;   // onderkant blijft 340
@@ -172,11 +124,9 @@ module dragon_l3_generator (
     input  wire        rst_n,
     input  wire [9:0]  x,
     input  wire [9:0]  y,
-    input  wire [2:0]  mood_anim,
     output reg         px_on,
     output reg  [2:0]  px_code
 );
-    wire _unused = &{mood_anim, 1'b0};
 
     localparam [9:0] SPRITE_X = 10'd222;   // midden blijft 286
     localparam [9:0] SPRITE_Y = 10'd162;   // onderkant blijft 336
@@ -224,11 +174,9 @@ module dragon_l4_generator (
     input  wire        rst_n,
     input  wire [9:0]  x,
     input  wire [9:0]  y,
-    input  wire [2:0]  mood_anim,
     output reg         px_on,
     output reg  [2:0]  px_code
 );
-    wire _unused = &{mood_anim, 1'b0};
 
     localparam [9:0] SPRITE_X = 10'd189;   // midden blijft 285
     localparam [9:0] SPRITE_Y = 10'd122;   // onderkant blijft 360

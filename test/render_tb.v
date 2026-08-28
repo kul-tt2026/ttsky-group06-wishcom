@@ -73,14 +73,11 @@ module render_tb;
     .evolve_now     (SET_EVOLVE),
     .combo_len      (2'd0),
 
-    .chest_frame    (2'd0),
     .chest_state    (SET_CSTATE),
     .chest_sel      (SET_CSEL),
     .chest_outcome  (3'd0),
 
-    .dragon_mood_anim (3'd0),
     .flash          (1'b0),
-    .flame_frame    (1'b0),
     .evolve_blink   (1'b1),
 
     .frame_tick     (1'b0),           // geen animatie: stilstaand frame

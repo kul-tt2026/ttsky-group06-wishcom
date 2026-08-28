@@ -115,15 +115,18 @@ module tt_um_dragonchi (
   );
 
   // ---- animation heartbeat (Person B) ----
-  wire [1:0] dragon_bob, chest_frame;
+  wire [1:0] dragon_bob;
   wire [2:0] dragon_mood_anim;
-  wire flash, flame_frame, evolve_blink;
+  wire flash, evolve_blink;
+  wire fx_on;
+  wire [1:0] fx_kind;
   anim u_anim (
     .clk(clk), .rst_n(rst_n), .frame_tick(frame_tick),
-    .mode(mode), .satisfaction(satisfaction), .chest_state(chest_state),
-    .dragon_bob(dragon_bob), .dragon_mood_anim(dragon_mood_anim),
-    .chest_frame(chest_frame), .flash(flash), .flame_frame(flame_frame),
-    .evolve_blink(evolve_blink)
+    .satisfaction(satisfaction),
+    .dragon_bob(dragon_bob), 
+    .flash(flash), 
+    .evolve_blink(evolve_blink), .act_drink(act_drink), .act_feed(act_feed), .act_sleep(act_sleep),
+    .fx_kind(fx_kind), .fx_on(fx_on)
   );
 
   // ---- TinyVGA Pmod.  Do not touch. ----
@@ -141,12 +144,12 @@ module tt_um_dragonchi (
     .hearts(hearts), .satisfaction(satisfaction),
     .coins(coins), .level(level), .combo_len(combo_len),
     .chest_state(chest_state), .chest_sel(chest_sel),
-    .chest_outcome(chest_outcome), .dragon_mood_anim(dragon_mood_anim),
-    .chest_frame(chest_frame), .flash(flash), .flame_frame(flame_frame),
+    .chest_outcome(chest_outcome), 
+    .flash(flash), 
     .R(R), .G(G), .B(B), .overflow(overflow), .evolve_now(evolve_now),
     .chest_contents(chest_contents), .pot(pot), .round(round),
     .evolve_blink(evolve_blink), .frame_tick(frame_tick), .egg_frame(egg_frame), .flash_r(flash_r),
-    .btn_level(btn_level)
+    .btn_level(btn_level), .fx_kind(fx_kind), .fx_on(fx_on)
   );
 
   
@@ -157,5 +160,5 @@ module tt_um_dragonchi (
   assign uio_out = 8'b0;
   assign uio_oe  = 8'b0;
 
-  wire _unused = &{ena, uio_in, btn_level, chest_outcome, dragon_bob, dragon_mood_anim, 1'b0};
+  wire _unused = &{ena, uio_in, chest_outcome, dragon_bob, 1'b0};
 endmodule

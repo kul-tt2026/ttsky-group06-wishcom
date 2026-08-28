@@ -30,18 +30,18 @@ module renderer (
     input  wire       evolve_now, // of je genoeg geld hebt om te evolven
     input  wire [1:0] combo_len, // ongebruikt
 
-    input  wire [1:0] chest_frame, // animatie (voorlopig nog niets)
     input  wire [1:0] chest_state, // 0 closed, 1 opening, 2 open, 3 menu
     input  wire [1:0] chest_sel, // welke kist is selected (0,1,2)
     input  wire [2:0] chest_outcome, // bevat alleen gekozen kist
 
-    input  wire [2:0] dragon_mood_anim,
     input  wire       flash,
-    input  wire       flame_frame,
     input  wire       evolve_blink,
 
     input  wire       frame_tick, // voor animatie van ei
     input  wire [7:0] btn_level,
+
+    input  wire [1:0] fx_kind,
+    input  wire       fx_on,
 
     input  wire       overflow, // als hartjes vol of geld vol
     input  wire [8:0] chest_contents,  // {kist2, kist1, kist0}, 3 bits elk
@@ -121,7 +121,7 @@ module renderer (
   wire [2:0] dragon_code;  // welke kleur die dan krijgt
 
   dragon_draw u_dragon (
-    .x(px - DRAGON_X), .y(py - DRAGON_Y), .mood_anim(dragon_mood_anim),
+    .x(px - DRAGON_X), .y(py - DRAGON_Y),
     .px_on(dragon_on), .px_code(dragon_code),
     .level(level), .clk(clk), .rst_n(rst_n)
   );
@@ -310,6 +310,13 @@ module renderer (
     .bg_rgb(bg_chest_rgb)
   );
 
+   reg [5:0] fx_rgb;
+  always @(*) case (fx_kind)
+    2'd1:    fx_rgb = 6'b11_10_00;   // FEED: oranje
+    2'd2:    fx_rgb = 6'b00_00_10;   // DRINK: donkerblauw
+    default: fx_rgb = 6'b00_00_00;   // SLEEP: zwart
+  endcase
+
   // ======================= 2. SHOW ========================================
   wire show_dragon  = (mode == M_HOME);
   wire show_satbar  = (mode == M_HOME);
@@ -487,14 +494,15 @@ module renderer (
     else if (chest_body_on)                        rgb = chest_rgb;
     else if (chest_icon_on)                        rgb = icon_rgb;
     else if (chest_lid_on)                         rgb = chest_rgb;
+    else if (fx_on && (py < 10'd294))              rgb = fx_rgb;
     else if (show_dragon   && dragon_on)           rgb = sprite_rgb;
-    else rgb = (mode == M_CHEST) ? bg_chest_rgb : bg_home_rgb;
+    else if (in_chest)                             rgb = bg_chest_rgb;
+    else                                           rgb = bg_home_rgb;
     {R, G, B} = rgb;
   end
 
   // coin_q hangt onderaan de prioriteitsketen en hoeft dus niet gelezen te
   // worden -- coin_d is de laatste tak.  Wel aangesloten laten, anders zie je
   // niet meer dat coinbar hem uitgeeft.
-  wire _unused = &{menu_sel, chest_outcome, chest_frame,
-                   flame_frame, combo_len, flash, coin_q, 1'b0};
+  wire _unused = &{menu_sel, chest_outcome, combo_len, flash, coin_q, 1'b0};
 endmodule
