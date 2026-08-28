@@ -35,7 +35,7 @@ module render_tb;
   localparam       SET_EVOLVE  = 1'b1;   // evolve_now: knop mag oplichten
 
   // minigame
-  localparam [1:0] SET_CSTATE  = 2'd3;   // 0 PICK  1 OPEN  2 RESULT  3 MENU
+  localparam [1:0] SET_CSTATE  = 2'd2;   // 0 PICK  1 OPEN  2 RESULT  3 MENU
   localparam [1:0] SET_CSEL    = 2'd2;
   localparam [8:0] SET_CONTENT = 9'b010_001_100;   // {kist2, kist1, kist0}
   localparam [9:0] SET_POT     = 10'd160;
@@ -46,6 +46,7 @@ module render_tb;
   localparam [9:0] SET_FLASHR  = 10'd0;  // 0 = flits uit
 
   localparam [7:0] SET_BTN_LEVEL = 8'b0010_0000;
+  localparam       SET_NIGHT = 1'b1;
 
   // ======================= aandrijving ====================================
   reg clk = 1'b0;
@@ -89,6 +90,7 @@ module render_tb;
     .egg_frame      (SET_EGGFR),
     .flash_r        (SET_FLASHR),
     .btn_level      (SET_BTN_LEVEL),
+    .night          (SET_NIGHT),
 
     .R(R), .G(G), .B(B)
   );

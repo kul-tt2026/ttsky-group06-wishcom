@@ -355,11 +355,11 @@ module renderer (
   always @(*) case (sprite_code)
     3'd1: sprite_night = 6'b00_00_00;   // zwarte omtrek blijft zwart
     3'd2: sprite_night = 6'b01_01_01;   // hoorns licht
-    3'd3: sprite_night = 6'b10_10_10;   // lichaam
+    3'd3: sprite_night = 6'b00_01_00;   // lichaam
     3'd4: sprite_night = 6'b10_10_10;   // wit
-    3'd5: sprite_night = 6'b01_01_01;   // vlekken / schaduw
-    3'd6: sprite_night = 6'b00_00_00;   // hoorns schaduw
-    3'd7: sprite_night = 6'b01_01_01;   // nekje & buikje
+    3'd5: sprite_night = 6'b00_01_00;   // vlekken / schaduw
+    3'd6: sprite_night = 6'b01_01_01;   // hoorns schaduw
+    3'd7: sprite_night = 6'b00_01_00;   // nekje & buikje
     default: sprite_night = 6'b00_00_00;
   endcase
 

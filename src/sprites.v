@@ -244,6 +244,7 @@ module background (
   wire [5:0] c_edge  = night ? 6'b00_00_00 : 6'b01_00_00;
   wire [5:0] c_soil  = night ? 6'b01_00_00 : 6'b10_01_00;
   wire [5:0] c_sdk   = night ? 6'b00_00_00 : 6'b01_00_00;   // spikkels
+  wire [5:0] c_star  = night ? 6'b11_11_00 : c_sky;   // overdag onzichtbaar
 
   // ---- zon ---------------------------------------------------------------
   // Halfbreedte per rij uit een tabel: sqrt(R^2 - dy^2) zou twee
@@ -292,17 +293,57 @@ module background (
   wire [5:0] h  = hx ^ hy;
 
   wire speck = (h[2:0] == 3'd3) && (h[5:4] != 2'b00);
+  // ---- sterren -----------------------------------------------------------
+  // Sterren alleen boven Y=200.
+  //
+  // Kleine sterren = 1x1 pixel
+  // Grote sterren  = 2x2 pixels
+  //
+  // De coordinate hash zorgt ervoor dat de sterren niet op een zichtbaar
+  // regelmatig raster verschijnen.
+
+  wire [7:0] st_x = x[7:0];
+  wire [7:0] st_y = y[7:0];
+
+  // Mix X en Y op verschillende manieren
+  wire [7:0] st_mix1 =
+      st_x
+    ^ {st_y[3:0], st_y[7:4]}
+    ^ (st_x << 3)
+    ^ (st_y >> 2);
+
+  wire [7:0] st_mix2 =
+      st_mix1
+    ^ {st_mix1[2:0], st_mix1[7:3]}
+    ^ (st_x >> 2);
+
+  // Verschillende zeldzame waarden = verschillende stertypes
+  wire star_small_seed = (st_mix2 == 8'hB6);
+  wire star_big_seed   = (st_mix2 == 8'h29);
+
+  // Kleine sterren: 1x1
+  wire star_small =
+    star_small_seed;
+
+  // Grote sterren: 2x2
+  wire star_big =
+    (x[0] == 1'b0) &&
+    (y[0] == 1'b0) &&
+    star_big_seed;
+
+  wire star = star_big | star_small;
+
   // ---- stapelen ----------------------------------------------------------
-    always @(*) begin
+  always @(*) begin
     if      (y >= SOIL_Y + EDGE_H) bg_rgb = speck ? c_sdk : c_soil;
     else if (y >= SOIL_Y)          bg_rgb = c_edge;
     else if (y >= GRASS_Y)         bg_rgb = c_grass;
     else if (sun)                  bg_rgb = c_sun;
     else if (cloud1 || cloud2)     bg_rgb = c_cloud;
+    else if (star)                 bg_rgb = c_star;
     else                           bg_rgb = c_sky;
   end
 endmodule
-
 
 // ===========================================================================
 // GAMEOVER_TEXT -- "GAME" / "OVER" in een 6x8 font, 8x geschaald.
@@ -690,7 +731,6 @@ endmodule
                   (y < SCALES_Y)            ? C_GOLD  : scale_rgb;
 endmodule */
 
-`default_nettype none
 // ===========================================================================
 // VELVET_BG -- gecapitonneerd rood fluweel als achtergrond voor de minigame,
 // met een bruine boord en een gouden bies bovenaan.

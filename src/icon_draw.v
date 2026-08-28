@@ -62,7 +62,7 @@ module icon_draw (
   // zien.  Andere maten dan 64 of 128 kunnen niet: het moet een macht van twee
   // blijven, anders heb je een deler nodig.
   localparam [9:0] IC_X = 10'd32;   // (128 - 64) / 2
-  localparam [9:0] IC_Y = 10'd8;
+  localparam [9:0] IC_Y = 10'd4;
   localparam [9:0] IC_W = 10'd64;   // 16 * 4
 
   wire in_box = (x >= IC_X) && (x < IC_X + IC_W) &&
