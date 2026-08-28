@@ -632,7 +632,7 @@ endmodule
 // onder de bies netjes bij het begin van een tegel start in plaats van er
 // halverwege doorheen gesneden te worden.
 // ===========================================================================
-module scales_bg (
+/*module scales_bg (
     input  wire [9:0] x,          // portret-x  0..479
     input  wire [9:0] y,          // portret-y  0..639
     input  wire       plain,      // 1 = effen bruin onder de bies (menuscherm)
@@ -684,4 +684,80 @@ module scales_bg (
   // enige structuur eronder.
   assign bg_rgb = (plain || (y < BORDER_H)) ? C_BROWN :
                   (y < SCALES_Y)            ? C_GOLD  : scale_rgb;
+endmodule */
+
+`default_nettype none
+// ===========================================================================
+// VELVET_BG -- gecapitonneerd rood fluweel als achtergrond voor de minigame,
+// met een bruine boord en een gouden bies bovenaan.
+//
+// Ruiten zijn goedkoop: |dx| + |dy| binnen een tegel geeft de afstand tot het
+// tegelmidden in ruitvorm, en dat is puur optellen.  Tegel 64 x 64, dus alle
+// tegelposities zijn bitselecties.
+//
+// De ruiten liggen op TWEE roosters tegelijk: eentje rond het tegelmidden en
+// eentje rond de tegelhoek.  Dat volgt vanzelf uit dd -- is de ruitafstand
+// groter dan een halve tegel, dan hoor je bij de buurruit en is de afstand
+// 64 min die waarde.  Zo sluit het vlak zonder gaten.
+//
+// HET VELD IS GEDITHERD tussen twee roodtinten.  Op twee bits per kanaal is er
+// niets tussen (85,0,0) en (170,0,0), en allebei apart zijn ze te donker of te
+// fel; om en om per pixel leest als (128,0,0) en dat is precies de kleur die
+// fluweel nodig heeft.  Kost een XOR.  Ziet het er op de echte monitor
+// onrustig uit, zet DITHER op 0 -- dan wordt het veld effen donkerrood.
+// ===========================================================================
+module velvet_bg (
+    input  wire [9:0] x,          // portret-x  0..479
+    input  wire [9:0] y,          // portret-y  0..639
+    output wire [5:0] bg_rgb
+);
+  localparam DITHER = 1'b1;
+
+  // ---- kleuren -----------------------------------------------------------
+  localparam [5:0] C_TUFT  = 6'b00_00_00;   // zwart knoopje op de kruising
+  localparam [5:0] C_SEAM  = 6'b01_00_00;   // donkerrode naad
+  localparam [5:0] C_FLD1  = 6'b01_00_00;   // veld, donkere helft
+  localparam [5:0] C_FLD2  = 6'b10_00_00;   // veld, lichte helft
+  localparam [5:0] C_BROWN = 6'b01_00_00;   // boord
+  localparam [5:0] C_GOLD  = 6'b11_10_00;   // bies
+
+  // ---- boord bovenaan ----------------------------------------------------
+  localparam [9:0] BORDER_H = 10'd176;
+  localparam [9:0] TRIM_H   = 10'd10;
+  localparam [9:0] SCALES_Y = BORDER_H + TRIM_H;   // 186
+
+  // ---- het patroon -------------------------------------------------------
+  localparam [6:0] SEAM_W = 7'd1;           // dikte van de naad
+  localparam [5:0] TUFT_W = 6'd3;           // grootte van het knoopje
+
+  wire [5:0] tx = x[5:0];
+  wire [5:0] ty = y[5:0];
+
+  wire [5:0] dx = (tx >= 6'd32) ? (tx - 6'd32) : (6'd32 - tx);   // 0..32
+  wire [5:0] dy = (ty >= 6'd32) ? (ty - 6'd32) : (6'd32 - ty);
+
+  wire [6:0] d  = {1'b0, dx} + {1'b0, dy};                       // 0..64
+  wire [6:0] dd = (d <= 7'd32) ? d : (7'd64 - d);                // 0..32
+
+  // De vier ruiten raken elkaar op de tegelranden; daar zit het knoopje.
+  wire tuft = ((dx >= 6'd32 - TUFT_W) && (dy <= TUFT_W)) ||
+              ((dx <= TUFT_W)         && (dy >= 6'd32 - TUFT_W));
+
+  wire seam = (dd >= 7'd32 - SEAM_W);
+  wire dith = DITHER && (x[0] ^ y[0]);
+
+  wire [5:0] velvet = tuft ? C_TUFT :
+                      seam ? C_SEAM :
+                      dith ? C_FLD2 : C_FLD1;
+  localparam [5:0] C_LINE = 6'b00_00_00;   // zwarte scheiding
+  localparam [9:0] LINE_W = 10'd4;         // dikte
+
+  // ---- stapelen ----------------------------------------------------------
+  // Een zwart lijntje aan weerskanten van de bies: goud direct tegen rood
+  // vloeit visueel in elkaar over, met zwart ertussen springt het los.
+  assign bg_rgb =
+      (y <  BORDER_H )     ? C_BROWN :   // boord
+      (y <  SCALES_Y)              ? C_GOLD  :   // gouden bies
+      (y <  SCALES_Y + LINE_W)     ? C_LINE  :   // lijntje onder de bies
+                                     velvet;
 endmodule

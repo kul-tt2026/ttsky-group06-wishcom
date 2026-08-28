@@ -35,7 +35,7 @@ module render_tb;
   localparam       SET_EVOLVE  = 1'b1;   // evolve_now: knop mag oplichten
 
   // minigame
-  localparam [1:0] SET_CSTATE  = 2'd1;   // 0 PICK  1 OPEN  2 RESULT  3 MENU
+  localparam [1:0] SET_CSTATE  = 2'd3;   // 0 PICK  1 OPEN  2 RESULT  3 MENU
   localparam [1:0] SET_CSEL    = 2'd2;
   localparam [8:0] SET_CONTENT = 9'b010_001_100;   // {kist2, kist1, kist0}
   localparam [9:0] SET_POT     = 10'd160;

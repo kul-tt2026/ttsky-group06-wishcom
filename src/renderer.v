@@ -304,9 +304,8 @@ module renderer (
   );
   wire [5:0] bg_chest_rgb;
 
-  scales_bg u_scales (
+  velvet_bg u_velvet (
     .x(px), .y(py),
-    .plain(chest_state == 2'd3),
     .bg_rgb(bg_chest_rgb)
   );
 
