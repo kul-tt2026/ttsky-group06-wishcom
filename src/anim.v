@@ -24,6 +24,10 @@ module anim (
     input  wire       act_drink,
     input  wire       act_sleep,
 
+    input  wire       wake,
+
+    output reg        night,  
+
     output reg  [1:0] dragon_bob,       // idle wip 0..2   -- NOG TE SCHRIJVEN
     output reg        flash,            // fanfare bij evolve -- NOG TE SCHRIJVEN
     output reg        evolve_blink,
@@ -73,8 +77,7 @@ module anim (
   // een mux op sprite_rgb.  De teller hier hoeft daar niet voor te veranderen.
   localparam [1:0] FX_NONE  = 2'd0,
                    FX_FEED  = 2'd1,
-                   FX_DRINK = 2'd2,
-                   FX_SLEEP = 2'd3;
+                   FX_DRINK = 2'd2;
 
   localparam [4:0] FX_LEN = 5'd30;      // 30 frames = een halve seconde
 
@@ -87,7 +90,6 @@ module anim (
     end else if (frame_tick) begin
       if      (act_feed)  begin fx_kind <= FX_FEED;  fx_t <= FX_LEN; end
       else if (act_drink) begin fx_kind <= FX_DRINK; fx_t <= FX_LEN; end
-      else if (act_sleep) begin fx_kind <= FX_SLEEP; fx_t <= FX_LEN; end
       else if (fx_t != 5'd0)    fx_t <= fx_t - 5'd1;
       else                      fx_kind <= FX_NONE;
     end
@@ -97,4 +99,20 @@ module anim (
 
   // satisfaction wordt pas gelezen zodra dragon_bob geschreven is.
   wire _unused = &{satisfaction, 1'b0};
+
+
+
+
+    // ---- nacht: een TOESTAND, geen effect ----------------------------------
+  // Slapen zet hem aan en hij blijft aan tot je iets anders doet.  Daarom een
+  // eigen blokje met een eigen reset, los van de knipperteller hierboven --
+  // die twee hebben niets met elkaar te maken.
+  always @(posedge clk) begin
+    if (!rst_n) begin
+      night <= 1'b0;
+    end else if (frame_tick) begin
+      if      (act_sleep) night <= 1'b1;
+      else if (wake)      night <= 1'b0;
+    end
+  end
 endmodule

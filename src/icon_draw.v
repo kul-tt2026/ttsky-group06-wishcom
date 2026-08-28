@@ -29,7 +29,7 @@
 //   1 = zwart                  5 = wit (glans)
 //   2 = bruin / donkeroranje   6 = rood (drank, vonken, rode bom)
 //   3 = oranje                 7 = grijsblauw (glas)
-//   4 = creme / geel
+//   4 = ook blauw 
 // ---------------------------------------------------------------------------
 module icon_draw (
     input  wire [9:0] x,          // lokaal, 0..127

@@ -120,13 +120,15 @@ module tt_um_dragonchi (
   wire flash, evolve_blink;
   wire fx_on;
   wire [1:0] fx_kind;
+  wire wake = act_drink | act_feed | act_minigame | req_evolve;
+  wire night;
   anim u_anim (
     .clk(clk), .rst_n(rst_n), .frame_tick(frame_tick),
     .satisfaction(satisfaction),
     .dragon_bob(dragon_bob), 
     .flash(flash), 
     .evolve_blink(evolve_blink), .act_drink(act_drink), .act_feed(act_feed), .act_sleep(act_sleep),
-    .fx_kind(fx_kind), .fx_on(fx_on)
+    .fx_kind(fx_kind), .fx_on(fx_on), .wake(wake), .night(night) 
   );
 
   // ---- TinyVGA Pmod.  Do not touch. ----
@@ -149,7 +151,7 @@ module tt_um_dragonchi (
     .R(R), .G(G), .B(B), .overflow(overflow), .evolve_now(evolve_now),
     .chest_contents(chest_contents), .pot(pot), .round(round),
     .evolve_blink(evolve_blink), .frame_tick(frame_tick), .egg_frame(egg_frame), .flash_r(flash_r),
-    .btn_level(btn_level), .fx_kind(fx_kind), .fx_on(fx_on)
+    .btn_level(btn_level), .fx_kind(fx_kind), .fx_on(fx_on), .night(night)
   );
 
   

@@ -219,6 +219,7 @@ endmodule
 module background (
     input  wire [9:0] x,          // portret-x  0..479
     input  wire [9:0] y,          // portret-y  0..639
+    input  wire       night, 
     output reg  [5:0] bg_rgb
 );
   // ---- horizon -----------------------------------------------------------
@@ -233,13 +234,16 @@ module background (
   localparam [9:0] SUN_R  = 10'd36;
 
   // ---- kleuren -----------------------------------------------------------
-  localparam [5:0] C_SKY     = 6'b01_10_11;   // hemelsblauw, zoals het titelscherm
-  localparam [5:0] C_SUN     = 6'b11_11_00;   // geel
-  localparam [5:0] C_CLOUD   = 6'b11_11_11;   // wit
-  localparam [5:0] C_GRASS   = 6'b00_10_00;   // ZELFDE groen als title_egg's gras
-  localparam [5:0] C_EDGE    = 6'b01_00_00;   // donkerbruine rand
-  localparam [5:0] C_SOIL    = 6'b10_01_00;   // aarde
-  localparam [5:0] C_SOIL_DK = 6'b01_00_00;   // donkerder, voor de spikkels
+    // ---- kleuren, dag en nacht ---------------------------------------------
+  // De zon wordt de maan: zelfde tabel, zelfde plek, alleen wit.  Er is dus
+  // geen aparte maanvorm nodig.
+  wire [5:0] c_sky   = night ? 6'b00_00_00 : 6'b01_10_11;
+  wire [5:0] c_sun   = night ? 6'b11_11_11 : 6'b11_11_00;
+  wire [5:0] c_cloud = night ? 6'b01_01_01 : 6'b11_11_11;
+  wire [5:0] c_grass = night ? 6'b00_01_00 : 6'b00_10_00;
+  wire [5:0] c_edge  = night ? 6'b00_00_00 : 6'b01_00_00;
+  wire [5:0] c_soil  = night ? 6'b01_00_00 : 6'b10_01_00;
+  wire [5:0] c_sdk   = night ? 6'b00_00_00 : 6'b01_00_00;   // spikkels
 
   // ---- zon ---------------------------------------------------------------
   // Halfbreedte per rij uit een tabel: sqrt(R^2 - dy^2) zou twee
@@ -289,13 +293,13 @@ module background (
 
   wire speck = (h[2:0] == 3'd3) && (h[5:4] != 2'b00);
   // ---- stapelen ----------------------------------------------------------
-  always @(*) begin
-    if      (y >= SOIL_Y + EDGE_H) bg_rgb = speck ? C_SOIL_DK : C_SOIL;
-    else if (y >= SOIL_Y)          bg_rgb = C_EDGE;
-    else if (y >= GRASS_Y)         bg_rgb = C_GRASS;
-    else if (sun)                  bg_rgb = C_SUN;
-    else if (cloud1 || cloud2)     bg_rgb = C_CLOUD;
-    else                           bg_rgb = C_SKY;
+    always @(*) begin
+    if      (y >= SOIL_Y + EDGE_H) bg_rgb = speck ? c_sdk : c_soil;
+    else if (y >= SOIL_Y)          bg_rgb = c_edge;
+    else if (y >= GRASS_Y)         bg_rgb = c_grass;
+    else if (sun)                  bg_rgb = c_sun;
+    else if (cloud1 || cloud2)     bg_rgb = c_cloud;
+    else                           bg_rgb = c_sky;
   end
 endmodule
 

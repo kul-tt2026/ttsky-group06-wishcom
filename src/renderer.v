@@ -37,6 +37,8 @@ module renderer (
     input  wire       flash,
     input  wire       evolve_blink,
 
+    input  wire       night,
+
     input  wire       frame_tick, // voor animatie van ei
     input  wire [7:0] btn_level,
 
@@ -300,7 +302,8 @@ module renderer (
   wire [5:0] bg_home_rgb;
   background u_bg (
     .x(px), .y(py),
-    .bg_rgb(bg_home_rgb)
+    .bg_rgb(bg_home_rgb),
+    .night(night)
   );
   wire [5:0] bg_chest_rgb;
 
@@ -345,6 +348,25 @@ module renderer (
     default: sprite_rgb = 6'b00_00_00;
   endcase
 
+  // De draak wordt grijs bij nacht.  Een tweede palet in plaats van een
+  // helderheidstruc, want dan houd je per code de hand aan hoe donker iets
+  // wordt -- de omtrek moet zwart blijven, het buikje mag oplichten.
+  reg [5:0] sprite_night;
+  always @(*) case (sprite_code)
+    3'd1: sprite_night = 6'b00_00_00;   // zwarte omtrek blijft zwart
+    3'd2: sprite_night = 6'b01_01_01;   // hoorns licht
+    3'd3: sprite_night = 6'b10_10_10;   // lichaam
+    3'd4: sprite_night = 6'b10_10_10;   // wit
+    3'd5: sprite_night = 6'b01_01_01;   // vlekken / schaduw
+    3'd6: sprite_night = 6'b00_00_00;   // hoorns schaduw
+    3'd7: sprite_night = 6'b01_01_01;   // nekje & buikje
+    default: sprite_night = 6'b00_00_00;
+  endcase
+
+
+
+
+
   // -- kisten: bodem en deksel delen EEN opzoeking ------------------------
   // Een pixel is bodem OF deksel, nooit allebei -- de STACK kiest er een.
   function [5:0] chest_color;
@@ -375,7 +397,7 @@ module renderer (
         3'd1:    icon_color = 6'b00_00_00;   // zwart (omtrek, bomromp)
         3'd2:    icon_color = 6'b10_01_00;   // bruin / donkeroranje (kurk, muntschaduw)
         3'd3:    icon_color = 6'b11_10_00;   // oranje (muntvlak)
-        3'd4:    icon_color = 6'b11_11_01;   // creme / geel (muntglans, vonken bom2)
+        3'd4:    icon_color = 6'b01_01_01;   // creme / geel (muntglans, vonken bom2)
         3'd5:    icon_color = 6'b11_11_11;   // wit (glans op de bom)
         3'd6:    icon_color = 6'b10_00_00;   // rood (drank, vonken, rode bom)
         3'd7:    icon_color = 6'b01_01_10;   // grijsblauw (glas)
@@ -494,7 +516,7 @@ module renderer (
     else if (chest_icon_on)                        rgb = icon_rgb;
     else if (chest_lid_on)                         rgb = chest_rgb;
     else if (fx_on && (py < 10'd294))              rgb = fx_rgb;
-    else if (show_dragon   && dragon_on)           rgb = sprite_rgb;
+    else if (show_dragon   && dragon_on)  rgb = night ? sprite_night : sprite_rgb;
     else if (in_chest)                             rgb = bg_chest_rgb;
     else                                           rgb = bg_home_rgb;
     {R, G, B} = rgb;
