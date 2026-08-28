@@ -225,9 +225,9 @@ module renderer (
   wire [2:0] menu_r, coin_r, lvl_r;
   wire       menu_q, coin_q, lvl_q;
 
-  wire [3:0] dig_digit = menu_q ? menu_d : lvl_q ? lvl_d : coin_d;
-  wire [2:0] dig_row   = menu_q ? menu_r : lvl_q ? lvl_r : coin_r;
-
+  wire [3:0] dig_digit = in_chest ? menu_d : (lvl_q ? lvl_d : coin_d);
+  wire [2:0] dig_row   = in_chest ? menu_r : (lvl_q ? lvl_r : coin_r);
+ 
   wire [3:0] dig_bits;
   digit_rom u_digit (.digit(dig_digit), .row(dig_row), .bits(dig_bits));
 

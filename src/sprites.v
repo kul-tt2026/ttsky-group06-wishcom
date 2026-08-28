@@ -128,8 +128,8 @@ module dragon_l3_generator (
     output reg  [2:0]  px_code
 );
 
-    localparam [9:0] SPRITE_X = 10'd222;   // midden blijft 286
-    localparam [9:0] SPRITE_Y = 10'd162;   // onderkant blijft 336
+    localparam [9:0] SPRITE_X = 10'd186;   // midden blijft 286
+    localparam [9:0] SPRITE_Y = 10'd166;   // onderkant blijft 336
     localparam [9:0] SPRITE_W = 10'd128;   // 32 * 4
     localparam [9:0] SPRITE_H = 10'd128;
 
@@ -178,8 +178,8 @@ module dragon_l4_generator (
     output reg  [2:0]  px_code
 );
 
-    localparam [9:0] SPRITE_X = 10'd189;   // midden blijft 285
-    localparam [9:0] SPRITE_Y = 10'd122;   // onderkant blijft 360
+    localparam [9:0] SPRITE_X = 10'd176;   // midden blijft 285
+    localparam [9:0] SPRITE_Y = 10'd114;   // onderkant blijft 360
     localparam [9:0] SPRITE_W = 10'd192;   // 48 * 4
     localparam [9:0] SPRITE_H = 10'd192;
 
