@@ -293,7 +293,7 @@ module background (
   wire [5:0] h  = hx ^ hy;
 
   wire speck = (h[2:0] == 3'd3) && (h[5:4] != 2'b00);
-  // ---- sterren -----------------------------------------------------------
+  /*// ---- sterren -----------------------------------------------------------
   // Sterren alleen boven Y=200.
   //
   // Kleine sterren = 1x1 pixel
@@ -331,7 +331,7 @@ module background (
     (y[0] == 1'b0) &&
     star_big_seed;
 
-  wire star = star_big | star_small;
+  wire star = star_big | star_small;*/
 
   // ---- stapelen ----------------------------------------------------------
   always @(*) begin
@@ -340,7 +340,7 @@ module background (
     else if (y >= GRASS_Y)         bg_rgb = c_grass;
     else if (sun)                  bg_rgb = c_sun;
     else if (cloud1 || cloud2)     bg_rgb = c_cloud;
-    else if (star)                 bg_rgb = c_star;
+    //else if (star)                 bg_rgb = c_star;
     else                           bg_rgb = c_sky;
   end
 endmodule

@@ -3,34 +3,36 @@
 // TITLE_EGG  --  grasstrook, hoppend ei en "PRESS ANY BUTTON".
 //
 //   * GRAS   : strook van GRASS_H px onderaan.
-//   * EI     : PROCEDUREEL uit twee kleine tabellen, 2x geschaald -> 256 px.
-//              Het ei HOPT: een verticale verschuiving uit een tabel.  Geen
-//              shear meer -- die brak lijnen omdat een 2x vergrote sprite niet
-//              per halve bronpixel kan verschuiven.  Verticaal schuiven is
-//              artefactvrij zolang de stappen even zijn (= hele bronpixels).
+//   * EI     : één 32x32 sprite, 8x geschaald -> 256 px.  Het ei HOPT: een
+//              verticale verschuiving uit een tabel.  Geen shear -- die brak
+//              lijnen omdat een vergrote sprite niet per halve bronpixel kan
+//              verschuiven.  Verticaal schuiven is artefactvrij zolang de
+//              stappen een veelvoud van de schaal zijn (hier: even is genoeg,
+//              8 zou perfect zijn -- zie de opmerking bij de hop-tabel).
 //   * SCHADUW: blijft op dezelfde plek maar KRIMPT als het ei omhoog gaat.
 //              Dat is de gangbare spelconventie: kleiner = verder van de grond.
 //              Wil je het andersom (groter in de lucht), zet SHADOW_GROW op 1.
 //   * TEKST  : "PRESS ANY BUTTON", knippert asymmetrisch (lang aan, kort uit).
 //
-// HET EI IS GEEN BITMAP MEER.  egg_128s.hex was 128x128x3 = 49152 bits en
-// kostte ~2400 cellen, terwijl er maar drie kleuren in zaten.  Je betaalde dus
-// per pixel voor informatie die er niet was.  Nu staan vorm en textuur apart:
+// HET EI IS WEER EEN GEWONE BITMAP, maar nu op 32x32 in plaats van 128x128.
+// De geschiedenis in het kort:
 //
-//   egg_shape.hex : 128 regels {hw_out[5:0], hw_in[5:0]}, 3 hexcijfers.
-//                   Per BRONRIJ de halve breedte van de buitenrand en die van
-//                   de witte schaal.  Alles daartussen is zwarte rand, dus de
-//                   omtrek volgt de getekende vorm en sluit boven EN onder.
-//                   hw_in == 0 betekent "deze rij is volledig rand" -- zo zijn
-//                   de kapjes boven- en onderaan dicht.
-//   egg_spots.hex :  32 regels van 32 bits.  Elke bit = een blok van 4x4
-//                   bronpixels (8x8 op het scherm).  Bewust grof; de stippen
-//                   zijn textuur, geen lijnwerk, en blijven asymmetrisch.
+//   egg_128s.hex   128x128x3 = 49152 bits, ~2400 cellen.  Veel te duur.
+//   shape + spots  procedureel, ~2500 bits.  Goedkoper, maar de vorm moest
+//                  gespiegeld zijn (halve breedte per rij) en de stippen
+//                  zaten in een aparte tabel met een 32:1 mux erachter.
+//   egg_32.hex     1024 pixels x 3 bits = 3072 bits.  <-- NU
 //
-// Samen ~2500 bits.  Beide worden gegenereerd door tools/egg_decompose.py uit
-// egg_128s.hex; die hex blijft in de repo als bron-art, maar wordt door de
-// hardware niet meer gelezen.  Wil je het ei wijzigen: pas de art aan en draai
-// het script opnieuw -- niet dit bestand.
+// De 32x32-versie is niet alleen goedkoper dan de procedurele (gemeten in een
+// losse testbank: 416 tegen 550 cellen), ze is ook eerlijker: de sprite is
+// precies wat je tekent, inclusief asymmetrie, zonder dat vorm en textuur in
+// twee tabellen uit elkaar getrokken worden.  tools/egg_decompose.py is
+// daarmee overbodig geworden; egg_shape.hex en egg_spots.hex mogen weg.
+//
+// Wil je het ei wijzigen: teken een nieuwe 32x32 en schrijf hem als egg_32.hex,
+// één hexcijfer per pixel, 32 per regel.  De codes zijn die van dragon_rgb:
+//   0 = transparant   1 = zwarte rand   2 = grijze schaduw
+//   4 = witte schaal  5 = donkergroene vlek
 //
 // Uitgangen (de renderer kiest de kleuren):
 //   egg_on / egg_code : gebruik hetzelfde palet als dragon_rgb (codes 1..7)
@@ -68,7 +70,7 @@ module title_egg (
   localparam [9:0] GRASS_H  = 10'd100;
 
   localparam [9:0] EGG_CX   = 10'd240;
-  localparam [9:0] EGG_W    = 10'd256;   // 128 * 2
+  localparam [9:0] EGG_W    = 10'd256;   // 32 * 8
   localparam [9:0] EGG_H    = 10'd256;
   localparam [9:0] EGG_FOOT = 10'd590;   // voet in rust: midden van het gras
   localparam [9:0] EGG_X    = EGG_CX - (EGG_W >> 1);
@@ -76,13 +78,19 @@ module title_egg (
   localparam SHADOW_GROW = 1'b0;         // 0 = krimpen (normaal), 1 = groeien
 
   // --- kleurcodes van het ei (zelfde palet als dragon_rgb) ----------------
-  localparam [2:0] EGG_EDGE  = 3'd1;     // zwarte omtrek
-  localparam [2:0] EGG_SHELL = 3'd4;     // witte schaal
-  localparam [2:0] EGG_SPOT  = 3'd5;     // donkergroene vlek
+  // Ze staan nu IN egg_32.hex; deze namen blijven staan als legenda.
+  //   1 = EGG_EDGE (zwart)   2 = grijs   4 = EGG_SHELL (wit)   5 = EGG_SPOT
 
   // --- hop: tabel van verticale offsets ------------------------------------
   // 96 frames = 1.6 s.  Twaalf stappen van 8 frames: omhoog, even hangen,
-  // omlaag, dan rust.  Alle waarden EVEN, dus hele bronpixels.
+  // omlaag, dan rust.
+  //
+  // LET OP: de sprite is nu 8x geschaald, dus een offset die geen veelvoud van
+  // 8 is verschuift het ei met een fractie van een bronpixel.  Dat is niet
+  // fout -- het ei blijft heel, want de hele bitmap schuift mee -- maar de
+  // blokjes "trillen" een pixel op hun rasterlijn.  Wil je dat weg, gebruik
+  // dan alleen veelvouden van 8 (0, 8, 16, 24); de tabel hieronder houdt de
+  // oude, fijnere beweging aan omdat die vloeiender oogt.
   //
   // Zodra het barsten begint MAAKT het ei zijn hop af en blijft dan liggen.
   // Meteen stilzetten zou het ei mid-lucht naar de grond laten springen.
@@ -136,41 +144,25 @@ module title_egg (
     end
   end
 
-  // --- ei: procedureel uit vorm- en stippentabel (128x128 bron, 2x) -------
+  // --- ei: één 32x32 bitmap, 8x geschaald ---------------------------------
+  // De deling door 8 is een bitselectie, dus gratis: offx[7:3] is exact
+  // offx >> 3 voor de 0..255 die binnen het vak voorkomen.  Buiten het vak
+  // klemmen we het adres op 0 zodat de ROM niet op een willekeurig adres
+  // geadresseerd wordt (scheelt logica en houdt de simulatie deterministisch).
   wire in_egg_box = (x >= EGG_X) && (x < EGG_X + EGG_W) &&
                     (y >= EGG_Y) && (y < EGG_Y + EGG_H);
   wire [9:0] offx = x - EGG_X;
   wire [9:0] offy = y - EGG_Y;
-  wire [9:0] sclx = offx >> 1;
-  wire [9:0] scly = offy >> 1;
-  wire [6:0] rel_x = in_egg_box ? sclx[6:0] : 7'd0;
-  wire [6:0] rel_y = in_egg_box ? scly[6:0] : 7'd0;
+  wire [4:0] rel_x = in_egg_box ? offx[7:3] : 5'd0;
+  wire [4:0] rel_y = in_egg_box ? offy[7:3] : 5'd0;
+  wire [9:0] eaddr = {rel_y, rel_x};
 
-  // Afstand tot de middenas.  De as ligt tussen kolom 63 en 64, dus de rechter
-  // helft krijgt er 1 bij -- exact dezelfde formule als egg_decompose.py, want
-  // anders staat de rand aan een kant een pixel scheef.
-  wire [6:0] dax = (rel_x > 7'd63) ? (rel_x - 7'd62) : (7'd63 - rel_x);
+  reg [2:0] egg_rom [0:1023];
+  initial $readmemh("egg_32.hex", egg_rom);
+  wire [2:0] code = egg_rom[eaddr];
 
-  reg [11:0] shape [0:127];
-  initial $readmemh("egg_shape.hex", shape);
-  wire [11:0] srow   = shape[rel_y];
-  wire [5:0]  hw_out = srow[11:6];       // buitenrand van de schaal
-  wire [5:0]  hw_in  = srow[5:0];        // waar de witte schaal begint
-
-  // hw_out == 0 (lege rij) valt hier vanzelf af: dax < 0 is nooit waar.
-  wire in_shell = in_egg_box && (dax < {1'b0, hw_out});
-  wire on_edge  = in_shell && ((hw_in == 6'd0) || (dax >= {1'b0, hw_in}));
-
-  // stippen: 32x32 blokken van 4x4 bronpixels, NIET gespiegeld
-  reg [31:0] spots [0:31];
-  initial $readmemh("egg_spots.hex", spots);
-  wire [31:0] spot_row = spots[rel_y[6:2]];
-  wire        spot     = spot_row[rel_x[6:2]];
-
-  wire [2:0] code = !in_shell ? 3'd0      :
-                    on_edge   ? EGG_EDGE  :
-                    spot      ? EGG_SPOT  :
-                                EGG_SHELL;
+  // in_shell = "hier zit ei".  De barst hangt hiervan af, dus de naam blijft.
+  wire in_shell = in_egg_box && (code != 3'd0);
 
   // Het ei blijft zichtbaar tot de flits het overneemt.  Zou je het bij
   // egg_frame 5 laten verdwijnen, dan zie je een frame lang leeg gras -- een
@@ -180,16 +172,13 @@ module title_egg (
   assign egg_code = code;
 
   // ======================= BARST ==========================================
-  // DRIE hoofdstralen vanuit een punt midden in het ei, 120 graden uit elkaar
-  // (een echte drieslag-breuk) en met een offset gedraaid, zodat geen enkele
-  // recht omhoog of recht opzij wijst.  Er zaten ooit twee vertakkingen bij;
-  // die kostten samen ~400 cellen en zijn eruit gehaald -- git bewaart ze.
+  // Twee stralen vanuit een punt midden in het ei, 120 graden uit elkaar, met
+  // een offset gedraaid zodat geen enkele recht omhoog of recht opzij wijst.
+  // Er zaten ooit een derde straal en twee vertakkingen bij; die kostten samen
+  // ~400 cellen en zijn eruit gehaald -- git bewaart ze.
   //
-  // In ruil komen de drie stralen nu NA ELKAAR: eerst A, dan B erbij, dan C.
-  // Dat leest als een ei dat stap voor stap openbreekt, in plaats van drie
-  // lijnen die synchroon uitzetten.  Het is bovendien goedkoper -- elke straal
-  // leest zijn lengte uit de tabel, zonder gedeelde `grow` met drie
-  // afkapvergelijkingen erachter.
+  // De stralen komen NA ELKAAR: eerst A, dan B erbij.  Dat leest als een ei
+  // dat stap voor stap openbreekt, in plaats van lijnen die synchroon uitzetten.
   //
   // Elke straal krijgt een driehoeksgolf-slingering.
   // REGEL: helling + slingering moet onder de lijndikte blijven, anders valt
@@ -197,6 +186,9 @@ module title_egg (
   //
   // Alles rekent in 10-bit signed: de grootste tussenwaarde is
   // OX + tC + (tC>>>2) + wob = 313, ruim binnen -512..511.
+  //
+  // De barst rekent in SCHERMpixels (0..255 binnen het ei), niet in bronpixels,
+  // dus hij is niet meegeschaald naar 32x32 en blijft even fijn als voorheen.
   wire [9:0] lx = x - EGG_X;                     // lokaal 0..255
   wire [9:0] ly = y - EGG_Y;
   wire signed [9:0] slx = $signed({2'b0, lx[7:0]});
@@ -207,10 +199,6 @@ module title_egg (
 
   // Lengte per straal per frame; 0 = deze straal bestaat nog niet.
   // De lijn wordt dikker naarmate het ei verder openbreekt.
-   // Lengte per straal per frame; 0 = deze straal bestaat nog niet.
-  // Twee stralen, 120 graden uit elkaar: A omhoog, B naar links.  Er was ooit
-  // een derde (C, naar rechtsonder) plus twee vertakkingen; die zijn eruit
-  // gehaald toen de plaats op moest -- git bewaart ze.
   reg [7:0] lenA, lenB;
   reg [2:0] cw;
   always @(*) case (egg_frame)
@@ -283,7 +271,7 @@ module title_egg (
   assign flash_rim = flash_on && (fd + RIM > flash_r);
 
   // --- PRESS ANY BUTTON (3x5 font, 4x geschaald) --------------------------
-  localparam PRESS = 1'b0;
+  localparam PRESS = 1'b1;
   wire in_press = PRESS && blink &&
                   (x >= PRESS_X) && (x < PRESS_X + PRESS_W) &&
                   (y >= PRESS_Y) && (y < PRESS_Y + PRESS_H);

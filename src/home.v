@@ -102,7 +102,7 @@ module home (
           if (egg_timer != 7'd0) begin
             egg_timer <= egg_timer - 7'd1;          // barst groeit
           end else if (flash_r < 10'd760) begin
-            flash_r <= flash_r + 10'd8;             // flits groeit
+            flash_r <= flash_r + 10'd16;             // flits groeit
           end else begin
             restart <= 1'b1;
             flash_r <= 10'd0;

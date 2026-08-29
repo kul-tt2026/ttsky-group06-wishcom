@@ -60,7 +60,11 @@ module dragon_state (
   wire do_evolve = req_evolve && (coins >= evolve_price);
   wire heal_up = do_evolve && (level == FORM_A - 1 || level == FORM_B - 1);
   reg [6:0] overflow_timer;
-  wire [10:0] coins_sum = {1'b0, coins} + {1'b0, coins_amount};
+  wire [10:0] coins_na_evolve = do_evolve ? ({1'b0, coins} - {1'b0, evolve_price})
+                                        : {1'b0, coins};
+  wire [10:0] add_amt   = req_coins_add ? {1'b0, coins_amount} : 11'd0;
+  wire [10:0] coins_sum = coins_na_evolve + add_amt;
+  
 
   always @(posedge clk) begin
     if (!rst_n || restart) begin
@@ -113,19 +117,15 @@ module dragon_state (
 
       // ---- coins ---------------------------------------------------------
       
-      
-      if (do_evolve) begin
-        coins <= coins - evolve_price;
-      end else if (req_coins_add) begin
+      if (do_evolve || req_coins_add) begin
         if (coins_sum >= {1'b0, COIN_CAP}) begin
-          coins          <= COIN_CAP;
-          overflow       <= 1'b1;
-          overflow_timer <= 7'd120;
-        end else begin
-          coins <= coins_sum[9:0];
-        end
-      end
-    
+          coins <= COIN_CAP; overflow <= 1'b1; overflow_timer <= 7'd120;
+        end else coins <= coins_sum[9:0];
+      end    
+      
+
+
+
       // ---- level ---------------------------------------------------------
       if (do_evolve) begin
         if (level == MAX_LEVEL) begin
