@@ -3,18 +3,8 @@
 // ---------------------------------------------------------------------------
 // CHEST MINIGAME
 //
-// Runs when mode == CHEST (home.v decides that). Three chests, one
-// hides a free level-up, one hides coins, one costs a heart. Pick with
-// UP/DOWN (buttons 1/3), open with SELECT (6), leave with START (7).
-//
-// This is the old game_fsm, reshaped in two ways:
-//   1. It no longer owns any stats -- it emits request pulses instead.
-//   2. It no longer owns modes -- it raises minigame_done and home.v
-//      switches back.
-//
-// Same superpower as before: fully testable in simulation with no screen.
-// The shuffle TODO is the same one as the old file, and the same trap
-// applies: pick one of the six orderings, never roll chests independently.
+// Runs when mode == CHEST (home.v decides that). Three chests. Pick with
+// UP/DOWN (buttons 1/3), open with SELECT (6), leave with BACK (7).
 // ---------------------------------------------------------------------------
 module chest_game (
     input  wire       clk,
@@ -62,8 +52,14 @@ module chest_game (
   //end
 
 
-  // we hebben maar 6 waarden nodig dus als >= 6 zet dan op 0 of 1, niet modulo want das blijkbaar duur in hardware
-  wire [2:0] safe_random = (random_3bit >= 3'd6) ? (random_3bit - 3'd6) : random_3bit;
+reg [2:0] safe_random;
+  always @(posedge clk) begin
+      if (!rst_n) begin
+          safe_random <= 3'd0;
+      end else if (random_3bit < 3'd6) begin   // tussen elke interactie verandert random_3bit miljoenen keren
+          safe_random <= random_3bit;
+      end
+  end
 
   reg [7:0] timer;  // hoelang de animatie duurt
   reg       dealt;  // have the chests been shuffled yet?
@@ -104,7 +100,7 @@ module chest_game (
 
     else if (!active) begin
         chest_state <= C_PICK; dealt <= 0; pot <= 0; round <= 0;
-        req_coins_add <= 0; req_heart_lose_chest <= 0; minigame_done <= 0;
+        req_coins_add <= 0; req_heart_lose_chest <= 0; minigame_done <= 0; chest_sel <= 0;
         // (We zetten alles direct veilig terug)
     end
 
@@ -113,7 +109,7 @@ module chest_game (
       minigame_done<=0;
       if (timer!=0) timer<=timer-8'd1;
 
-      if (active) case (chest_state)
+      case (chest_state)
         C_PICK: begin
           //  * if (!dealt): use lfsr[2:0] to pick one of the SIX orderings
           //    of {O_BOM,O_COIN,O_LOSE} into chest_contents; dealt<=1
@@ -140,7 +136,7 @@ module chest_game (
           // SELECT (btn 6)
           if (btn_pressed[6]) begin
               chest_outcome <= sel_content;
-              timer <= 45;  // 45 frames wachten eer we naar open gaan voor eventuele animatie
+              timer <= 20;  // 20 frames wachten eer we naar open gaan voor animatie
               chest_state <= C_OPEN;  // kist is open, volgende case
           end
 
@@ -157,7 +153,7 @@ module chest_game (
         C_OPEN: begin
           // when timer==0 -> timer<=60; chest_state<=C_RESULT
           if (timer == 0) begin 
-              timer <= 60; 
+              timer <= 33; 
               chest_state <= C_RESULT;  // uitslag is klaar, volgende case
           end
         end
@@ -178,7 +174,7 @@ module chest_game (
                     minigame_done <= 1;
                 end
                 O_CURSED: begin
-                    pot_payout <= pot; //(pot + {2'b0, reward} > 11'd999) ? 10'd999 : (pot + {2'b0, reward});
+                    pot_payout <= (pot + {2'b0, reward} > 11'd999) ? 10'd999 : (pot + {2'b0, reward});
                     req_coins_add <= 1;
                     req_heart_lose_chest <= 1;
                     minigame_done <= 1;
@@ -213,9 +209,6 @@ module chest_game (
 
       default: chest_state<=C_PICK;
       endcase
-      else begin
-        chest_state<=C_PICK; dealt<=0; pot <= 0; round <= 0;   // reset whenever we're not active
-      end
     end
   end
 
