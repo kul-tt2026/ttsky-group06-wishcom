@@ -3,9 +3,9 @@ project:
   title:        "WISH"      # Project title
   author:       "Annabel,Wout,Sixten,Hanne,Isabelle"      # Your name
   discord:      "/"      # Your discord username, for communication and automatically assigning you a Tapeout role (optional)
-  description:  "/"      # One line description of what your project does
+  description:  "A pet dragon to keep alive and play with!"      # One line description of what your project does
   language:     "Verilog" # other examples include SystemVerilog, Amaranth, VHDL, etc
-  clock_hz:     0       # Clock frequency in Hz (or 0 if not applicable)
+  clock_hz:     25000000       # Clock frequency in Hz (or 0 if not applicable)
 
   # How many tiles your design occupies? A single tile is about 167x108 uM.
   tiles: "4x2"          # Valid values: 1x1, 1x2, 2x2, 3x2, 4x2, 6x2 or 8x2
@@ -17,28 +17,28 @@ project:
   # Source files must be in ./src and you must list each source file separately, one per line.
   # Don't forget to also update `PROJECT_SOURCES` in test/Makefile.
   source_files:
-    - "project.v"
-    - "hvsync_generator.v"
     - "anim.v"
     - "balance.v"
     - "buttons.v"
     - "chest_draw.v"
     - "chest_game.v"
+    - "chest_menu.v"
+    - "coinbar.v"
     - "dragon_draw.v"
     - "dragon_state.v"
-    - "home.v"
-    - "renderer.v"
-    - "sprites.v"
     - "draw_buttons.v"
-    - "hearts.v"
-    - "satisfactionbar.v"
-    - "coinbar.v"
     - "dual_lfsr.v"
-    - "chest_menu.v"
+    - "feed_fx.v"
+    - "hearts.v"
+    - "home.v"
+    - "hvsync_generator.v"
+    - "icon_draw.v"
+    - "project.v"
+    - "renderer.v"
+    - "satisfactionbar.v"
+    - "sprites.v"
     - "title_card.v"
     - "title_egg.v"
-    - "icon_draw.v"
-    - "feed_fx.v"
     - "water_fx.v"
 
 
@@ -46,34 +46,34 @@ project:
 # This section is for the datasheet/website. Use descriptive names (e.g., RX, TX, MOSI, SCL, SEG_A, etc.).
 pinout:
   # Inputs
-  ui[0]: "input1"
-  ui[1]: "input2"
-  ui[2]: "input3"
-  ui[3]: "input4"
-  ui[4]: "input5"
-  ui[5]: "input6"
-  ui[6]: "input7"
-  ui[7]: "input8"
+  ui[0]: ""
+  ui[1]: "up/evolve"
+  ui[2]: ""
+  ui[3]: "down"
+  ui[4]: "feed"
+  ui[5]: "drink"
+  ui[6]: "select/sleep"
+  ui[7]: "back/play"
 
   # Outputs
-  uo[0]: "output1"
-  uo[1]: "output2"
-  uo[2]: "output3"
-  uo[3]: "output4"
-  uo[4]: "output5"
-  uo[5]: "output6"
-  uo[6]: "output7"
-  uo[7]: "output8"
+  uo[0]: "R1"
+  uo[1]: "G1"
+  uo[2]: "B1"
+  uo[3]: "vsync"
+  uo[4]: "R0"
+  uo[5]: "G0"
+  uo[6]: "B0"
+  uo[7]: "hsync"
 
   # Bidirectional pins
-  uio[0]: "bi1"
-  uio[1]: "bi2"
-  uio[2]: "bi3"
-  uio[3]: "bi4"
-  uio[4]: "bi5"
-  uio[5]: "bi6"
-  uio[6]: "bi7"
-  uio[7]: "bi8"
+  uio[0]: ""
+  uio[1]: ""
+  uio[2]: ""
+  uio[3]: ""
+  uio[4]: ""
+  uio[5]: ""
+  uio[6]: ""
+  uio[7]: ""
 
 # Do not change!
 yaml_version: 6
