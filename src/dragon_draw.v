@@ -4,6 +4,7 @@ module dragon_draw (
     input  wire       rst_n,
     input  wire [9:0] x,
     input  wire [9:0] y,
+    input  wire [1:0] dragon_bob,
     input  wire [2:0] level,
     output wire       px_on,
     output wire [2:0] px_code
@@ -20,7 +21,7 @@ module dragon_draw (
         .clk       (clk),
         .rst_n     (rst_n),
         .x         (x),
-        .y         (y),
+        .y         (yb),
         .px_on     (lvl2_px_on),
         .px_code   (lvl2_px_code)
     );
@@ -30,7 +31,7 @@ module dragon_draw (
         .clk       (clk),
         .rst_n     (rst_n),
         .x         (x),
-        .y         (y),
+        .y         (yb),
         .px_on     (lvl3_px_on),
         .px_code   (lvl3_px_code)
     );
@@ -39,7 +40,7 @@ module dragon_draw (
         .clk       (clk),
         .rst_n     (rst_n),
         .x         (x),
-        .y         (y),
+        .y         (yb),
         .px_on     (lvl4_px_on),
         .px_code   (lvl4_px_code)
     );

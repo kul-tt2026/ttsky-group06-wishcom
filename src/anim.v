@@ -68,6 +68,45 @@ module anim (
     end
   end
 
+  // ======================= dragon_bob animatie ============================
+  reg [7:0] bob_timer;
+  reg [7:0] total_cycle;
+
+  // Bepaal totale cyclusduur per humeur (16 frames hop + rustperiode)
+  always @(*) begin
+    case (satisfaction)
+      3'd0:    total_cycle = 8'd0;    // Boos: staat permanent stil
+      3'd1:    total_cycle = 8'd150;  // Ontevreden: 16 frames hop + ~2.23s rust (2.5s totaal)
+      3'd2:    total_cycle = 8'd90;   // Neutraal:   16 frames hop + ~1.23s rust (1.5s totaal)
+      3'd3:    total_cycle = 8'd60;   // Blij:       16 frames hop + ~0.73s rust (1.0s totaal)
+      default: total_cycle = 8'd48;   // Heel blij:  16 frames hop + ~0.53s rust (0.8s totaal)
+    endcase
+  end
+
+  always @(posedge clk) begin
+    if (!rst_n) begin
+      bob_timer  <= 8'd0;
+      dragon_bob <= 2'd0;
+    end else if (frame_tick) begin
+      if (total_cycle == 8'd0) begin
+        bob_timer  <= 8'd0;
+        dragon_bob <= 2'd0;
+      end else begin
+        if (bob_timer >= total_cycle - 8'd1) begin
+          bob_timer <= 8'd0;
+        end else begin
+          bob_timer <= bob_timer + 8'd1;
+        end
+
+        // Vlotte sprong van 16 frames (4 frames per stand: 0 -> 1 -> 2 -> 1)
+        if      (bob_timer < 8'd4)   dragon_bob <= 2'd0;
+        else if (bob_timer < 8'd8)   dragon_bob <= 2'd1;
+        else if (bob_timer < 8'd12)  dragon_bob <= 2'd2;
+        else if (bob_timer < 8'd16)  dragon_bob <= 2'd1;
+        else                         dragon_bob <= 2'd0; // Rustperiode op gras
+      end
+    end
+  end
   // ======================= voeren / drinken / slapen ======================
   // De meest basale versie: een halve seconde lang kleurt de renderer de lucht
   // om.  EEN teller voor alle drie, want ze kunnen niet tegelijk -- home.v
