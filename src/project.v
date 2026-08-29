@@ -148,6 +148,7 @@ module tt_um_dragonchi (
     .coins(coins), .level(level), .combo_len(combo_len),
     .chest_state(chest_state), .chest_sel(chest_sel),
     .chest_outcome(chest_outcome), 
+    .dragon_bob(dragon_bob),
     .flash(flash), 
     .R(R), .G(G), .B(B), .overflow(overflow), .evolve_now(evolve_now),
     .chest_contents(chest_contents), .pot(pot), .round(round),
@@ -163,5 +164,5 @@ module tt_um_dragonchi (
   assign uio_out = 8'b0;
   assign uio_oe  = 8'b0;
 
-  wire _unused = &{ena, uio_in, chest_outcome, dragon_bob, 1'b0};
+  wire _unused = &{ena, uio_in, chest_outcome,  1'b0};
 endmodule
