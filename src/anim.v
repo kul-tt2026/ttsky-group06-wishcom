@@ -43,7 +43,6 @@ module anim (
     if (!rst_n) begin
       blink_cnt    <= 8'd0;
       evolve_blink <= 1'b1;
-      dragon_bob   <= 2'd0;
       flash        <= 1'b0;
     end else if (frame_tick) begin
       if (blink_cnt == 8'd179) blink_cnt <= 8'd0;
