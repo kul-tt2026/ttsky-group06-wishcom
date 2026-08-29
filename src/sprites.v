@@ -76,7 +76,7 @@ module dragon_l2_generator (
     output reg  [2:0]  px_code
 );
 
-    localparam [9:0] SPRITE_X = 10'd186;   // midden blijft 250
+    localparam [9:0] SPRITE_X = 10'd174;   // midden blijft 250
     localparam [9:0] SPRITE_Y = 10'd166;   // onderkant blijft 340
     localparam [9:0] SPRITE_W = 10'd128;   // 32 * 4
     localparam [9:0] SPRITE_H = 10'd128;

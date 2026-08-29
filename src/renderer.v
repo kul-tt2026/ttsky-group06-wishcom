@@ -44,6 +44,7 @@ module renderer (
 
     input  wire [1:0] fx_kind,
     input  wire       fx_on,
+    input  wire [6:0] fx_age,
 
     input  wire       overflow, // als hartjes vol of geld vol
     input  wire [8:0] chest_contents,  // {kist2, kist1, kist0}, 3 bits elk
@@ -312,12 +313,19 @@ module renderer (
     .bg_rgb(bg_chest_rgb)
   );
 
-   reg [5:0] fx_rgb;
-  always @(*) case (fx_kind)
-    2'd1:    fx_rgb = 6'b11_10_00;   // FEED: oranje
-    2'd2:    fx_rgb = 6'b00_00_10;   // DRINK: donkerblauw
-    default: fx_rgb = 6'b00_00_00;   // SLEEP: zwart
-  endcase
+ 
+wire flame_on;
+wire [5:0] flame_rgb;
+wire lamb_on;
+ wire [5:0] lamb_rgb;
+feed_fx u_feed (
+  .x(px), .y(py), .fx_age(fx_age),
+  .active(fx_on && (fx_kind == 2'd1)),
+  .flame_on(flame_on), .flame_rgb(flame_rgb),
+  .lamb_on(lamb_on), .lamb_rgb(lamb_rgb)
+);
+
+   
 
   // ======================= 2. SHOW ========================================
   wire show_dragon  = (mode == M_HOME);
@@ -480,7 +488,7 @@ module renderer (
     2'd2:    heartsinfo_rgb = 6'b11_11_11;   // hartje bij overflow
     default: heartsinfo_rgb = 6'b00_00_00;
   endcase
-  
+
 
 
   // ======================= 3. STACK =======================================
@@ -515,8 +523,10 @@ module renderer (
     else if (chest_body_on)                        rgb = chest_rgb;
     else if (chest_icon_on)                        rgb = icon_rgb;
     else if (chest_lid_on)                         rgb = chest_rgb;
-    else if (fx_on && (py < 10'd294))              rgb = fx_rgb;
+    else if (flame_on)                             rgb = flame_rgb;
     else if (show_dragon   && dragon_on)  rgb = night ? sprite_night : sprite_rgb;
+    else if (lamb_on)                              rgb = lamb_rgb;
+    else if (fx_on && (fx_kind == 2'd2) && (py < 10'd294)) rgb = 6'b00_00_10;  // DRINK
     else if (in_chest)                             rgb = bg_chest_rgb;
     else                                           rgb = bg_home_rgb;
     {R, G, B} = rgb;

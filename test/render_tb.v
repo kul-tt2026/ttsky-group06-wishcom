@@ -22,7 +22,7 @@
 module render_tb;
 
   // ======================= WAT WIL JE ZIEN ================================
-  localparam [2:0] MODE = 3'd3;    // 0 TITLE  1 EGG  2 HOME  3 CHEST
+  localparam [2:0] MODE = 3'd2;    // 0 TITLE  1 EGG  2 HOME  3 CHEST
                                    // 4 GAMEOVER  5 YOU_WIN
   localparam       STEP = 1;       // 1 = vol, 2 of 4 = snel itereren
 
@@ -30,7 +30,7 @@ module render_tb;
   localparam [2:0] SET_HEARTS  = 3'd3;
   localparam [2:0] SET_SAT     = 3'd2;
   localparam [9:0] SET_COINS   = 10'd347;
-  localparam [2:0] SET_LEVEL   = 3'd2;
+  localparam [2:0] SET_LEVEL   = 3'd6;
   localparam       SET_OVERFL  = 1'b0;
   localparam       SET_EVOLVE  = 1'b1;   // evolve_now: knop mag oplichten
 
@@ -46,7 +46,7 @@ module render_tb;
   localparam [9:0] SET_FLASHR  = 10'd0;  // 0 = flits uit
 
   localparam [7:0] SET_BTN_LEVEL = 8'b0010_0000;
-  localparam       SET_NIGHT = 1'b1;
+  localparam       SET_NIGHT = 1'b0;
 
   // ======================= aandrijving ====================================
   reg clk = 1'b0;

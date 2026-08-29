@@ -38,6 +38,7 @@ project:
     - "title_card.v"
     - "title_egg.v"
     - "icon_draw.v"
+    - "feed_fx.v"
 
 
 # The pinout of your project. Leave unused pins blank. DO NOT delete or add any pins.

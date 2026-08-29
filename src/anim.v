@@ -33,7 +33,8 @@ module anim (
     output reg        evolve_blink,
 
     output reg  [1:0] fx_kind,          // 0 niets, 1 feed, 2 drink, 3 sleep
-    output wire       fx_on             // effect loopt
+    output wire       fx_on,             // effect loopt
+    output wire [6:0] fx_age
 );
   // ======================= evolve-knop knippert ===========================
   reg [7:0] blink_cnt;
@@ -79,23 +80,24 @@ module anim (
                    FX_FEED  = 2'd1,
                    FX_DRINK = 2'd2;
 
-  localparam [4:0] FX_LEN = 5'd30;      // 30 frames = een halve seconde
-
+  localparam [6:0] FX_FEED_LEN = 7'd45;      // 30 frames = een halve seconde
+  localparam [6:0] FX_DRINK_LEN = 7'd30;
   reg [4:0] fx_t;
 
   always @(posedge clk) begin
     if (!rst_n) begin
       fx_kind <= FX_NONE;
-      fx_t    <= 5'd0;
+      fx_t    <= 7'd0;
     end else if (frame_tick) begin
-      if      (act_feed)  begin fx_kind <= FX_FEED;  fx_t <= FX_LEN; end
-      else if (act_drink) begin fx_kind <= FX_DRINK; fx_t <= FX_LEN; end
-      else if (fx_t != 5'd0)    fx_t <= fx_t - 5'd1;
+      if      (act_feed)  begin fx_kind <= FX_FEED;  fx_t <= FX_FEED_LEN; end
+      else if (act_drink) begin fx_kind <= FX_DRINK; fx_t <= FX_DRINK_LEN; end
+      else if (fx_t != 7'd0)    fx_t <= fx_t - 7'd1;
       else                      fx_kind <= FX_NONE;
     end
   end
 
-  assign fx_on = (fx_t != 5'd0);
+  assign fx_on = (fx_t != 7'd0);
+  assign fx_age = FX_FEED_LEN - fx_t;
 
   // satisfaction wordt pas gelezen zodra dragon_bob geschreven is.
   wire _unused = &{satisfaction, 1'b0};
