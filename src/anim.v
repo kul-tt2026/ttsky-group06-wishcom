@@ -25,6 +25,7 @@ module anim (
     input  wire       act_sleep,
 
     input  wire       wake,
+    input  wire       restart, 
 
     output reg        night,  
 
@@ -128,8 +129,8 @@ module anim (
   assign fx_age = fx_len_now - fx_t;
 
   always @(posedge clk) begin
-    if (!rst_n) begin
-      fx_kind <= FX_NONE;
+    if (!rst_n || restart) begin
+      fx_kind <= FX_NONE; 
       fx_t    <= 7'd0;
     end else if (frame_tick) begin
       if (fx_t != 7'd0)   fx_t <= fx_t - 7'd1;     // bezig wint van alles
@@ -143,7 +144,7 @@ module anim (
   // Eigen always-blok met eigen reset: Verilog verbiedt dat een register
   // vanuit twee blokken gedreven wordt.
   always @(posedge clk) begin
-    if (!rst_n)            night <= 1'b0;
+    if (!rst_n || restart)            night <= 1'b0;
     else if (frame_tick) begin
       if      (wake)       night <= 1'b0;
       else if (act_sleep)  night <= 1'b1;

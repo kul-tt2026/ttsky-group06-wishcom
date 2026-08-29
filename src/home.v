@@ -85,8 +85,7 @@ module home (
       act_minigame <= 1'b0;
       req_evolve   <= 1'b0;
       restart      <= 1'b0;
-      
-
+    end
       case (mode)
 
         // -------------------------------------------------------------
@@ -114,14 +113,13 @@ module home (
           if (game_over)      mode <= M_GAMEOVER;
           else if (you_win)   mode <= M_YOU_WIN;
           else if (!fx_on) begin        // <-- knoppen dood tijdens een effect
-            if (btn_pressed[BTN_FEED])   act_feed   <= 1'b1;
-            if (btn_pressed[BTN_DRINK])  act_drink  <= 1'b1;
-            if (btn_pressed[BTN_SLEEP])  act_sleep  <= 1'b1;
-            if (btn_pressed[BTN_EVOLVE]) req_evolve <= 1'b1;
             if (btn_pressed[BTN_PLAY]) begin
-              act_minigame <= 1'b1;
-              mode         <= M_CHEST;
+              act_minigame <= 1'b1; mode <= M_CHEST;
             end
+            else if (btn_pressed[BTN_EVOLVE]) req_evolve <= 1'b1;
+            else if (btn_pressed[BTN_FEED])   act_feed   <= 1'b1;
+            else if (btn_pressed[BTN_DRINK])  act_drink  <= 1'b1;
+            else if (btn_pressed[BTN_SLEEP])  act_sleep  <= 1'b1;
           end
         end
 

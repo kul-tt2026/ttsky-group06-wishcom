@@ -127,7 +127,7 @@ module tt_um_dragonchi (
     .clk(clk), .rst_n(rst_n), .frame_tick(frame_tick),
     .satisfaction(satisfaction),
     .dragon_bob(dragon_bob), 
-    .flash(flash), 
+    .flash(flash), .restart(restart),
     .evolve_blink(evolve_blink), .act_drink(act_drink), .act_feed(act_feed), .act_sleep(act_sleep),
     .fx_kind(fx_kind), .fx_on(fx_on), .wake(wake), .night(night) , .fx_age(fx_age)
   );
