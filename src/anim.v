@@ -123,16 +123,5 @@ module anim (
 
 
 
-    // ---- nacht: een TOESTAND, geen effect ----------------------------------
-  // Slapen zet hem aan en hij blijft aan tot je iets anders doet.  Daarom een
-  // eigen blokje met een eigen reset, los van de knipperteller hierboven --
-  // die twee hebben niets met elkaar te maken.
-  always @(posedge clk) begin
-    if (!rst_n) begin
-      night <= 1'b0;
-    end else if (frame_tick) begin
-      if      (act_sleep) night <= 1'b1;
-      else if (wake)      night <= 1'b0;
-    end
-  end
+
 endmodule

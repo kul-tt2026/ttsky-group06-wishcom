@@ -1,0 +1,4 @@
+read_verilog -sv src/*.v
+hierarchy -top tt_um_dragonchi
+proc
+check -assert
