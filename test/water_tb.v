@@ -23,9 +23,11 @@ module water_tb;
   wire dragon_on;
   wire [2:0] dragon_code;
   dragon_draw u_draw (
-    .clk(clk), .rst_n(rst_n), .x(px), .y(py), .level(level),
-    .px_on(dragon_on), .px_code(dragon_code)
-  );
+  .clk(clk), .rst_n(rst_n), .x(px), .y(py), .level(level),
+  .dragon_bob(2'd0),                          // <-- erbij
+  .px_on(dragon_on), .px_code(dragon_code)
+);
+  
 
   reg [5:0] sprite_rgb;
   always @(*) case (dragon_code)
