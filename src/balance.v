@@ -61,39 +61,14 @@ module balance (
                        (next_h2 != next_h3);
 
   // 2. Directe controle op ontbrekende actie in 6 stappen
-  reg [2:0] next_count_00, next_count_01, next_count_10, next_count_11;
-  always @(*) begin
-    next_count_00 = ((next_h0 == A_MINIGAME) ? 3'd1 : 3'd0) +
-                    ((actions_count >= 3'd1 && next_h1 == A_MINIGAME) ? 3'd1 : 3'd0) +
-                    ((actions_count >= 3'd2 && next_h2 == A_MINIGAME) ? 3'd1 : 3'd0) +
-                    ((actions_count >= 3'd3 && next_h3 == A_MINIGAME) ? 3'd1 : 3'd0) +
-                    ((actions_count >= 3'd4 && next_h4 == A_MINIGAME) ? 3'd1 : 3'd0) +
-                    ((actions_count >= 3'd5 && next_h5 == A_MINIGAME) ? 3'd1 : 3'd0);
-
-    next_count_01 = ((next_h0 == A_FEED) ? 3'd1 : 3'd0) +
-                    ((actions_count >= 3'd1 && next_h1 == A_FEED) ? 3'd1 : 3'd0) +
-                    ((actions_count >= 3'd2 && next_h2 == A_FEED) ? 3'd1 : 3'd0) +
-                    ((actions_count >= 3'd3 && next_h3 == A_FEED) ? 3'd1 : 3'd0) +
-                    ((actions_count >= 3'd4 && next_h4 == A_FEED) ? 3'd1 : 3'd0) +
-                    ((actions_count >= 3'd5 && next_h5 == A_FEED) ? 3'd1 : 3'd0);
-
-    next_count_10 = ((next_h0 == A_DRINK) ? 3'd1 : 3'd0) +
-                    ((actions_count >= 3'd1 && next_h1 == A_DRINK) ? 3'd1 : 3'd0) +
-                    ((actions_count >= 3'd2 && next_h2 == A_DRINK) ? 3'd1 : 3'd0) +
-                    ((actions_count >= 3'd3 && next_h3 == A_DRINK) ? 3'd1 : 3'd0) +
-                    ((actions_count >= 3'd4 && next_h4 == A_DRINK) ? 3'd1 : 3'd0) +
-                    ((actions_count >= 3'd5 && next_h5 == A_DRINK) ? 3'd1 : 3'd0);
-
-    next_count_11 = ((next_h0 == A_SLEEP) ? 3'd1 : 3'd0) +
-                    ((actions_count >= 3'd1 && next_h1 == A_SLEEP) ? 3'd1 : 3'd0) +
-                    ((actions_count >= 3'd2 && next_h2 == A_SLEEP) ? 3'd1 : 3'd0) +
-                    ((actions_count >= 3'd3 && next_h3 == A_SLEEP) ? 3'd1 : 3'd0) +
-                    ((actions_count >= 3'd4 && next_h4 == A_SLEEP) ? 3'd1 : 3'd0) +
-                    ((actions_count >= 3'd5 && next_h5 == A_SLEEP) ? 3'd1 : 3'd0);
-  end
-
-  wire next_missing_an_action = (next_count_00 == 3'd0) || (next_count_01 == 3'd0) || 
-                                (next_count_10 == 3'd0) || (next_count_11 == 3'd0);
+   wire [3:0] seen_mask =
+      (4'b0001 << next_h0) |
+      ((actions_count >= 3'd1) ? (4'b0001 << next_h1) : 4'b0000) |
+      ((actions_count >= 3'd2) ? (4'b0001 << next_h2) : 4'b0000) |
+      ((actions_count >= 3'd3) ? (4'b0001 << next_h3) : 4'b0000) |
+      ((actions_count >= 3'd4) ? (4'b0001 << next_h4) : 4'b0000) |
+      ((actions_count >= 3'd5) ? (4'b0001 << next_h5) : 4'b0000);
+  wire next_missing_an_action = (seen_mask != 4'b1111);
 
   // Bitmasker voor de renderer combo balk
   wire [3:0] seen_recent = (actions_count >= 3'd1 ? (4'b0001 << hist_0) : 4'b0000) | 

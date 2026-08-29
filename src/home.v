@@ -20,6 +20,7 @@ module home (
     input  wire       you_win,         // from dragon_state (a LEVEL, not a pulse)
     input  wire       minigame_done,   // from chest_game (one-frame pulse)
     input  wire [9:0] coins,           // unused: dragon_state checks the price
+    input  wire       fx_on, 
 
     output reg  [2:0] mode,            // see localparams below
     output reg  [2:0] menu_sel,        // kept for the interface; always 0 now
@@ -109,17 +110,16 @@ module home (
           end
         end
         // -------------------------------------------------------------
-        M_HOME: begin
-          // end conditions first: they are levels, so test before buttons
+                M_HOME: begin
           if (game_over)      mode <= M_GAMEOVER;
           else if (you_win)   mode <= M_YOU_WIN;
-          else begin
+          else if (!fx_on) begin        // <-- knoppen dood tijdens een effect
             if (btn_pressed[BTN_FEED])   act_feed   <= 1'b1;
             if (btn_pressed[BTN_DRINK])  act_drink  <= 1'b1;
             if (btn_pressed[BTN_SLEEP])  act_sleep  <= 1'b1;
-            if (btn_pressed[BTN_EVOLVE]) req_evolve <= 1'b1;  // price checked in dragon_state
+            if (btn_pressed[BTN_EVOLVE]) req_evolve <= 1'b1;
             if (btn_pressed[BTN_PLAY]) begin
-              act_minigame <= 1'b1;      // counts as the 4th combo action
+              act_minigame <= 1'b1;
               mode         <= M_CHEST;
             end
           end

@@ -314,16 +314,22 @@ module renderer (
   );
 
  
-wire flame_on;
-wire [5:0] flame_rgb;
-wire lamb_on;
- wire [5:0] lamb_rgb;
+wire feed_on;
+wire [5:0] feed_rgb;
 feed_fx u_feed (
   .x(px), .y(py), .fx_age(fx_age),
   .active(fx_on && (fx_kind == 2'd1)),
-  .flame_on(flame_on), .flame_rgb(flame_rgb),
-  .lamb_on(lamb_on), .lamb_rgb(lamb_rgb)
+  .feed_on(feed_on), .feed_rgb(feed_rgb)
 );
+
+wire       water_on;
+wire [5:0] water_rgb;
+water_fx u_water (
+    .x(px), .y(py), .fx_age(fx_age),
+    .active(fx_on && (fx_kind == 2'd2)),   // FX_DRINK
+    .water_on(water_on), .water_rgb(water_rgb)
+  );
+
 
    
 
@@ -523,10 +529,9 @@ feed_fx u_feed (
     else if (chest_body_on)                        rgb = chest_rgb;
     else if (chest_icon_on)                        rgb = icon_rgb;
     else if (chest_lid_on)                         rgb = chest_rgb;
-    else if (flame_on)                             rgb = flame_rgb;
+    else if (feed_on)                              rgb = feed_rgb;
+    else if (water_on)                             rgb = water_rgb;
     else if (show_dragon   && dragon_on)  rgb = night ? sprite_night : sprite_rgb;
-    else if (lamb_on)                              rgb = lamb_rgb;
-    else if (fx_on && (fx_kind == 2'd2) && (py < 10'd294)) rgb = 6'b00_00_10;  // DRINK
     else if (in_chest)                             rgb = bg_chest_rgb;
     else                                           rgb = bg_home_rgb;
     {R, G, B} = rgb;

@@ -63,7 +63,7 @@ module tt_um_dragonchi (
     .mode(mode), .menu_sel(menu_sel),
     .act_feed(act_feed), .act_drink(act_drink), .act_sleep(act_sleep),
     .req_evolve(req_evolve), .restart(restart), .you_win(you_win), .act_minigame(act_minigame),
-    .egg_frame(egg_frame), .flash_r(flash_r)
+    .egg_frame(egg_frame), .flash_r(flash_r), .fx_on(fx_on)
   );
 
   // ---- balance game (Person B) ----

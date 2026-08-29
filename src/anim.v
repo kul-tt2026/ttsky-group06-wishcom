@@ -76,28 +76,46 @@ module anim (
   // Wil je later meer: het vallende blok bij drinken volgt uit fx_t (hoe lager
   // de teller, hoe verder gezakt), en bij slapen kan de draak grijs worden met
   // een mux op sprite_rgb.  De teller hier hoeft daar niet voor te veranderen.
-  localparam [1:0] FX_NONE  = 2'd0,
-                   FX_FEED  = 2'd1,
-                   FX_DRINK = 2'd2;
+  localparam [1:0] FX_NONE = 2'd0, FX_FEED = 2'd1, FX_DRINK = 2'd2;
+  localparam [6:0] FX_FEED_LEN  = 7'd73;   // lam valt, pauze, vlam, nagloeien
+  localparam [6:0] FX_DRINK_LEN = 7'd30;   // water landt op frame 8, dan hold
 
-  localparam [6:0] FX_FEED_LEN = 7'd45;      // 30 frames = een halve seconde
-  localparam [6:0] FX_DRINK_LEN = 7'd30;
-  reg [4:0] fx_t;
+  // ---- HIER staat fx_t: puur lokaal, nergens een poort -------------------
+  reg [6:0] fx_t;
+
+  assign fx_on = (fx_t != 7'd0);
+
+  // fx_age telt OP vanaf 0, voor welk effect dan ook loopt.
+  wire [6:0] fx_len_now = (fx_kind == FX_DRINK) ? FX_DRINK_LEN : FX_FEED_LEN;
+  assign fx_age = fx_len_now - fx_t;
 
   always @(posedge clk) begin
     if (!rst_n) begin
       fx_kind <= FX_NONE;
       fx_t    <= 7'd0;
     end else if (frame_tick) begin
-      if      (act_feed)  begin fx_kind <= FX_FEED;  fx_t <= FX_FEED_LEN; end
+      if (fx_t != 7'd0)   fx_t <= fx_t - 7'd1;     // bezig wint van alles
+      else if (act_feed)  begin fx_kind <= FX_FEED;  fx_t <= FX_FEED_LEN;  end
       else if (act_drink) begin fx_kind <= FX_DRINK; fx_t <= FX_DRINK_LEN; end
-      else if (fx_t != 7'd0)    fx_t <= fx_t - 7'd1;
-      else                      fx_kind <= FX_NONE;
+      else                fx_kind <= FX_NONE;
     end
   end
 
-  assign fx_on = (fx_t != 7'd0);
-  assign fx_age = FX_FEED_LEN - fx_t;
+  // ---- nacht: blijft staan tot een andere actie je wekt -------------------
+  // Eigen always-blok met eigen reset: Verilog verbiedt dat een register
+  // vanuit twee blokken gedreven wordt.
+  always @(posedge clk) begin
+    if (!rst_n)            night <= 1'b0;
+    else if (frame_tick) begin
+      if      (wake)       night <= 1'b0;
+      else if (act_sleep)  night <= 1'b1;
+    end
+  end
+
+
+
+
+
 
   // satisfaction wordt pas gelezen zodra dragon_bob geschreven is.
   wire _unused = &{satisfaction, 1'b0};
