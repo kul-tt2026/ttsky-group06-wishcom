@@ -397,7 +397,9 @@ water_fx u_water (
   endfunction
 
   function [5:0] dim_color;
+    /* verilator lint_off UNUSEDSIGNAL */
     input [5:0] c;
+    /* verilator lint_on UNUSEDSIGNAL */
     begin
       dim_color = {1'b0, c[5], 1'b0, c[3], 1'b0, c[1]};
     end

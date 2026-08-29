@@ -62,9 +62,11 @@ module coinbar (
   wire [9:0] diff_y = y - FRAME;        // 0..187 binnen in_inner
 
   // idx = diff_y / 24 = (diff_y / 8) / 3
-  wire [7:0]  dy8   = diff_y[7:0];
+  wire [4:0] dy8 = diff_y[7:3]; // Pas de bit-range aan op wat je effectief gebruikt
   wire [4:0]  dq    = dy8[7:3];                       // /8, 0..23
-  wire [15:0] m3    = {11'd0, dq} * 16'd683;
+  /* verilator lint_off UNUSEDSIGNAL */
+  wire [15:0] m3 = {11'd0, dq} * 16'd683;
+  /* verilator lint_on UNUSEDSIGNAL */
   wire [2:0]  idx   = m3[13:11];                      // /3, 0..7
 
   // sy = diff_y - idx*24, met idx*24 = (idx<<4) + (idx<<3)
@@ -84,18 +86,22 @@ module coinbar (
   // ======================= BCD, zonder deler ==============================
   wire [9:0]  c_val  = (coins > 10'd999) ? 10'd999 : coins;
 
-  wire [15:0] m100   = {6'd0, c_val} * 16'd41;        // /100
+  /* verilator lint_off UNUSEDSIGNAL */
+  wire [15:0] m100 = {6'd0, c_val} * 16'd41;
+  /* verilator lint_on UNUSEDSIGNAL */
   wire [3:0]  d_hond = m100[15:12];
   wire [9:0]  h100   = ({6'd0, d_hond} << 6) +        // d_hond * 100
                        ({6'd0, d_hond} << 5) +
                        ({6'd0, d_hond} << 2);
   wire [9:0]  r100   = c_val - h100;                  // 0..99
 
-  wire [15:0] m10    = {6'd0, r100} * 16'd205;        // /10
+  /* verilator lint_off UNUSEDSIGNAL */
+  wire [15:0] m10  = {6'd0, r100} * 16'd205;
+  /* verilator lint_on UNUSEDSIGNAL */
   wire [3:0]  d_tien = m10[14:11];
   wire [9:0]  t10    = ({6'd0, d_tien} << 3) +        // d_tien * 10
                        ({6'd0, d_tien} << 1);
-  wire [9:0]  r10    = r100 - t10;
+  wire [3:0] r10 = r100[3:0] - t10[3:0]; // of wire [3:0] r10 = (r100 - t10)[3:0];
   wire [3:0]  d_een  = r10[3:0];
 
   wire show_hond = (d_hond != 4'd0);

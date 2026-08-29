@@ -116,10 +116,11 @@ module tt_um_dragonchi (
 
   // ---- animation heartbeat (Person B) ----
   wire [1:0] dragon_bob;
-  wire [2:0] dragon_mood_anim;
+  // wire [2:0] dragon_mood_anim;
   wire flash, evolve_blink;
   wire fx_on;
   wire [1:0] fx_kind;
+  wire [6:0] fx_age;
   wire wake = act_drink | act_feed | act_minigame | req_evolve;
   wire night;
   anim u_anim (
@@ -128,7 +129,7 @@ module tt_um_dragonchi (
     .dragon_bob(dragon_bob), 
     .flash(flash), 
     .evolve_blink(evolve_blink), .act_drink(act_drink), .act_feed(act_feed), .act_sleep(act_sleep),
-    .fx_kind(fx_kind), .fx_on(fx_on), .wake(wake), .night(night) 
+    .fx_kind(fx_kind), .fx_on(fx_on), .wake(wake), .night(night) , .fx_age(fx_age)
   );
 
   // ---- TinyVGA Pmod.  Do not touch. ----
@@ -151,7 +152,7 @@ module tt_um_dragonchi (
     .R(R), .G(G), .B(B), .overflow(overflow), .evolve_now(evolve_now),
     .chest_contents(chest_contents), .pot(pot), .round(round),
     .evolve_blink(evolve_blink), .frame_tick(frame_tick), .egg_frame(egg_frame), .flash_r(flash_r),
-    .btn_level(btn_level), .fx_kind(fx_kind), .fx_on(fx_on), .night(night)
+    .btn_level(btn_level), .fx_kind(fx_kind), .fx_on(fx_on), .night(night), .fx_age(fx_age)
   );
 
   
