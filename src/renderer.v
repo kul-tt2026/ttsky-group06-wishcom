@@ -243,7 +243,7 @@ module renderer (
   digit_rom u_digit (.digit(dig_digit), .row(dig_row), .bits(dig_bits));
 
   // MINI GAME MENU PAGE ----------------------------------------------------
-  wire       menu_on, menu_q
+  wire       menu_on, menu_q;
   wire [2:0] menu_code;
   chest_menu u_menu (
     .x(px), .y(py), .pot(pot), .round(round),
