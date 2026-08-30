@@ -44,7 +44,7 @@ module egg_tb;
     .clk(clk), .rst_n(rst_n), .frame_tick(frame_tick),
     .btn_pressed(btn_pressed),
     .game_over(1'b0), .you_win(1'b0), .minigame_done(1'b0), .coins(10'd0),
-    .mode(mode), .egg_frame(egg_frame), .flash_r(flash_r)
+    .mode(mode), .egg_frame(egg_frame), .flash_r(flash_r), .flash_cx(10'd240), .flash_cy(10'd462),  
   );
 
   // ---- de drawables --------------------------------------------------------
@@ -54,7 +54,7 @@ module egg_tb;
   title_egg u_egg (
     .clk(clk), .rst_n(rst_n), .frame_tick(frame_tick),
     .x(x), .y(y),
-    .egg_frame(egg_frame), .flash_r(flash_r),
+    .egg_frame(egg_frame), .flash_r(flash_r), .flash_cx(fl_cx), .flash_cy(fl_cy), 
     .egg_on(egg_on), .egg_code(egg_code),
     .crack_on(crack_on),
     .flash_on(flash_on), .flash_rim(flash_rim),

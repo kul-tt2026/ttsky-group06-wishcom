@@ -17,19 +17,23 @@
 // TICKS_PER_SHOT = 2 videoframes = 33 ms, dus `ppm2gif.py 33` is ware
 // snelheid.  De hele reeks duurt EVO_LEN = 60 frames = 1 s.
 //
-// De achthoek staat hier in de testbench zelf, precies zoals renderer.v hem
-// straks moet tekenen -- zo kan je dit draaien VOORDAT je title_egg omgebouwd
-// hebt.  Als je hem daar wel al hebt, klopt het beeld exact.
+// LET OP -- DEZE TESTBENCH GEBRUIKT renderer.v NIET.
+// Hij instantieert alleen anim en dragon_draw, en tekent de achthoek zelf.
+// Wijzigingen in renderer.v (fl_cx / fl_cy / fl_r) hebben hier dus GEEN
+// effect; die zie je pas op het echte scherm.  Stem het middelpunt hier met
+// +CX= en +CY=, en zet de waarde die je mooi vindt daarna over naar
+// renderer.v.
 // ---------------------------------------------------------------------------
 module evolve_tb;
   localparam SHOTS          = 40;     // 40 * 2 = 80 frames, ruim de 60 van EVO_LEN
   localparam TICKS_PER_SHOT = 2;
   localparam STEP           = 2;
 
-  // middelpunt van de flits: het midden van de draak (px 186..381, py 122..350)
-  localparam [9:0] EVO_CX = 10'd283;
-  localparam [9:0] EVO_CY = 10'd236;
-  localparam [9:0] RIM    = 10'd12;
+  localparam [9:0] RIM = 10'd12;
+  // middelpunt van de flits -- instelbaar met +CX= en +CY=
+  //   CX loopt over de 480 px brede kant (240 = midden)
+  //   CY loopt over de 640 px hoge kant  (236 = midden van de draak)
+  reg [9:0] EVO_CX, EVO_CY;
 
   reg clk = 1'b0;
   always #20 clk = ~clk;
@@ -39,7 +43,7 @@ module evolve_tb;
   reg [9:0] px, py;
 
   wire night, flash, evolve_blink, fx_on, evo_on;
-  wire [3:0] dragon_bob, fx_kind;
+  wire [1:0] dragon_bob, fx_kind;
   wire [6:0] fx_age;
   wire [9:0] evo_r;
   wire [2:0] level_shown;
@@ -105,11 +109,15 @@ module evolve_tb;
 
   initial begin
     if (!$value$plusargs("FROM=%d", lvl_from)) lvl_from = 3'd2;
-    if (!$value$plusargs("TO=%d",   lvl_to))   lvl_to   = 3'd4;
+    if (!$value$plusargs("TO=%d",   lvl_to))   lvl_to   = 3'd3;
+    if (!$value$plusargs("CX=%d",   EVO_CX))   EVO_CX   = 10'd240;
+    if (!$value$plusargs("CY=%d",   EVO_CY))   EVO_CY   = 10'd236;
     rst_n = 1'b0; frame_tick = 1'b0; evolved = 1'b0;
     level = lvl_from; px = 10'd0; py = 10'd0; frame_no = 0;
     repeat (4) @(posedge clk); rst_n = 1'b1; repeat (4) @(posedge clk);
-    $display("evolve_tb: van level %0d naar %0d", lvl_from, lvl_to);
+    $display("evolve_tb: van level %0d naar %0d, flits op (%0d,%0d)",
+             lvl_from, lvl_to, EVO_CX, EVO_CY);
+    $display("           (deze testbench gebruikt renderer.v NIET)");
 
     for (s = 0; s < SHOTS; s = s + 1) begin
       for (t = 0; t < TICKS_PER_SHOT; t = t + 1) tick;
