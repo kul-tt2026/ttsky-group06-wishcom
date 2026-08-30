@@ -67,7 +67,7 @@ module tt_um_dragonchi (
   wire [2:0] level_shown;
   wire evo_on;
   wire [9:0] evo_r;
-  wire buttons_dead = fx_on | evo_on
+  wire buttons_dead = fx_on | evo_on;
   home u_home (
     .clk(clk), .rst_n(rst_n), .frame_tick(frame_tick),
     .btn_pressed(btn_pressed),
