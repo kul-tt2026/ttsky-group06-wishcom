@@ -37,7 +37,7 @@ test_balance:
 # 2. Chest Game
 test_chest:
 	$(MAKE) clean
-	$(MAKE) TOPLEVEL=chest_game MODULE=test_chest VERILOG_SOURCES="$(SRC_DIR)/chest_game.v"
+	$(MAKE) TOPLEVEL=chest_game MODULE=test_chest VERILOG_SOURCES="$(SRC_DIR)/chest_game.v $(SRC_DIR)/dual_lfsr.v"
 
 # 3. LFSR
 test_lfsr:
