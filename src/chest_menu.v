@@ -228,7 +228,7 @@ module number2 (
   assign q_on    = in_band && in_g;
   assign on      = in_band && in_g && visible && q_bits[2'd3 - gcol];
 
-
+  wire _unused_num_round = &{1'b0, rest[4]};
 endmodule
 
 
@@ -273,6 +273,8 @@ module label (
 
   // bits is vijf breed, dus hier is een index van drie bits wel correct
   assign on = in_band && in_g && bits[3'd4 - gcol];
+
+  wire _unused_lbl = &{1'b0, cy[1:0]};
 endmodule
 
 // ---------------------------------------------------------------------------
