@@ -111,7 +111,7 @@ module renderer (
   wire       tegg_on, crack_on, flash_on, flash_rim, press_on;
   wire       tground_on, tground_shadow;
   wire [2:0] tegg_code;
-  wire [9:0] fl_cx = evo_on ? 10'd283 : 10'd240;
+  wire [9:0] fl_cx = evo_on ? 10'd240 : 10'd240;
   wire [9:0] fl_cy = evo_on ? 10'd236 : 10'd462;
   wire [9:0] fl_r  = evo_on ? evo_r   : flash_r;
 
@@ -275,7 +275,7 @@ module renderer (
   // module zelf; alleen het cijfer komt uit de gedeelde tabel hierboven.
   wire lvl_on;
   level_box u_level (
-    .x(px - LEVEL_X), .y(py - LEVEL_Y), .level(level),
+    .x(px - LEVEL_X), .y(py - LEVEL_Y), .level(level_shown),
     .q_digit(lvl_d), .q_row(lvl_r), .q_bits(dig_bits), .q_on(lvl_q),
     .on(lvl_on)
   );
@@ -554,5 +554,5 @@ water_fx u_water (
   // coin_q hangt onderaan de prioriteitsketen en hoeft dus niet gelezen te
   // worden -- coin_d is de laatste tak.  Wel aangesloten laten, anders zie je
   // niet meer dat coinbar hem uitgeeft.
-  wire _unused = &{menu_sel, chest_outcome, combo_len, flash, coin_q, 1'b0, menu_q};
+  wire _unused = &{menu_sel, chest_outcome, combo_len, coin_q, 1'b0, menu_q};
 endmodule

@@ -83,7 +83,8 @@ module anim (
       default: total_cycle = 8'd48;
     endcase
   end
-
+  reg [6:0] fx_t;
+  assign evo_on = (evo_t != 7'd0);
   wire fx_busy  = (fx_t != 7'd0);          // een effect speelt ECHT
   wire grounded = (dragon_bob == 3'd0);    // de draak staat op het gras
 
@@ -142,7 +143,6 @@ module anim (
     end
   end
   // ======================= voeren / drinken ===============================
-  reg [6:0] fx_t;
   reg [1:0] pending;        // aangevraagd, wacht tot de draak geland is
 
   // Alleen op de FLANK starten, niet op het niveau: blijft een knop hangen,
@@ -197,7 +197,6 @@ module anim (
   localparam [6:0] EVO_LEN    = EVO_PEAK + EVO_STEP + 7'd1;   // 70 frames = 1.17 s
 
   reg [6:0] evo_t;
-  assign evo_on = (evo_t != 7'd0);
   wire [6:0] evo_age = EVO_LEN - evo_t;
 
   // De straal: groeien tot het hoogtepunt, dan krimpen.  De klem op `step` is

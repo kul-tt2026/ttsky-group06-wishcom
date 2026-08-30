@@ -68,7 +68,7 @@ module chest_menu (
   assign q_on    = n2_q || n3_q;
 
   // Het rondenummer staat onder ROUND, allebei gecentreerd op x = 240.
- 
+  wire [4:0] round_disp = {1'b0, round} + 5'd1;   // round telt vanaf 0
   // Bij een enkel cijfer tekent number2 alleen de rechtercel; schuif het vak
   // dan 8 px op zodat dat cijfer wel onder het midden van ROUND valt.
   wire two_digits = (round_disp >= 5'd10);
@@ -77,7 +77,7 @@ module chest_menu (
 
   wire [9:0] rnd_Y0 = menu_open ? 10'd84  : 10'd94;
 
-  wire [4:0] round_disp = {1'b0, round} + 5'd1;   // round telt vanaf 0
+  
   wire       num_round;
   number2 u_num_round (
     .x(x), .y(y), .X0(rnd_X0), .Y0(rnd_Y0),

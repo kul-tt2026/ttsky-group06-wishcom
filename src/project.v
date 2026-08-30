@@ -56,6 +56,17 @@ module tt_um_dragonchi (
   wire act_feed, act_drink, act_sleep, act_minigame, req_evolve, restart;
   wire game_over, minigame_done;
   wire [9:0] coins, flash_r;
+  wire fx_on;
+   wire [1:0] dragon_bob;
+  // wire [2:0] dragon_mood_anim;
+  wire flash, evolve_blink;
+  wire [1:0] fx_kind;
+  wire [6:0] fx_age;
+  wire wake = act_drink | act_feed | act_minigame | req_evolve;
+  wire night;
+  wire [2:0] level_shown;
+  wire evo_on;
+  wire [9:0] evo_r;
   home u_home (
     .clk(clk), .rst_n(rst_n), .frame_tick(frame_tick),
     .btn_pressed(btn_pressed),
@@ -63,7 +74,7 @@ module tt_um_dragonchi (
     .mode(mode), .menu_sel(menu_sel),
     .act_feed(act_feed), .act_drink(act_drink), .act_sleep(act_sleep),
     .req_evolve(req_evolve), .restart(restart), .you_win(you_win), .act_minigame(act_minigame),
-    .egg_frame(egg_frame), .flash_r(flash_r), .fx_on(fx_on)
+    .egg_frame(egg_frame), .flash_r(flash_r), .fx_on(fx_on|evo_on)
   );
 
   // ---- balance game (Person B) ----
@@ -116,17 +127,7 @@ module tt_um_dragonchi (
   );
 
   // ---- animation heartbeat (Person B) ----
-  wire [1:0] dragon_bob;
-  // wire [2:0] dragon_mood_anim;
-  wire flash, evolve_blink;
-  wire fx_on;
-  wire [1:0] fx_kind;
-  wire [6:0] fx_age;
-  wire wake = act_drink | act_feed | act_minigame | req_evolve;
-  wire night;
-  wire [2:0] level_shown;
-  wire evo_on;
-  wire [9:0] evo_r;
+ 
   anim u_anim (
     .clk(clk), .rst_n(rst_n), .frame_tick(frame_tick),
     .satisfaction(satisfaction),
