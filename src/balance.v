@@ -89,9 +89,9 @@ module balance (
     // Als de 4e actie net binnenkomt OF al 4 unieke acties in het register zitten:
     if ((actions_count >= 3'd3 && next_unique_4 && has_act) || (actions_count >= 3'd4 && current_unique_4)) begin
       combo_len = 2'd3;
-    end else if (num_unique_3 >= 2'd3) begin
+    end else if (num_unique_3 >= 3'd3) begin
       combo_len = 2'd2;
-    end else if (num_unique_3 >= 2'd2) begin
+    end else if (num_unique_3 >= 3'd2) begin
       combo_len = 2'd1;
     end else begin
       combo_len = 2'd0;
