@@ -284,4 +284,6 @@ module draw_buttons (
                    any_fill_dark  ? 3'd2 :
                    ell_i          ? 3'd3 : 3'd0;
   assign px_on = (px_code != 3'd0);
+
+  wire _unused = &{wd_u[9:8], wd_u[1:0], wd_v[9:5], wd_v[1:0], wp_u[9:8], wp_u[1:0], wp_v[9:5], wp_v[1:0], we_u[9:8], we_u[1:0], we_v[9:5], we_v[1:0], wf_u[9:8], wf_u[1:0], wf_v[9:5], wf_v[1:0], ws_u[9:8], ws_u[1:0], ws_v[9:5], ws_v[1:0], 1'b0};
 endmodule

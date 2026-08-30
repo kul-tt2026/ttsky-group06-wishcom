@@ -187,4 +187,7 @@ module satisfactionbar (
                    smiley   ? 3'd0         :   // de lijnen van het gezichtje
                    coloured ? (idx + 3'd1) :   // kleur 1..5
                               3'd7;            // onverlicht
+
+
+  wire _unused = &{diff_y[9:6], sxw[9:6], fdx[5:0], fdy[5:0], 1'b0};
 endmodule

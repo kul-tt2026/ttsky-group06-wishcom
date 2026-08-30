@@ -119,4 +119,6 @@ module hearts (
 
   assign px_on   = heart_edge || heart_core;
   assign px_code = heart_core ? (overflow ? 2'd2 : 2'd1) : 2'd0;
+
+  wire _unused = &{NHEART, HPITCH, sxw[9:6], 1'b0};
 endmodule

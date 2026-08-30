@@ -97,4 +97,6 @@ module icon_draw (
   // ---- uitgangen ---------------------------------------------------------
   assign px_on   = in_box && (raw != 3'd0);
   assign px_code = code;
+
+  wire _unused = &{I_2X, ox[9:6], ox[1:0], oy[9:6], oy[1:0], 1'b0};
 endmodule

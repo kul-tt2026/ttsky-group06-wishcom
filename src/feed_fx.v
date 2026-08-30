@@ -79,5 +79,7 @@ module feed_fx (
 
 
  assign feed_on = lamb_on || flame_on;
- assign feed_rgb = flame_on ? flame_rgb : lamb_rgb; 
+ assign feed_rgb = flame_on ? flame_rgb : lamb_rgb;
+
+ wire _unused = &{FALL_SH, lox[7:6], lox[1:0], loy[9:6], loy[1:0], 1'b0};
 endmodule
