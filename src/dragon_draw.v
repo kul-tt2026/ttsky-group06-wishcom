@@ -4,13 +4,13 @@ module dragon_draw (
     input  wire       rst_n,
     input  wire [9:0] x,
     input  wire [9:0] y,
-    input  wire [1:0] dragon_bob,
+    input  wire [2:0] dragon_bob,
     input  wire [2:0] level,
     output wire       px_on,
     output wire [2:0] px_code
 );
     // yb verschuift de Y-coördinaat met dragon_bob
-    wire [9:0] yb = y + {8'd0, dragon_bob};
+    wire [9:0] yb = y + {7'd0, dragon_bob};
     
     // Draden voor de submodule outputs
     wire         lvl2_px_on,  lvl3_px_on,  lvl4_px_on;
