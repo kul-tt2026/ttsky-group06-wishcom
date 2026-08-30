@@ -42,7 +42,7 @@ module anim (
     input  wire [2:0] level,            // de NIEUWE vorm
 
     output reg        night,
-    output reg  [1:0] dragon_bob,       // idle wip 0..2
+    output reg  [2:0] dragon_bob,       // idle wip 0..2
     output reg        flash,            // knippert tijdens de evolve-opbouw
     output reg        evolve_blink,     // trage knipper op de evolve-KNOP
     output reg  [2:0] level_shown,      // wat de renderer moet tekenen
@@ -70,6 +70,7 @@ module anim (
     end
   end
 
+  
   // ======================= dragon_bob =====================================
   reg [7:0] bob_timer;
   reg [7:0] total_cycle;
@@ -84,30 +85,62 @@ module anim (
   end
 
   wire fx_busy  = (fx_t != 7'd0);          // een effect speelt ECHT
-  wire grounded = (dragon_bob == 2'd0);    // de draak staat op het gras
+  wire grounded = (dragon_bob == 3'd0);    // de draak staat op het gras
 
-  // De bob staat stil zolang er een effect speelt.  Let op de volgorde: hij
-  // bevriest op fx_busy en NIET op fx_on, want fx_on is ook hoog terwijl we
-  // op de landing wachten -- dan zou de bob nooit meer 0 worden en hangt het
-  // effect voor eeuwig in pending.
+  // De bob staat stil zolang er een effect speelt of evolve loopt.
   always @(posedge clk) begin
     if (!rst_n || restart) begin
-      bob_timer <= 8'd0; dragon_bob <= 2'd0;
+      bob_timer  <= 8'd0;
+      dragon_bob <= 3'd0;
     end else if (frame_tick && !fx_busy && !evo_on) begin
       if (total_cycle == 8'd0) begin
-        bob_timer <= 8'd0; dragon_bob <= 2'd0;
+        bob_timer  <= 8'd0;
+        dragon_bob <= 3'd0;
       end else begin
         if (bob_timer >= total_cycle - 8'd1) bob_timer <= 8'd0;
         else                                 bob_timer <= bob_timer + 8'd1;
-        if      (bob_timer < 8'd4)   dragon_bob <= 2'd0;
-        else if (bob_timer < 8'd8)   dragon_bob <= 2'd1;
-        else if (bob_timer < 8'd12)  dragon_bob <= 2'd2;
-        else if (bob_timer < 8'd16)  dragon_bob <= 2'd1;
-        else                         dragon_bob <= 2'd0;
+
+        case (satisfaction)
+          // 1: Ontevreden (1 px klein hupje)
+          3'd1: begin
+            if (bob_timer >= 8'd3 && bob_timer < 8'd8) dragon_bob <= 3'd1;
+            else                                       dragon_bob <= 3'd0;
+          end
+
+          // 2: Neutraal (2 px sprong)
+          3'd2: begin
+            if      (bob_timer < 8'd3)  dragon_bob <= 3'd0;
+            else if (bob_timer < 8'd6)  dragon_bob <= 3'd1;
+            else if (bob_timer < 8'd11) dragon_bob <= 3'd2; // hangtime op de top
+            else if (bob_timer < 8'd13) dragon_bob <= 3'd1; // snelle val
+            else                        dragon_bob <= 3'd0;
+          end
+
+          // 3: Blij (3 px sprong)
+          3'd3: begin
+            if      (bob_timer < 8'd3)  dragon_bob <= 3'd0;
+            else if (bob_timer < 8'd6)  dragon_bob <= 3'd1;
+            else if (bob_timer < 8'd9)  dragon_bob <= 3'd2;
+            else if (bob_timer < 8'd14) dragon_bob <= 3'd3; // hangtime op de top
+            else if (bob_timer < 8'd16) dragon_bob <= 3'd1; // snelle val
+            else                        dragon_bob <= 3'd0;
+          end
+
+          // 4: Heel blij (4 px topsprong met snappy landing)
+          3'd4: begin
+            if      (bob_timer < 8'd3)  dragon_bob <= 3'd0;
+            else if (bob_timer < 8'd6)  dragon_bob <= 3'd1;
+            else if (bob_timer < 8'd9)  dragon_bob <= 3'd3;
+            else if (bob_timer < 8'd14) dragon_bob <= 3'd4; // hangtime op de top (5 frames)
+            else if (bob_timer < 8'd16) dragon_bob <= 3'd2; // snelle val (2 frames)
+            else                        dragon_bob <= 3'd0; // landing
+          end
+
+          default: dragon_bob <= 3'd0;
+        endcase
       end
     end
   end
-
   // ======================= voeren / drinken ===============================
   reg [6:0] fx_t;
   reg [1:0] pending;        // aangevraagd, wacht tot de draak geland is
