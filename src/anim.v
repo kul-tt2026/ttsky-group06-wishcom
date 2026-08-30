@@ -152,9 +152,16 @@ module anim (
   // EVO_BLINK .. EVO_PEAK-1 de flits groeit vanuit het midden van de draak
   // EVO_PEAK                de vorm wisselt, verstopt achter de volle flits
   // EVO_PEAK .. EVO_LEN-1   de flits krimpt weg en onthult de nieuwe vorm
-  localparam [6:0] EVO_LEN   = 7'd60;
-  localparam [6:0] EVO_BLINK = 7'd30;
-  localparam [6:0] EVO_PEAK  = 7'd45;
+  // Draai hieraan om de animatie te stemmen:
+  //   EVO_BLINK  hoeveel frames de OUDE vorm knippert voor de flits begint
+  //   EVO_STEP   hoeveel groeistappen de flits neemt; straal = EVO_STEP * 16
+  //              10 stappen = 160 px, net genoeg om de draak te dekken.
+  //              Groter getal = grotere flits.
+  localparam [6:0] EVO_BLINK = 7'd48;                 // 0.80 s knipperen
+  localparam [6:0] EVO_STEP  = 7'd11;                 // 11 * 16 = 176 px
+  localparam [6:0] EVO_PEAK   = EVO_BLINK + EVO_STEP + 7'd1;  // 59: flits op zijn grootst
+  localparam [6:0] EVO_SWITCH = EVO_BLINK + EVO_STEP;         // 58: hier wisselt de vorm
+  localparam [6:0] EVO_LEN    = EVO_PEAK + EVO_STEP + 7'd1;   // 70 frames = 1.17 s
 
   reg [6:0] evo_t;
   assign evo_on = (evo_t != 7'd0);
@@ -167,7 +174,7 @@ module anim (
   wire [6:0] grow_raw = (evo_age >= EVO_BLINK) ? (evo_age - EVO_BLINK) : 7'd0;
   wire [6:0] fade_raw = (evo_age <  EVO_LEN)   ? (EVO_LEN - 7'd1 - evo_age) : 7'd0;
   wire [6:0] step_raw = (evo_age <  EVO_PEAK)  ? grow_raw : fade_raw;
-  wire [3:0] step     = (step_raw > 7'd15) ? 4'd15 : step_raw[3:0];
+  wire [3:0] step     = (step_raw > EVO_STEP) ? EVO_STEP[3:0] : step_raw[3:0];
   assign evo_r = (evo_on && (evo_age >= EVO_BLINK)) ? {2'd0, step, 4'b0} : 10'd0;
 
   always @(posedge clk) begin
@@ -182,12 +189,18 @@ module anim (
   // De oude vorm vasthouden tot de flits op zijn hoogtepunt is.  Buiten een
   // evolve loopt level_shown gewoon mee met level, zodat een restart of een
   // reset hem meteen goed zet.
+  // LET OP de volgorde van deze takken.  Op het frame waarop `evolved` pulst
+  // heeft dragon_state `level` AL omgezet, maar staat evo_t nog op nul -- dus
+  // evo_on is nog laag.  Zonder de eerste tak zou de `!evo_on`-tak dan winnen
+  // en sprong de draak meteen naar zijn nieuwe vorm, waarna je de hele
+  // knipper- en groeifase naar de VERKEERDE vorm zat te kijken.
   always @(posedge clk) begin
     if (!rst_n || restart)                 level_shown <= 3'd0;
     else if (frame_tick) begin
-      if (!evo_on)                         level_shown <= level;
-      else if (evo_age >= EVO_PEAK)        level_shown <= level;
-      // in de knipper- en groeifase blijft de OUDE waarde staan
+      if (evolved)                         level_shown <= level_shown;  // vasthouden
+      else if (!evo_on)                    level_shown <= level;
+      else if (evo_age >= EVO_SWITCH)      level_shown <= level;
+      // knipper- en groeifase: de OUDE vorm blijft staan
     end
   end
 
@@ -195,7 +208,7 @@ module anim (
   // Vier frames aan, vier uit: bit 2 van de leeftijd.
   always @(posedge clk) begin
     if (!rst_n || restart) flash <= 1'b0;
-    else if (frame_tick)   flash <= evo_on && (evo_age < EVO_BLINK) && evo_age[2];
+    else if (frame_tick)   flash <= evo_on && (evo_age < EVO_BLINK) && evo_age[3];
   end
 
   // ======================= nacht ==========================================
