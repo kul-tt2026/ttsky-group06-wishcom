@@ -217,10 +217,13 @@ module title_egg (
     input [3:0] t;
     reg [2:0] hlf;
     reg [3:0] trw;
+    reg _unused_trw;
     begin
       hlf = t[2:0];
       trw = t[3] ? (4'd7 - {1'b0,hlf}) : {1'b0,hlf};
       wob = $signed({6'b0, trw[2:0], 1'b0}) - 10'sd7;
+
+      _unused_trw = trw[3];
     end
   endfunction
 
@@ -314,4 +317,6 @@ module title_egg (
 
   assign ground_on     = grass || shadow;
   assign ground_shadow = shadow;
+
+  wire _unused = &{1'b0, offx[9:8], offx[2:0], offy[9:8], offy[2:0], lx[9:8], ly[9:8], pdx[9:8], pdx[1:0], pdy[9:5], pdy[1:0]};
 endmodule

@@ -109,6 +109,8 @@ module dragon_l2_generator (
             px_code <= 3'd0;
         end
     end
+
+    wire _unused = &{1'b0, ox[9:7], ox[1:0], oy[9:7], oy[1:0]};
 endmodule
 
 
@@ -159,6 +161,8 @@ module dragon_l3_generator (
             px_code <= 3'd0;
         end
     end
+
+    wire _unused = &{1'b0, ox[9:7], ox[1:0], oy[9:7], oy[1:0]};
 endmodule
 
 
@@ -209,6 +213,8 @@ module dragon_l4_generator (
             px_code <= 3'd0;
         end
     end
+
+    wire _unused = &{1'b0, ox[9:8], ox[1:0], oy[9:8], oy[1:0]};
 endmodule
 
 // ===========================================================================
@@ -343,6 +349,8 @@ module background (
     //else if (star)                 bg_rgb = c_star;
     else                           bg_rgb = c_sky;
   end
+
+  wire _unused = &{1'b0, c_star, h[3]};
 endmodule
 
 // ===========================================================================
@@ -449,6 +457,8 @@ module gameover_text (
   end
 
   assign text_on = (in_line1 || in_line2) && in_glyph && glyph_bits[3'd5 - gcol];
+
+  wire _unused = &{1'b0, lx[9:8], ly10[9:6], ly[2:0]};
 endmodule
 
 // ===========================================================================
@@ -482,6 +492,8 @@ module pot_sprite (
 
   assign px_code = in_bounds ? rom[addr] : 3'd0;
   assign px_on   = (px_code != 3'd0);
+
+  wire _unused = &{1'b0, ox[9:7], ox[1:0], oy[9:7], oy[1:0]};
 endmodule
 
 // ===========================================================================
@@ -657,6 +669,8 @@ module win_screen (
   endcase
 
   assign on = (in_l1 || in_l2) && bits[5'd16 - col];
+
+  wire _unused = &{1'b0, gx[9], gx[3:0], gy[9:7], gy[3:0]};
 endmodule
 
 // ===========================================================================
@@ -804,4 +818,6 @@ module velvet_bg (
       (y <  SCALES_Y)              ? C_GOLD  :   // gouden bies
       (y <  SCALES_Y + LINE_W)     ? C_LINE  :   // lijntje onder de bies
                                      velvet;
+
+  wire _unused = &{1'b0, x[9:6]};
 endmodule

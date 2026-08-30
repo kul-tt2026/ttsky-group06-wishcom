@@ -141,4 +141,6 @@ module water_fx (
 
   assign water_on  = spl_on || in_jet || pist_on;
   assign water_rgb = rgb;
+
+  wire _unused = &{1'b0, pox[9:6], pox[0], poy[9:5], poy[0], sox[9:7], sox[1:0], soy[9:7], soy[1:0]};
 endmodule

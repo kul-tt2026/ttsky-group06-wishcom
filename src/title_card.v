@@ -140,4 +140,6 @@ module title_card (
                    wing       ? ((wcode == 2'd1) ? 3'd1 :
                                  (wcode == 2'd2) ? 3'd5 : 3'd2) : 3'd0;
   assign px_on   = in_outer || wing;
+
+  wire _unused = &{1'b0, tdx[9], tdx[0], tdy[9:7], tdy[0], wdx[9], wdx[2:0], wdy[9:8], wdy[2:0]};
 endmodule
