@@ -27,7 +27,8 @@ module dragon_state (
     output reg        game_over,
     output reg        you_win,
     output reg        overflow,              // "already at max" flash
-    output wire       evolve_now            // renderer: light up the option
+    output wire       evolve_now,            // renderer: light up the option
+    output wire       evolved
 );
   localparam MAX_HEARTS = 3'd5;
   localparam MAX_SAT    = 3'd4;
@@ -58,6 +59,7 @@ module dragon_state (
   wire sat_floor_hit = req_sat_down && (satisfaction == 3'd0);
   wire lose_any = req_heart_lose | req_heart_lose_chest | sat_floor_hit;
   wire do_evolve = req_evolve && (coins >= evolve_price);
+  assign evolved = do_evolve;
   wire heal_up = do_evolve && (level == FORM_A - 1 || level == FORM_B - 1);
   reg [6:0] overflow_timer;
   wire [10:0] coins_na_evolve = do_evolve ? ({1'b0, coins} - {1'b0, evolve_price})

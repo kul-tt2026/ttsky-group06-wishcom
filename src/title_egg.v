@@ -50,6 +50,8 @@ module title_egg (
     input  wire [9:0] y,             // portret-y  0..639
     input  wire [2:0] egg_frame,     // 0 heel .. 4 wijd open, 5 same
     input  wire [9:0] flash_r,       // straal van de flits; 0 = uit
+    input  wire [9:0] flash_cx, 
+    input  wire [9:0] flash_cy, 
 
     output wire       egg_on,
     output wire [2:0] egg_code,
@@ -259,9 +261,9 @@ module title_egg (
   // vermenigvuldigingen per pixel (duur!); een ACHTHOEK benadert hem met
   // alleen vergelijkingen en shifts:  max + min/2 <= r.
   // flash_r komt van buiten (home.v telt hem op), zodat de groei vloeiend is.
-  wire [9:0] fdx = (x >= EGG_CX) ? (x - EGG_CX) : (EGG_CX - x);
-  wire [9:0] fcy = EGG_FOOT - 10'd128;                  // midden van het ei
-  wire [9:0] fdy = (y >= fcy) ? (y - fcy) : (fcy - y);
+  wire [9:0] fdx = (x >= flash_cx) ? (x - flash_cx) : (flash_cx - x);
+  wire [9:0] fdy = (y >= flash_cy) ? (y - flash_cy) : (flash_cy - y);
+
   wire [9:0] fmx = (fdx > fdy) ? fdx : fdy;
   wire [9:0] fmn = (fdx > fdy) ? fdy : fdx;
   localparam [9:0] RIM = 10'd10;        // dikte van de rode bies

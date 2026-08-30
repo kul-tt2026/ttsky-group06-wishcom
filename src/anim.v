@@ -5,162 +5,205 @@
 // Alle tijdsafhankelijke beeldtoestand, zodat de renderer een pure functie
 // blijft van zijn ingangen.
 //
-// Hier stonden ooit ook chest_frame, flame_frame en dragon_mood_anim.  De
-// kistanimatie is er nooit gekomen -- de renderer leidt de drie standen
-// rechtstreeks af uit chest_state -- en de vlam en het humeur evenmin.  Alle
-// drie zijn eruit; git bewaart ze.
+// DRIE DINGEN DIE HIER NIEUW ZIJN
 //
-// LET OP: `flash` hier is NIET de flits van het ei.  Die komt uit home.v als
-// flash_r, de straal van de groeiende achthoek.  Deze is bedoeld voor een
-// fanfare bij het evolven en is nog niet geschreven.
+// 1. DE DRAAK LANDT EERST.  Vroeger kende het bob-blok act_feed niet, dus de
+//    vlam kon vertrekken terwijl de draak in de lucht hing.  Nu blijft een
+//    aangevraagde actie in `pending` staan tot dragon_bob weer 0 is, precies
+//    zoals het ei zijn hop afmaakt voordat het gaat barsten.  Tijdens het
+//    effect staat de bob stil, zodat de draak niet halverwege de vlam
+//    wegspringt.
+//
+//    fx_on is daarbij hoog vanaf de knopdruk, dus home.v blokkeert de knoppen
+//    al tijdens het wachten -- anders zou de speler in dat gaatje nog eens
+//    kunnen drukken.
+//
+// 2. EVOLVE-ANIMATIE.  Een puls op `evolved` start een reeks van EVO_LEN
+//    frames: eerst knippert de OUDE vorm, dan groeit dezelfde achthoek-flits
+//    als bij het ei vanuit het midden van de draak, en op het hoogtepunt
+//    daarvan wisselt de vorm.  `level_shown` is wat de renderer moet tekenen;
+//    die loopt dus even achter op `level` uit dragon_state.
+//
+// 3. RESTART wist nacht, een lopend effect en een lopende evolve.
 // ---------------------------------------------------------------------------
 module anim (
     input  wire       clk,
     input  wire       rst_n,
     input  wire       frame_tick,
+    input  wire       restart,
     input  wire [2:0] satisfaction,     // 0 boos .. 4 heel blij
 
     input  wire       act_feed,         // eenframe-pulsen uit home.v
     input  wire       act_drink,
     input  wire       act_sleep,
-
     input  wire       wake,
-    input  wire       restart, 
 
-    output reg        night,  
+    input  wire       evolved,          // puls uit dragon_state: het is gelukt
+    input  wire [2:0] level,            // de NIEUWE vorm
 
-    output reg  [1:0] dragon_bob,       // idle wip 0..2   -- NOG TE SCHRIJVEN
-    output reg        flash,            // fanfare bij evolve -- NOG TE SCHRIJVEN
-    output reg        evolve_blink,
+    output reg        night,
+    output reg  [1:0] dragon_bob,       // idle wip 0..2
+    output reg        flash,            // knippert tijdens de evolve-opbouw
+    output reg        evolve_blink,     // trage knipper op de evolve-KNOP
+    output reg  [2:0] level_shown,      // wat de renderer moet tekenen
 
-    output reg  [1:0] fx_kind,          // 0 niets, 1 feed, 2 drink, 3 sleep
-    output wire       fx_on,             // effect loopt
-    output wire [6:0] fx_age
+    output reg  [1:0] fx_kind,          // 0 niets, 1 feed, 2 drink
+    output wire       fx_on,            // effect loopt (of staat te wachten)
+    output wire [6:0] fx_age,
+
+    output wire       evo_on,           // evolve-flits loopt
+    output wire [9:0] evo_r             // straal van de flits, 0 = uit
 );
+  localparam [1:0] FX_NONE = 2'd0, FX_FEED = 2'd1, FX_DRINK = 2'd2;
+  localparam [6:0] FX_FEED_LEN  = 7'd73;
+  localparam [6:0] FX_DRINK_LEN = 7'd30;
+
   // ======================= evolve-knop knippert ===========================
   reg [7:0] blink_cnt;
-
   always @(posedge clk) begin
     if (!rst_n) begin
-      blink_cnt    <= 8'd0;
-      evolve_blink <= 1'b1;
-      flash        <= 1'b0;
+      blink_cnt <= 8'd0; evolve_blink <= 1'b1;
     end else if (frame_tick) begin
       if (blink_cnt == 8'd179) blink_cnt <= 8'd0;
       else                     blink_cnt <= blink_cnt + 8'd1;
       evolve_blink <= (blink_cnt < 8'd170);
-
-      // TODO Person B -- dragon_bob:
-      //   patroon 0,1,2,1, een stap per ~16 frames.  Sneller wippen naarmate
-      //   satisfaction hoger is, en bij 0 helemaal stilstaan -- een boze draak
-      //   die vrolijk op en neer gaat leest verkeerd.
-      //   Aansluiten kost EEN opteller: in dragon_draw.v `wire [9:0] yb =
-      //   y + {8'd0, dragon_bob};` en die yb aan alle drie de generatoren
-      //   geven.  Een hogere y voeren betekent verder in de sprite kijken,
-      //   dus de draak komt omhoog.
-
-      // TODO Person B -- flash:
-      //   knipperen op ~4 Hz tijdens het evolven.  Daarvoor is een signaal
-      //   nodig dat zegt DAT er geevolueerd is: `req_evolve` uit home.v is de
-      //   voor de hand liggende kandidaat, maar die wordt ook gestuurd als de
-      //   speler te weinig munten heeft.  Overleg met Person A of dragon_state
-      //   een bevestiging kan geven.
     end
   end
 
-  // ======================= dragon_bob animatie ============================
+  // ======================= dragon_bob =====================================
   reg [7:0] bob_timer;
   reg [7:0] total_cycle;
-
-  // Bepaal totale cyclusduur per humeur (16 frames hop + rustperiode)
   always @(*) begin
     case (satisfaction)
       3'd0:    total_cycle = 8'd0;    // Boos: staat permanent stil
-      3'd1:    total_cycle = 8'd150;  // Ontevreden: 16 frames hop + ~2.23s rust (2.5s totaal)
-      3'd2:    total_cycle = 8'd90;   // Neutraal:   16 frames hop + ~1.23s rust (1.5s totaal)
-      3'd3:    total_cycle = 8'd60;   // Blij:       16 frames hop + ~0.73s rust (1.0s totaal)
-      default: total_cycle = 8'd48;   // Heel blij:  16 frames hop + ~0.53s rust (0.8s totaal)
+      3'd1:    total_cycle = 8'd150;
+      3'd2:    total_cycle = 8'd90;
+      3'd3:    total_cycle = 8'd60;
+      default: total_cycle = 8'd48;
     endcase
   end
 
-  always @(posedge clk) begin
-    if (!rst_n) begin
-      bob_timer  <= 8'd0;
-      dragon_bob <= 2'd0;
-    end else if (frame_tick) begin
-      if (total_cycle == 8'd0) begin
-        bob_timer  <= 8'd0;
-        dragon_bob <= 2'd0;
-      end else begin
-        if (bob_timer >= total_cycle - 8'd1) begin
-          bob_timer <= 8'd0;
-        end else begin
-          bob_timer <= bob_timer + 8'd1;
-        end
+  wire fx_busy  = (fx_t != 7'd0);          // een effect speelt ECHT
+  wire grounded = (dragon_bob == 2'd0);    // de draak staat op het gras
 
-        // Vlotte sprong van 16 frames (4 frames per stand: 0 -> 1 -> 2 -> 1)
+  // De bob staat stil zolang er een effect speelt.  Let op de volgorde: hij
+  // bevriest op fx_busy en NIET op fx_on, want fx_on is ook hoog terwijl we
+  // op de landing wachten -- dan zou de bob nooit meer 0 worden en hangt het
+  // effect voor eeuwig in pending.
+  always @(posedge clk) begin
+    if (!rst_n || restart) begin
+      bob_timer <= 8'd0; dragon_bob <= 2'd0;
+    end else if (frame_tick && !fx_busy && !evo_on) begin
+      if (total_cycle == 8'd0) begin
+        bob_timer <= 8'd0; dragon_bob <= 2'd0;
+      end else begin
+        if (bob_timer >= total_cycle - 8'd1) bob_timer <= 8'd0;
+        else                                 bob_timer <= bob_timer + 8'd1;
         if      (bob_timer < 8'd4)   dragon_bob <= 2'd0;
         else if (bob_timer < 8'd8)   dragon_bob <= 2'd1;
         else if (bob_timer < 8'd12)  dragon_bob <= 2'd2;
         else if (bob_timer < 8'd16)  dragon_bob <= 2'd1;
-        else                         dragon_bob <= 2'd0; // Rustperiode op gras
+        else                         dragon_bob <= 2'd0;
       end
     end
   end
-  // ======================= voeren / drinken / slapen ======================
-  // De meest basale versie: een halve seconde lang kleurt de renderer de lucht
-  // om.  EEN teller voor alle drie, want ze kunnen niet tegelijk -- home.v
-  // geeft per frame hoogstens een van deze pulsen.
-  //
-  // Wil je later meer: het vallende blok bij drinken volgt uit fx_t (hoe lager
-  // de teller, hoe verder gezakt), en bij slapen kan de draak grijs worden met
-  // een mux op sprite_rgb.  De teller hier hoeft daar niet voor te veranderen.
-  localparam [1:0] FX_NONE = 2'd0, FX_FEED = 2'd1, FX_DRINK = 2'd2;
-  localparam [6:0] FX_FEED_LEN  = 7'd73;   // lam valt, pauze, vlam, nagloeien
-  localparam [6:0] FX_DRINK_LEN = 7'd30;   // water landt op frame 8, dan hold
 
-  // ---- HIER staat fx_t: puur lokaal, nergens een poort -------------------
+  // ======================= voeren / drinken ===============================
   reg [6:0] fx_t;
+  reg [1:0] pending;        // aangevraagd, wacht tot de draak geland is
 
-  assign fx_on = (fx_t != 7'd0);
+  // Alleen op de FLANK starten, niet op het niveau: blijft een knop hangen,
+  // dan begint het effect een keer en niet telkens opnieuw.
+  reg fd_q, dr_q;
+  wire feed_edge  = act_feed  && !fd_q;
+  wire drink_edge = act_drink && !dr_q;
 
-  // fx_age telt OP vanaf 0, voor welk effect dan ook loopt.
+  // fx_on is al hoog terwijl we op de landing wachten, zodat home.v de
+  // knoppen meteen doodlegt.  fx_kind staat in die fase op FX_NONE, dus
+  // feed_fx en water_fx tekenen nog niets.
+  assign fx_on = fx_busy || (pending != FX_NONE);
+
   wire [6:0] fx_len_now = (fx_kind == FX_DRINK) ? FX_DRINK_LEN : FX_FEED_LEN;
   assign fx_age = fx_len_now - fx_t;
 
   always @(posedge clk) begin
     if (!rst_n || restart) begin
-      fx_kind <= FX_NONE; 
-      fx_t    <= 7'd0;
+      fx_kind <= FX_NONE; fx_t <= 7'd0; pending <= FX_NONE;
+      fd_q <= 1'b0; dr_q <= 1'b0;
     end else if (frame_tick) begin
-      if (fx_t != 7'd0)   fx_t <= fx_t - 7'd1;     // bezig wint van alles
-      else if (act_feed)  begin fx_kind <= FX_FEED;  fx_t <= FX_FEED_LEN;  end
-      else if (act_drink) begin fx_kind <= FX_DRINK; fx_t <= FX_DRINK_LEN; end
-      else                fx_kind <= FX_NONE;
+      fd_q <= act_feed; dr_q <= act_drink;
+      if (fx_busy) begin
+        fx_t <= fx_t - 7'd1;
+      end else if (pending != FX_NONE) begin
+        // wachten tot de draak op de grond staat, dan pas losbarsten
+        if (grounded) begin
+          fx_kind <= pending;
+          fx_t    <= (pending == FX_DRINK) ? FX_DRINK_LEN : FX_FEED_LEN;
+          pending <= FX_NONE;
+        end
+      end else if (feed_edge)  begin pending <= FX_FEED;  fx_kind <= FX_NONE; end
+      else if (drink_edge)     begin pending <= FX_DRINK; fx_kind <= FX_NONE; end
+      else                     fx_kind <= FX_NONE;
     end
   end
 
-  // ---- nacht: blijft staan tot een andere actie je wekt -------------------
-  // Eigen always-blok met eigen reset: Verilog verbiedt dat een register
-  // vanuit twee blokken gedreven wordt.
+  // ======================= evolve-animatie ================================
+  // 0 .. EVO_BLINK-1        de OUDE vorm knippert
+  // EVO_BLINK .. EVO_PEAK-1 de flits groeit vanuit het midden van de draak
+  // EVO_PEAK                de vorm wisselt, verstopt achter de volle flits
+  // EVO_PEAK .. EVO_LEN-1   de flits krimpt weg en onthult de nieuwe vorm
+  localparam [6:0] EVO_LEN   = 7'd60;
+  localparam [6:0] EVO_BLINK = 7'd30;
+  localparam [6:0] EVO_PEAK  = 7'd45;
+
+  reg [6:0] evo_t;
+  assign evo_on = (evo_t != 7'd0);
+  wire [6:0] evo_age = EVO_LEN - evo_t;
+
+  // De straal: groeien tot het hoogtepunt, dan krimpen.  De klem op `step` is
+  // niet cosmetisch -- zonder hem loopt step<<4 over de 10-bits grens als
+  // evo_age ooit buiten bereik komt en klapt de schijf terug naar nul, precies
+  // de fout van het "tweede schaap" in feed_fx.
+  wire [6:0] grow_raw = (evo_age >= EVO_BLINK) ? (evo_age - EVO_BLINK) : 7'd0;
+  wire [6:0] fade_raw = (evo_age <  EVO_LEN)   ? (EVO_LEN - 7'd1 - evo_age) : 7'd0;
+  wire [6:0] step_raw = (evo_age <  EVO_PEAK)  ? grow_raw : fade_raw;
+  wire [3:0] step     = (step_raw > 7'd15) ? 4'd15 : step_raw[3:0];
+  assign evo_r = (evo_on && (evo_age >= EVO_BLINK)) ? {2'd0, step, 4'b0} : 10'd0;
+
   always @(posedge clk) begin
-    if (!rst_n || restart)            night <= 1'b0;
+    if (!rst_n || restart) begin
+      evo_t <= 7'd0;
+    end else if (frame_tick) begin
+      if (evo_t != 7'd0)  evo_t <= evo_t - 7'd1;
+      else if (evolved)   evo_t <= EVO_LEN;
+    end
+  end
+
+  // De oude vorm vasthouden tot de flits op zijn hoogtepunt is.  Buiten een
+  // evolve loopt level_shown gewoon mee met level, zodat een restart of een
+  // reset hem meteen goed zet.
+  always @(posedge clk) begin
+    if (!rst_n || restart)                 level_shown <= 3'd0;
+    else if (frame_tick) begin
+      if (!evo_on)                         level_shown <= level;
+      else if (evo_age >= EVO_PEAK)        level_shown <= level;
+      // in de knipper- en groeifase blijft de OUDE waarde staan
+    end
+  end
+
+  // flash = de knipper op de draak zelf, alleen in de eerste fase.
+  // Vier frames aan, vier uit: bit 2 van de leeftijd.
+  always @(posedge clk) begin
+    if (!rst_n || restart) flash <= 1'b0;
+    else if (frame_tick)   flash <= evo_on && (evo_age < EVO_BLINK) && evo_age[2];
+  end
+
+  // ======================= nacht ==========================================
+  always @(posedge clk) begin
+    if (!rst_n || restart) night <= 1'b0;
     else if (frame_tick) begin
       if      (wake)       night <= 1'b0;
       else if (act_sleep)  night <= 1'b1;
     end
   end
-
-
-
-
-
-
-  // satisfaction wordt pas gelezen zodra dragon_bob geschreven is.
-  wire _unused = &{satisfaction, 1'b0};
-
-
-
-
-
 endmodule

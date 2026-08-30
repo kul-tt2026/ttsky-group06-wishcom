@@ -47,6 +47,10 @@ module renderer (
     input  wire       fx_on,
     input  wire [6:0] fx_age,
 
+    input  wire [2:0] level_shown, 
+    input  wire       evo_on,
+    input  wire [9:0] evo_r, 
+
     input  wire       overflow, // als hartjes vol of geld vol
     input  wire [8:0] chest_contents,  // {kist2, kist1, kist0}, 3 bits elk
     input  wire [9:0] pot,             // groot tonen, los van coins
@@ -107,11 +111,15 @@ module renderer (
   wire       tegg_on, crack_on, flash_on, flash_rim, press_on;
   wire       tground_on, tground_shadow;
   wire [2:0] tegg_code;
+  wire [9:0] fl_cx = evo_on ? 10'd283 : 10'd240;
+  wire [9:0] fl_cy = evo_on ? 10'd236 : 10'd462;
+  wire [9:0] fl_r  = evo_on ? evo_r   : flash_r;
+
   title_egg u_title_egg (
     .clk(clk), .rst_n(rst_n), .frame_tick(frame_tick),
     .x(px), .y(py),
-    .egg_frame(egg_frame), .flash_r(flash_r),
-    .egg_on(tegg_on),   .egg_code(tegg_code),
+    .egg_frame(egg_frame), .flash_r(flash_r), .flash_cx(fl_cx),
+    .egg_on(tegg_on),   .egg_code(tegg_code), .flash_cy(fl_cy),
     .crack_on(crack_on),
     .flash_on(flash_on), .flash_rim(flash_rim),
     .press_on(press_on),
@@ -128,7 +136,7 @@ module renderer (
     .x(px - DRAGON_X), .y(py - DRAGON_Y),
     .dragon_bob(dragon_bob),
     .px_on(dragon_on), .px_code(dragon_code),
-    .level(level), .clk(clk), .rst_n(rst_n)
+    .level(level_shown), .clk(clk), .rst_n(rst_n)
   );
 
   // THREE CHESTS -----------------------------------------------------------
@@ -535,7 +543,8 @@ water_fx u_water (
     else if (chest_lid_on)                         rgb = chest_rgb;
     else if (feed_on)                              rgb = feed_rgb;
     else if (water_on)                             rgb = water_rgb;
-    else if (show_dragon   && dragon_on)  rgb = night ? sprite_night : sprite_rgb;
+    else if (evo_on && flash_on) rgb = flash_rim ? 6'b11_00_00 : 6'b11_10_00;
+    else if (show_dragon && dragon_on && !flash)  rgb = night ? sprite_night : sprite_rgb;
     else if (in_chest)                             rgb = bg_chest_rgb;
     else                                           rgb = bg_home_rgb;
     {R, G, B} = rgb;

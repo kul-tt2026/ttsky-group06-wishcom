@@ -101,6 +101,7 @@ module tt_um_dragonchi (
 
   // ---- the dragon's stats: the one owner (Person A) ----
   // wires defined above
+  wire evolved;
   dragon_state u_state (
     .clk(clk), .rst_n(rst_n), .frame_tick(frame_tick), .restart(restart),
     .req_heart_gain(req_heart_gain), .req_heart_lose(req_heart_lose),
@@ -111,7 +112,7 @@ module tt_um_dragonchi (
     .hearts(hearts), .satisfaction(satisfaction),
     .coins_amount(coins_amount),
     .you_win(you_win), .overflow(overflow), .evolve_now(evolve_now),
-    .coins(coins), .level(level), .game_over(game_over)
+    .coins(coins), .level(level), .game_over(game_over), .evolved(evolved)
   );
 
   // ---- animation heartbeat (Person B) ----
@@ -123,13 +124,17 @@ module tt_um_dragonchi (
   wire [6:0] fx_age;
   wire wake = act_drink | act_feed | act_minigame | req_evolve;
   wire night;
+  wire [2:0] level_shown;
+  wire evo_on;
+  wire [9:0] evo_r;
   anim u_anim (
     .clk(clk), .rst_n(rst_n), .frame_tick(frame_tick),
     .satisfaction(satisfaction),
     .dragon_bob(dragon_bob), 
     .flash(flash), .restart(restart),
     .evolve_blink(evolve_blink), .act_drink(act_drink), .act_feed(act_feed), .act_sleep(act_sleep),
-    .fx_kind(fx_kind), .fx_on(fx_on), .wake(wake), .night(night) , .fx_age(fx_age)
+    .fx_kind(fx_kind), .fx_on(fx_on), .wake(wake), .night(night) , .fx_age(fx_age),
+    .evolved(evolved), .level(level), .level_shown(level_shown), .evo_on(evo_on), .evo_r(evo_r) 
   );
 
   // ---- TinyVGA Pmod.  Do not touch. ----
@@ -153,7 +158,8 @@ module tt_um_dragonchi (
     .R(R), .G(G), .B(B), .overflow(overflow), .evolve_now(evolve_now),
     .chest_contents(chest_contents), .pot(pot), .round(round),
     .evolve_blink(evolve_blink), .frame_tick(frame_tick), .egg_frame(egg_frame), .flash_r(flash_r),
-    .btn_level(btn_level), .fx_kind(fx_kind), .fx_on(fx_on), .night(night), .fx_age(fx_age)
+    .btn_level(btn_level), .fx_kind(fx_kind), .fx_on(fx_on), .night(night), .fx_age(fx_age),
+    .level_shown(level_shown), .evo_on(evo_on), .evo_r(evo_r)
   );
 
   
