@@ -64,9 +64,9 @@ module coinbar (
   // idx = diff_y / 24 = (diff_y / 8) / 3
   wire [4:0] dy8 = diff_y[7:3]; // Pas de bit-range aan op wat je effectief gebruikt
   wire [4:0]  dq    = dy8[7:3];                       // /8, 0..23
-  /* verilator lint_off UNUSEDSIGNAL */
+
   wire [15:0] m3 = {11'd0, dq} * 16'd683;
-  /* verilator lint_on UNUSEDSIGNAL */
+
   wire [2:0]  idx   = m3[13:11];                      // /3, 0..7
 
   // sy = diff_y - idx*24, met idx*24 = (idx<<4) + (idx<<3)
@@ -86,9 +86,9 @@ module coinbar (
   // ======================= BCD, zonder deler ==============================
   wire [9:0]  c_val  = (coins > 10'd999) ? 10'd999 : coins;
 
-  /* verilator lint_off UNUSEDSIGNAL */
+
   wire [15:0] m100 = {6'd0, c_val} * 16'd41;
-  /* verilator lint_on UNUSEDSIGNAL */
+
   wire [3:0]  d_hond = m100[15:12];
   wire [9:0]  h100   = ({6'd0, d_hond} << 6) +        // d_hond * 100
                        ({6'd0, d_hond} << 5) +
@@ -155,4 +155,11 @@ module coinbar (
   assign px_code = font_px ? 2'd2 :
                    !in_seg ? 2'd0 :
                    lit     ? 2'd2 : 2'd1;
+  
+  wire _unused_math = &{
+      1'b0,
+      m3[15:14], m3[10:0],
+      m100[11:0],
+      m10[15], m10[10:0]
+  };
 endmodule
