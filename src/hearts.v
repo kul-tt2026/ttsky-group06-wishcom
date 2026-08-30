@@ -37,7 +37,7 @@
 module hearts (
     input  wire [9:0] x,            // local (px - HEARTS_X)
     input  wire [9:0] y,            // local (py - HEARTS_Y)
-    input  wire [2:0] hearts,       // 0..5, uit dragon_state
+    input  wire [2:0] u_hearts,       // 0..5, uit dragon_state
     input  wire       overflow,     // vol: kleurt de gevulde hartjes anders
     output wire       px_on,
     output wire [1:0] px_code
@@ -68,7 +68,7 @@ module hearts (
   wire [9:0] sxw = x - hbase;
   wire [5:0] sx  = sxw[5:0];           // 0..39
 
-  wire [2:0] hearts_c   = (hearts > 3'd5) ? 3'd5 : hearts;  // nooit meer dan er passen
+  wire [2:0] hearts_c   = (u_hearts > 3'd5) ? 3'd5 : u_hearts;  // nooit meer dan er passen
   wire       heart_full = in_row && (hidx < hearts_c);
 
   // ======================= de ruit ========================================
