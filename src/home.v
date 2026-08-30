@@ -148,7 +148,7 @@ module home (
         default: mode <= M_HOME;
       endcase
     end
-  end
+  
 
   wire _unused = &{coins, 1'b0};
 endmodule
