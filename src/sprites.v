@@ -97,7 +97,7 @@ module dragon_l2_generator (
     reg [2:0] rom [0:1023];
     initial $readmemh("dragon_l2.hex", rom);
 
-    always @(posedge clk or negedge rst_n) begin
+    always @(posedge clk) begin
         if (!rst_n) begin
             px_on   <= 1'b0;
             px_code <= 3'd0;
@@ -147,7 +147,7 @@ module dragon_l3_generator (
     reg [2:0] rom [0:1023];
     initial $readmemh("dragon_l3.hex", rom);
 
-    always @(posedge clk or negedge rst_n) begin
+    always @(posedge clk) begin
         if (!rst_n) begin
             px_on   <= 1'b0;
             px_code <= 3'd0;
@@ -197,7 +197,7 @@ module dragon_l4_generator (
     reg [2:0] rom [0:2303];
     initial $readmemh("dragon_l4.hex", rom);
 
-    always @(posedge clk or negedge rst_n) begin
+    always @(posedge clk) begin
         if (!rst_n) begin
             px_on   <= 1'b0;
             px_code <= 3'd0;
