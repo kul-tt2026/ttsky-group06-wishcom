@@ -118,7 +118,7 @@ module renderer (
   title_egg u_title_egg (
     .clk(clk), .rst_n(rst_n), .frame_tick(frame_tick),
     .x(px), .y(py),
-    .egg_frame(egg_frame), .flash_r(flash_r), .flash_cx(fl_cx),
+    .egg_frame(egg_frame), .flash_r(fl_r), .flash_cx(fl_cx),
     .egg_on(tegg_on),   .egg_code(tegg_code), .flash_cy(fl_cy),
     .crack_on(crack_on),
     .flash_on(flash_on), .flash_rim(flash_rim),
@@ -234,7 +234,7 @@ module renderer (
   // eerste en tekent de andere het verkeerde cijfer.
   wire [3:0] menu_d, coin_d, lvl_d;
   wire [2:0] menu_r, coin_r, lvl_r;
-  wire       menu_q, coin_q, lvl_q;
+  wire       coin_q, lvl_q;
 
   wire [3:0] dig_digit = in_chest ? menu_d : (lvl_q ? lvl_d : coin_d);
   wire [2:0] dig_row   = in_chest ? menu_r : (lvl_q ? lvl_r : coin_r);
@@ -243,7 +243,7 @@ module renderer (
   digit_rom u_digit (.digit(dig_digit), .row(dig_row), .bits(dig_bits));
 
   // MINI GAME MENU PAGE ----------------------------------------------------
-  wire       menu_on;
+  wire       menu_on, menu_q
   wire [2:0] menu_code;
   chest_menu u_menu (
     .x(px), .y(py), .pot(pot), .round(round),
@@ -554,5 +554,5 @@ water_fx u_water (
   // coin_q hangt onderaan de prioriteitsketen en hoeft dus niet gelezen te
   // worden -- coin_d is de laatste tak.  Wel aangesloten laten, anders zie je
   // niet meer dat coinbar hem uitgeeft.
-  wire _unused = &{menu_sel, chest_outcome, combo_len, flash, coin_q, 1'b0};
+  wire _unused = &{menu_sel, chest_outcome, combo_len, flash, coin_q, 1'b0, menu_q};
 endmodule
