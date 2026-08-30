@@ -28,14 +28,20 @@ jobs:
       - name: Run tests
         run: |
           cd test
-          make
-          # make will return success even if the test fails, so check for failure in the results.xml
-          ! grep '<failure' results.xml
+          
+          # Draai alle tests met hun eigen resultatenbestand
+          make COCOTB_RESULTS_FILE=results_tb.xml
+          make test_balance COCOTB_RESULTS_FILE=results_balance.xml
+          make test_chest COCOTB_RESULTS_FILE=results_chest.xml
+          make test_lfsr COCOTB_RESULTS_FILE=results_lfsr.xml
+          
+          # Controleer op errors in ALLE xml-bestanden tegelijk
+          ! grep '<failure' results_*.xml
 
       - name: Test Summary
         uses: test-summary/action@v2
         with:
-          paths: "test/results.xml"
+          paths: "test/results_*.xml"
         if: always()
 
       - name: upload waveform and test results
@@ -45,5 +51,5 @@ jobs:
           name: test-results
           path: |
             test/tb.fst
-            test/results.xml
+            test/results_*.xml
             test/output/*
