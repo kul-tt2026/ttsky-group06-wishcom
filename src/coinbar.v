@@ -95,9 +95,9 @@ module coinbar (
                        ({6'd0, d_hond} << 2);
   wire [9:0]  r100   = c_val - h100;                  // 0..99
 
-  /* verilator lint_off UNUSEDSIGNAL */
+
   wire [15:0] m10  = {6'd0, r100} * 16'd205;
-  /* verilator lint_on UNUSEDSIGNAL */
+
   wire [3:0]  d_tien = m10[14:11];
   wire [9:0]  t10    = ({6'd0, d_tien} << 3) +        // d_tien * 10
                        ({6'd0, d_tien} << 1);
