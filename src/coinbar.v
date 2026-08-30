@@ -62,8 +62,7 @@ module coinbar (
   wire [9:0] diff_y = y - FRAME;        // 0..187 binnen in_inner
 
   // idx = diff_y / 24 = (diff_y / 8) / 3
-  wire [4:0] dy8 = diff_y[7:3]; // Pas de bit-range aan op wat je effectief gebruikt
-  wire [4:0]  dq    = dy8[7:3];                       // /8, 0..23
+  wire [4:0]  dq = diff_y[7:3];
 
   wire [15:0] m3 = {11'd0, dq} * 16'd683;
 
