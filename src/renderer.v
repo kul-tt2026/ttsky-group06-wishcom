@@ -294,7 +294,7 @@ module renderer (
   wire [1:0] heartsinfo_code;
   hearts u_heartsinfo (
     .x(px - HEARTS_X), .y(py - HEARTS_Y),
-    .hearts(hearts), .overflow(overflow),
+    .u_hearts(hearts), .overflow(overflow),
     .px_on(heartsinfo_on), .px_code(heartsinfo_code)
   );
 
