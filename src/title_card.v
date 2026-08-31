@@ -57,7 +57,7 @@ module title_card (
   localparam [9:0] W_W    = 10'd264;    // 33 native * 8
   localparam [9:0] W_H    = 10'd152;    // 19 native * 8
   localparam [9:0] W_SINK = 10'd40;     // hoeveel vleugel achter het kader zakt
-  localparam       WINGS  = 1'b1;
+  localparam       WINGS  = 1'b0;
 
   // --- basis-rechthoek van het kader --------------------------------------
   wire [9:0] O_X = T_X - PAD - 2*BORDER;
