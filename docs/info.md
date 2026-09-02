@@ -16,6 +16,8 @@ The second is the play button: a treasure chest gamble. Open chests to grow a po
 
 Run out of hearts and it is game over; pay for the final evolution and you win.
 
+![Home screen](home_screen.png)
+
 ![Block Diagram](block_diagram.png)
 
 
@@ -91,6 +93,8 @@ Then: press anything to hatch the egg. Try feed, drink and sleep, and notice tha
 
 - **TinyVGA PMOD** on the output PMOD, and a VGA monitor. **The monitor has to be rotated 90°** — the game is drawn in portrait.
 - **8 push buttons** on `ui_in`. They are synchronised and edge-detected on-chip, so no external debouncing is needed.
+
+The eight bidirectional pins carry the game state out: the current mode, the chest-room state, whether an action was accepted, whether an evolution is affordable, and whether a stat is at its cap. The design has no audio itself — a microcontroller that already sits between the buttons and ui_in can read these and play matching sounds, so the sound design can change without a new tapeout.
 
 | `ui_in` | Home | Chest room |
 |---|---|---|

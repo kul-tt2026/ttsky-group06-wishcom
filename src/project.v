@@ -166,11 +166,14 @@ module tt_um_dragonochi (
 
   
 
-  
-
-  // audio later: assign uio_out[0] = spkr; uio_oe[0] = 1;
-  assign uio_out = 8'b0;
-  assign uio_oe  = 8'b0;
+  // ---- spelstatus naar buiten, voor de Pico die ook de knoppen aanstuurt ----
+  //   uio[2:0]  mode         0 TITLE 1 EGG 2 HOME 3 CHEST 4 GAMEOVER 5 YOU_WIN
+  //   uio[4:3]  chest_state  0 PICK 1 OPEN 2 RESULT 3 MENU
+  //   uio[5]    fx_on        een voer/drink-actie is aangenomen en speelt
+  //   uio[6]    evolve_now   evolve zou lukken (genoeg munten)
+  //   uio[7]    overflow     hartjes / satisfaction / munten zitten aan de cap
+  assign uio_out = {overflow, evolve_now, fx_on, chest_state, mode};
+  assign uio_oe  = 8'hFF;
 
   wire _unused = &{ena, uio_in, chest_outcome,  1'b0};
 endmodule

@@ -28,24 +28,24 @@ module render_tb;
 
   // stand van het spel (alleen relevant voor de gekozen mode)
   localparam [2:0] SET_HEARTS  = 3'd3;
-  localparam [2:0] SET_SAT     = 3'd2;
+  localparam [2:0] SET_SAT     = 3'd3;
   localparam [9:0] SET_COINS   = 10'd347;
-  localparam [2:0] SET_LEVEL   = 3'd6;
+  localparam [2:0] SET_LEVEL   = 3'd2;
   localparam       SET_OVERFL  = 1'b0;
   localparam       SET_EVOLVE  = 1'b1;   // evolve_now: knop mag oplichten
 
   // minigame
   localparam [1:0] SET_CSTATE  = 2'd2;   // 0 PICK  1 OPEN  2 RESULT  3 MENU
   localparam [1:0] SET_CSEL    = 2'd2;
-  localparam [8:0] SET_CONTENT = 9'b010_001_100;   // {kist2, kist1, kist0}
+  localparam [8:0] SET_CONTENT = 9'b000_001_100;   // {kist2, kist1, kist0}
   localparam [9:0] SET_POT     = 10'd160;
-  localparam [3:0] SET_ROUND   = 4'd2;
+  localparam [3:0] SET_ROUND   = 4'd0;
 
   // ei / flits (alleen zichtbaar in mode EGG)
   localparam [2:0] SET_EGGFR   = 3'd3;   // 0 heel .. 4 wijd open
   localparam [9:0] SET_FLASHR  = 10'd0;  // 0 = flits uit
 
-  localparam [7:0] SET_BTN_LEVEL = 8'b0010_0000;
+  localparam [7:0] SET_BTN_LEVEL = 8'b0000_0000;
   localparam       SET_NIGHT = 1'b0;
 
   // ======================= aandrijving ====================================
@@ -78,10 +78,20 @@ module render_tb;
     .chest_sel      (SET_CSEL),
     .chest_outcome  (3'd0),
 
-    .flash          (1'b0),
+        .flash          (1'b0),
     .evolve_blink   (1'b1),
-
+    .night          (SET_NIGHT),
     .frame_tick     (1'b0),           // geen animatie: stilstaand frame
+    .btn_level      (SET_BTN_LEVEL),
+
+    // deze zeven ontbraken -- niet aangesloten = Z = zwarte draak
+    .dragon_bob     (5'd0),
+    .fx_kind        (2'd0),
+    .fx_on          (1'b0),
+    .fx_age         (7'd0),
+    .level_shown    (SET_LEVEL),      // de renderer tekent level_shown, niet level
+    .evo_on         (1'b0),
+    .evo_r          (10'd0),
 
     .overflow       (SET_OVERFL),
     .chest_contents (SET_CONTENT),
@@ -89,9 +99,8 @@ module render_tb;
     .round          (SET_ROUND),
     .egg_frame      (SET_EGGFR),
     .flash_r        (SET_FLASHR),
-    .btn_level      (SET_BTN_LEVEL),
-    .night          (SET_NIGHT),
 
+    
     .R(R), .G(G), .B(B)
   );
 

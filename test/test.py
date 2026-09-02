@@ -5,12 +5,14 @@ Dit is de test die de Tiny Tapeout-CI draait (`make` in test/).  Hij
 speelt het spel niet uit -- een intro alleen al is 139 beelden = 58 miljoen klokken -- maar
 controleert wat een monitor en een speler als eerste merken:
 
-  1. na reset staat de chip op TITLE en zijn de pinnen gedefinieerd
+  1. na reset staat de chip op TITLE, de pinnen zijn gedefinieerd, en de
+     uio-pinnen zijn uitgang met de spelstatus erop (allemaal laag na reset)
   2. uo_out: bit 7 = hsync, bit 3 = vsync, en de kleurbits zijn 0 zolang
      de straal buiten het beeld staat (blanking MOET zwart zijn)
   3. binnen het beeld komt er echt kleur uit
   4. frame_tick komt precies een keer per beeld (420000 klokken, 16.8 ms)
-     en een knop op ui_in doet iets: TITLE -> EGG binnen een paar beelden
+     en een knop op ui_in doet iets: TITLE -> EGG binnen een paar beelden,
+     en dat is ook op uio[2:0] te zien (de Pico leest daar de mode)
 
 Reken op een paar minuten: tb.v dumpt elk signaal naar tb.fst en een beeld
 is 420000 klokken.  Wil je het sneller, zet $dumpvars in tb.v uit.
@@ -44,7 +46,10 @@ async def test_reset_state(dut):
     assert int(top.u_state.hearts.value) == 5
     assert int(top.u_state.level.value) == 1, "level moet op 1 beginnen"
     assert dut.uo_out.value.is_resolvable, "uo_out heeft X/Z na reset"
-    assert int(dut.uio_oe.value) == 0 and int(dut.uio_out.value) == 0
+    assert dut.uio_out.value.is_resolvable, "uio_out heeft X/Z na reset"
+    # uio = {overflow, evolve_now, fx_on, chest_state[1:0], mode[2:0]}: allemaal uitgang
+    assert int(dut.uio_oe.value) == 0xFF, "uio-pinnen moeten uitgang zijn (spelstatus voor de Pico)"
+    assert int(dut.uio_out.value) == 0, "na reset: TITLE, geen kist, geen effect, 0 munten, geen overflow"
 
 
 @cocotb.test()
@@ -91,5 +96,6 @@ async def test_frame_tick_and_button(dut):
     await ClockCycles(dut.clk, 2)
     dut.ui_in.value = 0
     assert int(top.u_home.mode.value) == 1, "knop op ui_in bracht de chip niet van TITLE naar EGG"
+    assert int(dut.uio_out.value) & 0b111 == 1, "uio[2:0] volgt de mode niet"
     await RisingEdge(ft)
     assert int(top.u_home.egg_frame.value) != 0, "het ei barst niet"

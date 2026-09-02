@@ -66,14 +66,14 @@ pinout:
   uo[7]: "hsync"
 
   # Bidirectional pins
-  uio[0]: ""
-  uio[1]: ""
-  uio[2]: ""
-  uio[3]: ""
-  uio[4]: ""
-  uio[5]: ""
-  uio[6]: ""
-  uio[7]: ""
+  uio[0]: "mode[0]"
+  uio[1]: "mode[1]"
+  uio[2]: "mode[2]"
+  uio[3]: "chest_state[0]"
+  uio[4]: "chest_state[1]"
+  uio[5]: "fx_on"
+  uio[6]: "evolve_now"
+  uio[7]: "overflow"
 
 # Do not change!
 yaml_version: 6
