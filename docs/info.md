@@ -16,7 +16,7 @@ The second is the play button: a treasure chest gamble. Open chests to grow a po
 
 Run out of hearts and it is game over; pay for the final evolution and you win.
 
-![Block diagram](block_diagram.png)
+![Block Diagram](docs/diagrams/block_diagram.png)
 
 
 ### One clock, two rates
@@ -77,6 +77,9 @@ The dragon gets a second palette for night instead of a brightness trick, so the
 
 ![Button map](button_map.png)
 
+![Button map](docs/diagrams/button_map.png)
+
+
 Then: press anything to hatch the egg. Try feed, drink and sleep, and notice that input is ignored until each animation finishes. Alternate all four actions and the satisfaction bar climbs and the dragon bobs faster; repeat one action six times instead and the bar drops and hearts start going. Open a few chests, cash out, and spend the coins on an evolution.
 
 
@@ -88,8 +91,8 @@ Then: press anything to hatch the egg. Try feed, drink and sleep, and notice tha
 
 | `ui_in` | Home | Chest room |
 |---|---|---|
-| 1 | evolve | select left |
-| 3 | — | select right |
+| 1 | evolve | select up |
+| 3 | — | select down |
 | 4 | feed | — |
 | 5 | drink | — |
 | 6 | sleep | open chest / continue |
