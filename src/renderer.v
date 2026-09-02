@@ -24,7 +24,7 @@ module renderer (
     input  wire [2:0] menu_sel,
     input  wire [2:0] hearts, // 3 bit
     input  wire [2:0] satisfaction, // 3 bit => 5 options
-    input  wire [2:0] dragon_bob,
+    input  wire [4:0] dragon_bob,
     input  wire [9:0] coins, //tot 1000: level 1 20, level 2 40, level 3 80, level 160
     input  wire [2:0] level, // max 7 levels
 

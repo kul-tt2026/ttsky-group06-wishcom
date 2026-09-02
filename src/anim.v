@@ -42,7 +42,7 @@ module anim (
     input  wire [2:0] level,            // de NIEUWE vorm
 
     output reg        night,
-    output reg  [2:0] dragon_bob,       // idle wip 0..2
+    output reg  [4:0] dragon_bob,       // idle wip 0..2
     output reg        flash,            // knippert tijdens de evolve-opbouw
     output reg        evolve_blink,     // trage knipper op de evolve-KNOP
     output reg  [2:0] level_shown,      // wat de renderer moet tekenen
@@ -80,65 +80,73 @@ module anim (
       3'd1:    total_cycle = 8'd150;
       3'd2:    total_cycle = 8'd90;
       3'd3:    total_cycle = 8'd60;
-      default: total_cycle = 8'd48;
+      default: total_cycle = 8'd56;   // 56 frames cyclus voor sat=4
     endcase
   end
+
+  // Vlaggen en statussen (gedeclareerd vóór gebruik)
   reg [6:0] fx_t;
   reg [6:0] evo_t;
   assign evo_on = (evo_t != 7'd0);
   wire fx_busy  = (fx_t != 7'd0);          // een effect speelt ECHT
-  wire grounded = (dragon_bob == 3'd0);    // de draak staat op het gras
+  wire grounded = (dragon_bob == 5'd0);    // de draak staat op het gras (5 bits!)
 
   // De bob staat stil zolang er een effect speelt of evolve loopt.
   always @(posedge clk) begin
     if (!rst_n || restart) begin
       bob_timer  <= 8'd0;
-      dragon_bob <= 3'd0;
+      dragon_bob <= 5'd0;
     end else if (frame_tick && !fx_busy && !evo_on) begin
       if (total_cycle == 8'd0) begin
         bob_timer  <= 8'd0;
-        dragon_bob <= 3'd0;
+        dragon_bob <= 5'd0;
       end else begin
         if (bob_timer >= total_cycle - 8'd1) bob_timer <= 8'd0;
         else                                 bob_timer <= bob_timer + 8'd1;
 
         case (satisfaction)
-          // 1: Ontevreden (1 px klein hupje)
+          // 1: Ontevreden (4 px klein hupje)
           3'd1: begin
-            if (bob_timer >= 8'd3 && bob_timer < 8'd8) dragon_bob <= 3'd1;
-            else                                       dragon_bob <= 3'd0;
+            if      (bob_timer < 8'd3)   dragon_bob <= 5'd0;
+            else if (bob_timer < 8'd6)   dragon_bob <= 5'd2;
+            else if (bob_timer < 8'd14)  dragon_bob <= 5'd4;
+            else if (bob_timer < 8'd17)  dragon_bob <= 5'd1;
+            else                         dragon_bob <= 5'd0;
           end
 
-          // 2: Neutraal (2 px sprong)
+          // 2: Neutraal (8 px sprong)
           3'd2: begin
-            if      (bob_timer < 8'd3)  dragon_bob <= 3'd0;
-            else if (bob_timer < 8'd6)  dragon_bob <= 3'd1;
-            else if (bob_timer < 8'd11) dragon_bob <= 3'd2; // hangtime op de top
-            else if (bob_timer < 8'd13) dragon_bob <= 3'd1; // snelle val
-            else                        dragon_bob <= 3'd0;
+            if      (bob_timer < 8'd3)   dragon_bob <= 5'd0;
+            else if (bob_timer < 8'd6)   dragon_bob <= 5'd3;
+            else if (bob_timer < 8'd9)   dragon_bob <= 5'd6;
+            else if (bob_timer < 8'd18)  dragon_bob <= 5'd8; // 9 frames hangtime
+            else if (bob_timer < 8'd21)  dragon_bob <= 5'd3;
+            else                         dragon_bob <= 5'd0;
           end
 
-          // 3: Blij (3 px sprong)
+          // 3: Blij (12 px sprong)
           3'd3: begin
-            if      (bob_timer < 8'd3)  dragon_bob <= 3'd0;
-            else if (bob_timer < 8'd6)  dragon_bob <= 3'd1;
-            else if (bob_timer < 8'd9)  dragon_bob <= 3'd2;
-            else if (bob_timer < 8'd14) dragon_bob <= 3'd3; // hangtime op de top
-            else if (bob_timer < 8'd16) dragon_bob <= 3'd1; // snelle val
-            else                        dragon_bob <= 3'd0;
+            if      (bob_timer < 8'd3)   dragon_bob <= 5'd0;
+            else if (bob_timer < 8'd6)   dragon_bob <= 5'd4;
+            else if (bob_timer < 8'd9)   dragon_bob <= 5'd8;
+            else if (bob_timer < 8'd19)  dragon_bob <= 5'd12; // 10 frames hangtime
+            else if (bob_timer < 8'd22)  dragon_bob <= 5'd6;
+            else if (bob_timer < 8'd24)  dragon_bob <= 5'd2;
+            else                         dragon_bob <= 5'd0;
           end
 
-          // 4: Heel blij (4 px topsprong met snappy landing)
+          // 4: Heel blij (16 px topsprong)
           3'd4: begin
-            if      (bob_timer < 8'd3)  dragon_bob <= 3'd0;
-            else if (bob_timer < 8'd6)  dragon_bob <= 3'd1;
-            else if (bob_timer < 8'd9)  dragon_bob <= 3'd3;
-            else if (bob_timer < 8'd14) dragon_bob <= 3'd4; // hangtime op de top (5 frames)
-            else if (bob_timer < 8'd16) dragon_bob <= 3'd2; // snelle val (2 frames)
-            else                        dragon_bob <= 3'd0; // landing
+            if      (bob_timer < 8'd3)   dragon_bob <= 5'd0;
+            else if (bob_timer < 8'd6)   dragon_bob <= 5'd5;
+            else if (bob_timer < 8'd9)   dragon_bob <= 5'd11;
+            else if (bob_timer < 8'd21)  dragon_bob <= 5'd16; // 12 frames hangtime
+            else if (bob_timer < 8'd24)  dragon_bob <= 5'd8;  // snelle val
+            else if (bob_timer < 8'd26)  dragon_bob <= 5'd3;
+            else                         dragon_bob <= 5'd0;  // landing
           end
 
-          default: dragon_bob <= 3'd0;
+          default: dragon_bob <= 5'd0;
         endcase
       end
     end
