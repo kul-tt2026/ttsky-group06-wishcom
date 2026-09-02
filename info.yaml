@@ -1,7 +1,7 @@
 # Tiny Tapeout project information
 project:
   title:        "WISH"      # Project title
-  author:       "Annabel,Wout,Sixten,Hanne,Isabelle"      # Your name
+  author:       "Annabel Laneau, Wout Helsen, Sixten Strobbe, Hanne Vercammen, Isabelle Boogaerts"      # Your name
   discord:      "/"      # Your discord username, for communication and automatically assigning you a Tapeout role (optional)
   description:  "A pet dragon to keep alive and play with!"      # One line description of what your project does
   language:     "Verilog" # other examples include SystemVerilog, Amaranth, VHDL, etc
