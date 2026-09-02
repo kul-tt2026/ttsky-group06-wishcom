@@ -39,7 +39,7 @@ module bob_tb;
   wire [6:0] fx_age;
   wire [9:0] evo_r;
   wire [2:0] level_shown;
-  wire [2:0] dragon_bob;
+  wire [4:0] dragon_bob;
   anim u_anim (
     .clk(clk), .rst_n(rst_n), .frame_tick(frame_tick), .restart(1'b0),
     .satisfaction(sat),
