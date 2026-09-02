@@ -3,7 +3,7 @@
 // TOP LEVEL.  OWNER: PERSON A.  Nobody else commits here.  Wiring only.
 // Every signal below is documented in SIGNALS.md -- that page is the law.
 // ---------------------------------------------------------------------------
-module tt_um_dragonchi (
+module tt_um_dragonochi (
     input  wire [7:0] ui_in,
     output wire [7:0] uo_out,
     input  wire [7:0] uio_in,
