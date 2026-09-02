@@ -23,7 +23,7 @@ module dragon_state (
     output reg  [2:0] hearts,                // 0..5
     output reg  [2:0] satisfaction,          // 0 miserable .. 5 happy
     output reg  [9:0] coins,
-    output reg  [2:0] level,                 // 0..7
+    output reg  [2:0] level,                 // 1..7
     output reg        game_over,
     output reg        you_win,
     output reg        overflow,              // "already at max" flash
@@ -42,7 +42,6 @@ module dragon_state (
   // The last step (6 -> 7) costs 255, which is the whole purse.
   reg [9:0] evolve_price;
   always @(*) case (level)
-    3'd0: evolve_price = 10'd40;
     3'd1: evolve_price = 10'd90;
     3'd2: evolve_price = 10'd220;
     3'd3: evolve_price = 10'd180;
@@ -73,7 +72,7 @@ module dragon_state (
       hearts         <= MAX_HEARTS;
       satisfaction   <= 3'd2;
       coins          <= 10'd0;
-      level          <= 3'd0;
+      level          <= 3'd1;
       game_over      <= 1'b0;
       you_win        <= 1'b0;
       overflow       <= 1'b0;

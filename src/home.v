@@ -85,7 +85,6 @@ module home (
       act_minigame <= 1'b0;
       req_evolve   <= 1'b0;
       restart      <= 1'b0;
-    end
       case (mode)
 
         // -------------------------------------------------------------
@@ -109,7 +108,7 @@ module home (
           end
         end
         // -------------------------------------------------------------
-                M_HOME: begin
+        M_HOME: begin
           if (game_over)      mode <= M_GAMEOVER;
           else if (you_win)   mode <= M_YOU_WIN;
           else if (!fx_on) begin        // <-- knoppen dood tijdens een effect
@@ -148,7 +147,7 @@ module home (
         default: mode <= M_HOME;
       endcase
     end
-  
+  end
 
   wire _unused = &{coins, 1'b0};
 endmodule
