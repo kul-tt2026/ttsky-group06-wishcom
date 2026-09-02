@@ -33,7 +33,7 @@ module coinbar (
     output wire       px_on,
     output wire [1:0] px_code
 );
-  localparam [9:0] COINS_MAX = 10'd1000;
+  localparam [9:0] COINS_MAX = 10'd999;
 
   // ======================= geometrie balk =================================
   localparam [9:0] NSEG  = 10'd8;

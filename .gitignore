@@ -15,3 +15,5 @@ test/__pycache__/
 test/results.xml
 test/gate_level_netlist.v
 .vscode/settings.json
+test/*.fst
+src/shot*.ppm

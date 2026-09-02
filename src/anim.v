@@ -236,7 +236,7 @@ module anim (
   // en sprong de draak meteen naar zijn nieuwe vorm, waarna je de hele
   // knipper- en groeifase naar de VERKEERDE vorm zat te kijken.
   always @(posedge clk) begin
-    if (!rst_n || restart)                 level_shown <= 3'd0;
+    if (!rst_n || restart)                 level_shown <= 3'd1;
     else if (frame_tick) begin
       if (evolved)                         level_shown <= level_shown;  // vasthouden
       else if (!evo_on)                    level_shown <= level;

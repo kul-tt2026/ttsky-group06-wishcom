@@ -111,9 +111,11 @@ module renderer (
   wire       tegg_on, crack_on, flash_on, flash_rim, press_on;
   wire       tground_on, tground_shadow;
   wire [2:0] tegg_code;
-  wire [9:0] fl_cx = evo_on ? 10'd240 : 10'd240;
-  wire [9:0] fl_cy = evo_on ? 10'd236 : 10'd462;
-  wire [9:0] fl_r  = evo_on ? evo_r   : flash_r;
+
+  wire       evo_draw = evo_on && (mode == M_HOME);
+  wire [9:0] fl_cx = evo_draw ? 10'd240 : 10'd240;
+  wire [9:0] fl_cy = evo_draw ? 10'd236 : 10'd462;
+  wire [9:0] fl_r  = evo_draw ? evo_r   : flash_r;
 
   title_egg u_title_egg (
     .clk(clk), .rst_n(rst_n), .frame_tick(frame_tick),
@@ -299,8 +301,8 @@ module renderer (
   );
 
   // BUTTONS ----------------------------------------------------------------
-  //             FEED
-  //   DRINK   level up   SLEEP
+  //             DRINK
+  //  FEED   level up   SLEEP
   //             PLAY
   wire       button_on;
   wire [2:0] button_code;
@@ -502,7 +504,7 @@ water_fx u_water (
 
   reg [5:0] heartsinfo_rgb;
   always @(*) case (heartsinfo_code)
-    2'd0:    heartsinfo_rgb = 6'b00_00_00;   // zwarte omtrek
+    2'd0:    heartsinfo_rgb = night ? 6'b11_11_11 : 6'b00_00_00;   // zwarte omtrek
     2'd1:    heartsinfo_rgb = 6'b11_00_00;   // rood gevuld hartje
     2'd2:    heartsinfo_rgb = 6'b11_11_11;   // hartje bij overflow
     default: heartsinfo_rgb = 6'b00_00_00;
@@ -534,7 +536,7 @@ water_fx u_water (
     end
     else if (mode == M_YOU_WIN) rgb = win_on ? 6'b11_10_00 : 6'b00_00_00;
     else if (show_hearts   && heartsinfo_on)       rgb = heartsinfo_rgb;
-    else if (show_coin     && lvl_on)              rgb = 6'b00_00_00;  // LVL n
+    else if (show_coin     && lvl_on)              rgb = night ? 6'b11_11_11 : 6'b00_00_00;
     else if (show_coin     && coin_on)             rgb = coin_rgb;
     else if (show_satbar   && sat_on)              rgb = sat_rgb;
     else if (show_buttons  && button_on)           rgb = buttons_rgb;
@@ -544,8 +546,8 @@ water_fx u_water (
     else if (chest_lid_on)                         rgb = chest_rgb;
     else if (feed_on)                              rgb = feed_rgb;
     else if (water_on)                             rgb = water_rgb;
-    else if (evo_on && flash_on) rgb = flash_rim ? 6'b11_00_00 : 6'b11_10_00;
-    else if (show_dragon && dragon_on && !flash)  rgb = night ? sprite_night : sprite_rgb;
+    else if (evo_draw && flash_on)                 rgb = flash_rim ? 6'b11_00_00 : 6'b11_10_00;
+    else if (show_dragon && dragon_on && !flash)   rgb = night ? sprite_night : sprite_rgb;
     else if (in_chest)                             rgb = bg_chest_rgb;
     else                                           rgb = bg_home_rgb;
     {R, G, B} = rgb;

@@ -276,7 +276,7 @@ module title_egg (
   assign flash_rim = flash_on && (fd + RIM > flash_r);
 
   // --- PRESS ANY BUTTON (3x5 font, 4x geschaald) --------------------------
-  localparam PRESS = 1'b0;
+  localparam PRESS = 1'b1;
   wire in_press = PRESS && blink &&
                   (x >= PRESS_X) && (x < PRESS_X + PRESS_W) &&
                   (y >= PRESS_Y) && (y < PRESS_Y + PRESS_H);

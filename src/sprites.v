@@ -601,7 +601,7 @@ module level_box (
                    (y < 10'd9)  ? 3'd2 : (y < 10'd12) ? 3'd3 :
                    (y < 10'd15) ? 3'd4 : 3'd5;
 
-  assign q_digit = {1'b0, level} + 4'd1;       // level telt vanaf 0, de speler vanaf 1
+  assign q_digit = {1'b0, level};       // level telt vanaf 0, de speler vanaf 1
   assign q_row   = dgy;
   assign q_on    = in_dig;
 

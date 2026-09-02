@@ -68,10 +68,13 @@ The dragon gets a second palette for night instead of a brightness trick, so the
 
 ## How to test
 
-**In simulation.** to be written 
+**In simulation.** 
+Every module has its own cocotb test in `test/`, and `make test_core` runs them all in about three minutes. `test.py` is what
+the Tiny Tapeout CI runs on the full chip: sync timing, black blanking, one `frame_tick` per frame, and a button press taking the chip from the title to the egg.
 
+The three state machines — `home`, `dragon_state`, `anim` — are checked against Python models of the same logic, including reset at every awkward moment, simultaneous requests in one frame, held and spammed buttons, and 3000 frames of random input. `test_renderer` puts game states directly on the renderer and reads the screen back: layer order, what each mode may and may not show, heart and bar colours, and the numbers on screen decoded through the font. `test_hvsync` pins the VGA timing to the clock.
 
-
+The sprites themselves are checked by eye: the benches in `test/visual/` write frames as PPM and `ppm2gif.py` turns them into a GIF.
 
 **On hardware.** Plug the TinyVGA PMOD into the output PMOD, connect a monitor, put 8 buttons on `ui_in`, set the clock to 25.175 MHz and reset. You should get the title screen.
 
