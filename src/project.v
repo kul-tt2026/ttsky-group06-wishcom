@@ -57,7 +57,7 @@ module tt_um_dragonchi (
   wire game_over, minigame_done;
   wire [9:0] coins, flash_r;
   wire fx_on;
-   wire [2:0] dragon_bob;
+   wire [4:0] dragon_bob;
   // wire [2:0] dragon_mood_anim;
   wire flash, evolve_blink;
   wire [1:0] fx_kind;
