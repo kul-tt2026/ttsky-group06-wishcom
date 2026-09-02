@@ -16,7 +16,7 @@ The second is the play button: a treasure chest gamble. Open chests to grow a po
 
 Run out of hearts and it is game over; pay for the final evolution and you win.
 
-![Block Diagram](docs/diagrams/block_diagram.png)
+![Block Diagram](block_diagram.png)
 
 
 ### One clock, two rates
@@ -75,9 +75,9 @@ The dragon gets a second palette for night instead of a brightness trick, so the
 
 **On hardware.** Plug the TinyVGA PMOD into the output PMOD, connect a monitor, put 8 buttons on `ui_in`, set the clock to 25.175 MHz and reset. You should get the title screen.
 
-![Button map](button_map.png)
 
-![Button map](docs/diagrams/button_map.png)
+
+![Button map](button_map.png)
 
 
 Then: press anything to hatch the egg. Try feed, drink and sleep, and notice that input is ignored until each animation finishes. Alternate all four actions and the satisfaction bar climbs and the dragon bobs faster; repeat one action six times instead and the bar drops and hearts start going. Open a few chests, cash out, and spend the coins on an evolution.
