@@ -71,7 +71,7 @@ module feed_fx (
   wire [7:0] laddr = {lsy, lsx};
 
   reg [1:0] rom [0:255];
-  initial $readmemh("lamb.hex", rom);
+  initial $readmemh("lamb_meat.hex", rom);
   wire [1:0] lcode = rom[laddr];
 
   wire lamb_on  = in_lamb && (lcode != 2'd0);

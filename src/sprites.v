@@ -488,7 +488,7 @@ module pot_sprite (
   wire [9:0] addr  = {rel_y, rel_x};
 
   reg [2:0] rom [0:1023];
-  initial $readmemh("pot.hex", rom);
+  initial $readmemh("pot_sprite.hex", rom);
 
   assign px_code = in_bounds ? rom[addr] : 3'd0;
   assign px_on   = (px_code != 3'd0);
