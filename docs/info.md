@@ -64,7 +64,7 @@ The stack differs per mode:
 - *home* — hearts, level, coins, satisfaction bar, buttons, dragon, background
 - *chest* — hearts, menu, chest body, icon, lid, background
 
-Where two things use the same table and can never both claim a pixel, there is one lookup with muxed inputs instead of two copies. The dragon and the title egg share a palette because their modes exclude each other; the chest body and lid share theirs because the stack always picks one; and a single `digit_rom` draws the round number, the pot, the coin counter and the level. 
+Where two things use the same table and can never both claim a pixel, there is one lookup with mixed inputs instead of two copies. The dragon and the title egg share a palette because their modes exclude each other; the chest body and lid share theirs because the stack always picks one; and a single `digit_rom` draws the round number, the pot, the coin counter and the level. 
 
 The dragon gets a second palette for night instead of a brightness trick, so the outline stays black while the belly still lifts, and the unpicked chests dim by dropping the low bit of each channel.
 
