@@ -550,7 +550,13 @@ water_fx u_water (
     else if (show_dragon && dragon_on && !flash)   rgb = night ? sprite_night : sprite_rgb;
     else if (in_chest)                             rgb = bg_chest_rgb;
     else                                           rgb = bg_home_rgb;
-    {R, G, B} = rgb;
+  end
+
+  always @(posedge clk) begin
+    if (!rst_n)
+      {R, G, B} <= 6'b0;
+    else
+      {R, G, B} <= rgb;
   end
 
   // coin_q hangt onderaan de prioriteitsketen en hoeft dus niet gelezen te
