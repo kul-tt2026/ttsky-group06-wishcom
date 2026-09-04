@@ -84,7 +84,7 @@ async def px(dut, x, y):
     klok gesynchroniseerd, dus we wachten een flank."""
     dut.pix_y.value = x
     dut.pix_x.value = 639 - y
-    await RisingEdge(dut.clk)
+    await ClockCycles(dut.clk, 2)
     await Timer(1, unit="ns")
     r, g, b = dut.R.value, dut.G.value, dut.B.value
     if not (r.is_resolvable and g.is_resolvable and b.is_resolvable):

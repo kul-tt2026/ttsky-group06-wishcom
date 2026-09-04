@@ -57,6 +57,7 @@ async def test_uo_out_mapping_and_blanking(dut):
     await setup(dut)
     top = dut.user_project
     colour_seen, blank_checked = 0, 0
+    prev_active = None
     # een hele lijn plus een stuk: dekt hsync, front/back porch en actief beeld
     for _ in range(900):
         await RisingEdge(dut.clk)
@@ -65,11 +66,13 @@ async def test_uo_out_mapping_and_blanking(dut):
         assert (uo >> 7) & 1 == int(top.hsync.value), "uo_out[7] is niet hsync"
         assert (uo >> 3) & 1 == int(top.vsync.value), "uo_out[3] is niet vsync"
         colour = uo & 0b01110111
-        if int(top.video_active.value) == 0:
+        if prev_active == 0:
             blank_checked += 1
             assert colour == 0, f"kleur {colour:08b} buiten het beeld (hpos={int(top.pix_x.value)})"
-        elif colour:
+        elif prev_active and colour:
             colour_seen += 1
+        prev_active = int(top.video_active.value)
+        
     assert blank_checked > 100, "te weinig blanking gezien"
     assert colour_seen > 100, "geen kleur in het actieve beeld: staat de titel wel aan?"
 
